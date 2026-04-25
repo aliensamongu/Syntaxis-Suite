@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Trinitas Markup | Master Editor V2</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        :root {
+            --sidebar-width: 340px;
+            --gutter-width: 350px;
+            --bg-main: #e4e7ea;
+            
+            /* Oxford Scholar Palette */
+            --oxford-navy: #1B263B;
+            --oxford-navy-dark: #121A2A;
+            --oxford-cream: #F8F5EE;
+            --oxford-gold: #C5A059;
+            --oxford-crimson: #8C1C13;
+            --rustic-orange: #C86428;
+            
+            --radius-small: 8px;
+            --radius-medium: 12px;
+        }
+
+        body {
+            margin: 0; display: flex; height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; background: var(--bg-main);
+        }
+        
+        /* Left Sidebar */
+        #sidebar {
+            width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
+            border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
+            z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
+        }
+        .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
+        .sidebar-inner::-webkit-scrollbar { width: 6px; }
+        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
+        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+
+        input[type="text"], textarea, select {
+            width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
+            border: 1px solid var(--oxford-navy-dark); padding: 10px;
+            font-family: inherit; font-size: 13px; color: var(--oxford-navy);
+            background: var(--oxford-cream); transition: 0.1s; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        textarea { height: 100px; resize: vertical; line-height: 1.4; overflow-y: auto; }
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+
+        .std-btn {
+            border: none; padding: 10px; border-radius: var(--radius-small);
+            cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
+            transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy);
+        }
+        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+        .std-btn.danger { background: var(--oxford-crimson); color: white; }
+
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.1s; }
+        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
+        .btn-group button:hover:not(.active) { background: rgba(255,255,255,0.1); }
+
+        /* Workspace Area */
+        #workspace { flex-grow: 1; position: relative; display: flex; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 40px; align-items: flex-start; }
+        
+        /* The Actual Text Canvas */
+        #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); transition: line-height 0.3s ease; line-height: 1.8; position: relative; z-index: 10; cursor: text; min-height: 50vh; }
+        #text-canvas.spacing-standard { line-height: 1.8; }
+        #text-canvas.spacing-loose { line-height: 2.8; }
+        #text-canvas.spacing-double { line-height: 4.0; }
+
+        /* Clickable Words */
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, color 0.2s; position: relative; }
+        .word:hover { background-color: rgba(0,0,0,0.05); }
+        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
+
+        /* Grammar Badges */
+        .grammar-tag { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; font-weight: bold; color: white; padding: 2px 5px; border-radius: 4px; line-height: 1; pointer-events: none; letter-spacing: 0.5px; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.1); transition: opacity 0.2s; }
+
+        /* SVG Glass Overlay */
+        #svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; transition: opacity 0.2s; }
+
+        /* Scholar's Gutter */
+        #gutter { width: var(--gutter-width); flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; position: sticky; top: 0; transition: opacity 0.2s; }
+        .margin-note { background: white; padding: 15px; border-radius: var(--radius-small); border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05); transition: 0.2s; cursor: pointer; }
+        .margin-note:hover { transform: translateX(-5px); box-shadow: 5px 5px 15px rgba(0,0,0,0.1); }
+        .margin-note.active { border-color: var(--oxford-gold); background: #faf9f5; }
+        .note-header { font-size: 11px; font-weight: bold; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 5px; display: flex; justify-content: space-between;}
+        .note-body { font-size: 13px; font-family: Georgia, serif; line-height: 1.4; color: var(--oxford-navy-dark); white-space: pre-wrap; }
+        .delete-note { background: none; border: none; color: var(--oxford-crimson); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+
+        /* X-RAY TOGGLE CLASSES */
+        .hide-tags .grammar-tag { opacity: 0 !important; }
+        .hide-arrows #svg-layer { opacity: 0 !important; }
+        .hide-gutter #gutter { opacity: 0 !important; pointer-events: none; }
+
+        /* Save Menu Modals */
+        .floating-card { background: var(--oxford-navy-dark); padding: 12px; border-radius: var(--radius-small); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
+        .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
+        .proj-card:hover { border-color: var(--oxford-gold); }
+    </style>
+</head>
+<body id="app-body">
+
+<div id="sidebar">
+    <div class="sidebar-inner">
+        <h2>Σyntaxis <span style="font-weight: 300;">Markup</span></h2>
+        
+        <div class="floating-card" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <input type="text" id="projectName" placeholder="Project Name (e.g. 1 Peter 3)" style="background: var(--oxford-cream);">
+            <div style="display: flex; gap: 5px;">
+                <button class="std-btn" onclick="saveToAppLocal()" style="flex: 1;">Save App</button>
+                <button class="std-btn secondary" onclick="exportProjectJSON()" style="flex: 1;">⬇ JSON</button>
+                <button class="std-btn secondary" onclick="triggerLoadJSON()" style="flex: 1;">⬆ Load</button>
+                <input type="file" id="fileInput" style="display:none;" onchange="loadProjectJSON(event)">
+            </div>
+            <button class="std-btn" onclick="exportSnapshot()" style="background: #27ae60; color: white;">📸 Snapshot (PNG)</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>Visibility (X-Ray)</h3>
+            <div class="btn-group">
+                <button id="tog-tags" class="active" onclick="toggleXRay('tags')">Tags</button>
+                <button id="tog-arrows" class="active" onclick="toggleXRay('arrows')">Arrows</button>
+                <button id="tog-gutter" class="active" onclick="toggleXRay('gutter')">Gutter</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>1. Load Text</h3>
+            <textarea id="rawTextInput" placeholder="Paste your passage here..." style="height: 60px;"></textarea>
+            <button class="std-btn secondary" onclick="renderText()">Render onto Canvas</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>2. Layout & Spacing</h3>
+            <div class="btn-group">
+                <button id="btn-space-std" class="active" onclick="setSpacing('standard')">Standard</button>
+                <button id="btn-space-loose" onclick="setSpacing('loose')">Loose</button>
+                <button id="btn-space-double" onclick="setSpacing('double')">Double</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>3. Grammar Cabinet</h3>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 5px;">
+                <button class="std-btn" style="background: #2980b9; color: white;" onclick="applyGrammarTag('SUBJ', '#2980b9')">Subject</button>
+                <button class="std-btn" style="background: #c0392b; color: white;" onclick="applyGrammarTag('VERB', '#c0392b')">Verb</button>
+                <button class="std-btn" style="background: #27ae60; color: white;" onclick="applyGrammarTag('DO', '#27ae60')">Dir. Obj</button>
+                <button class="std-btn" style="background: #196f3d; color: white;" onclick="applyGrammarTag('IO', '#196f3d')">Ind. Obj</button>
+                <button class="std-btn" style="background: #8e44ad; color: white;" onclick="applyGrammarTag('PTC', '#8e44ad')">Participle</button>
+                <button class="std-btn" style="background: #800000; color: white;" onclick="applyGrammarTag('INF', '#800000')">Infinitive</button>
+                <button class="std-btn" style="background: #8B4513; color: white; grid-column: span 2;" onclick="applyGrammarTag('APP', '#8B4513')">Appositive</button>
+            </div>
+            <button class="std-btn secondary" style="margin-top: 2px;" onclick="clearGrammarTags()">Clear Tags</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>4. Typography & Highlight</h3>
+            <div style="display: flex; gap: 10px; align-items: flex-end; justify-content: space-between;">
+                <div style="display: flex; flex-direction: column; flex: 1; gap: 4px;">
+                    <span style="font-size: 10px; color: var(--oxford-cream); text-transform: uppercase; font-weight: bold;">Text Ink</span>
+                    <div style="display: flex; width: 100%; gap: 5px;">
+                        <input type="color" id="customTextColor" value="#8C1C13" style="width: 32px; height: 32px; padding: 0; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-small);">
+                        <button class="std-btn" style="flex: 1; padding: 8px;" onclick="applyTextColor()">Apply</button>
+                    </div>
+                </div>
+                <div style="display: flex; flex-direction: column; flex: 1; gap: 4px;">
+                    <span style="font-size: 10px; color: var(--oxford-cream); text-transform: uppercase; font-weight: bold;">Highlight</span>
+                    <div style="display: flex; width: 100%; gap: 5px;">
+                        <input type="color" id="customHighlightColor" value="#C5A059" style="width: 32px; height: 32px; padding: 0; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-small);">
+                        <button class="std-btn" style="flex: 1; padding: 8px;" onclick="applyCustomHighlight()">Apply</button>
+                    </div>
+                </div>
+            </div>
+            <div style="display: flex; gap: 10px; margin-top: 4px;">
+                <button class="std-btn secondary" style="flex: 1; padding: 8px;" onclick="clearTextColor()">Clear Ink</button>
+                <button class="std-btn secondary" style="flex: 1; padding: 8px;" onclick="clearHighlight()">Clear HL</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>5. Underlines</h3>
+            <div style="display: flex; gap: 5px; align-items: center;">
+                <select id="underlineStyle" style="flex: 2; padding: 8px;">
+                    <option value="solid">Solid</option>
+                    <option value="double">Double</option>
+                    <option value="dotted">Dotted</option>
+                    <option value="dashed">Dashed</option>
+                    <option value="wavy">Squiggly</option>
+                </select>
+                <input type="color" id="underlineColor" value="#1B263B" style="width: 32px; height: 32px; padding: 0; border: none; background: transparent; cursor: pointer; border-radius: var(--radius-small); flex-shrink: 0;">
+                <button class="std-btn" style="flex: 1; padding: 8px;" onclick="applyUnderline()">Apply</button>
+            </div>
+            <button class="std-btn secondary" style="margin-top: 2px; padding: 8px;" onclick="clearUnderlines()">Clear Underlines</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>6. Connections</h3>
+            <div class="btn-group">
+                <button id="btn-arrow-solid" onclick="toggleArrowMode('solid')">Solid ➔</button>
+                <button id="btn-arrow-dashed" onclick="toggleArrowMode('dashed')">Dashed ⇢</button>
+                <button id="btn-arrow-dotted" onclick="toggleArrowMode('dotted')">Dotted ⇾</button>
+            </div>
+            <button class="std-btn secondary" onclick="clearArrows()">Clear All Connections</button>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: auto;">
+            <h3>7. Scholar's Gutter</h3>
+            <textarea id="noteInput" placeholder="Type a margin note..." style="height: 70px;"></textarea>
+            <button class="std-btn" onclick="addMarginNote()">Add Note to Selection</button>
+        </div>
+        
+        <div style="margin-top: 10px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>Saved Local Projects</h3>
+            <div id="project-list"></div>
+        </div>
+    </div>
+</div>
+
+<div id="workspace">
+    <div id="text-canvas" class="spacing-standard">
+        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Paste text in the sidebar and click "Render onto Canvas" to begin...</span>
+    </div>
+    <div id="gutter"></div>
+    <svg id="svg-layer">
+        <defs>
+            <marker id="head-solid" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1B263B" /></marker>
+            <marker id="head-dashed" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#1B263B" /></marker>
+            <marker id="head-dotted" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#C86428" /></marker>
+        </defs>
+        <g id="arrow-paths"></g>
+    </svg>
+</div>
+
+<script>
+    const canvas = document.getElementById('text-canvas');
+    const gutter = document.getElementById('gutter');
+    const svgPaths = document.getElementById('arrow-paths');
+    const workspace = document.getElementById('workspace');
+    const appBody = document.getElementById('app-body');
+    
+    let selectedWords = [];
+    let lastClickedWordId = null;
+    let arrowMode = null; 
+    let arrowStartWordId = null;
+    
+    // Core Engine State
+    let connections = []; 
+    let notes = []; 
+    let currentSpacing = 'standard';
+
+    // ---------------------------------------------------------
+    // THE SAVE, LOAD & EXPORT ENGINE (V2)
+    // ---------------------------------------------------------
+    
+    window.addEventListener('DOMContentLoaded', () => { updateProjectList(); });
+
+    function getSavePayload() {
+        return {
+            projectName: document.getElementById('projectName').value,
+            rawText: document.getElementById('rawTextInput').value,
+            canvasHTML: canvas.innerHTML, // The digital snapshot of the DOM
+            connections: connections,
+            notes: notes,
+            spacing: currentSpacing
+        };
+    }
+
+    function saveToAppLocal() {
+        const name = document.getElementById('projectName').value.trim() || prompt("Enter Project Name:");
+        if(!name) return;
+        document.getElementById('projectName').value = name; // set it if prompted
+        
+        const projects = JSON.parse(localStorage.getItem('syntaxis_markup_projects') || '{}');
+        projects[name] = getSavePayload();
+        localStorage.setItem('syntaxis_markup_projects', JSON.stringify(projects));
+        updateProjectList();
+        alert("Project Saved to Local Browser Storage!");
+    }
+
+    function loadFromAppLocal(name) {
+        const projects = JSON.parse(localStorage.getItem('syntaxis_markup_projects') || '{}');
+        if (projects[name]) {
+            restoreState(projects[name]);
+        }
+    }
+
+    function deleteLocalProject(name, e) {
+        e.stopPropagation();
+        if(confirm(`Are you sure you want to delete the project "${name}"?`)) {
+            const projects = JSON.parse(localStorage.getItem('syntaxis_markup_projects') || '{}');
+            delete projects[name];
+            localStorage.setItem('syntaxis_markup_projects', JSON.stringify(projects));
+            updateProjectList();
+        }
+    }
+
+    function updateProjectList() { 
+        const listDiv = document.getElementById('project-list'); 
+        listDiv.innerHTML = ''; 
+        const projects = JSON.parse(localStorage.getItem('syntaxis_markup_projects') || '{}'); 
+        Object.keys(projects).forEach(name => { 
+            listDiv.innerHTML += `<div class="proj-card" onclick="loadFromAppLocal('${name}')"><span>${name}</span><button onclick="deleteLocalProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold; padding:0 5px;" title="Delete Project">&times;</button></div>`; 
+        }); 
+    }
+
+    function exportProjectJSON() {
+        const payload = getSavePayload();
+        let name = (payload.projectName || 'markup_project') + '.json';
+        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
+        const downloadAnchorNode = document.createElement('a');
+        downloadAnchorNode.setAttribute("href", dataStr);
+        downloadAnchorNode.setAttribute("download", name);
+        document.body.appendChild(downloadAnchorNode); 
+        downloadAnchorNode.click();
+        downloadAnchorNode.remove();
+    }
+
+    function triggerLoadJSON() { document.getElementById('fileInput').click(); }
+    
+    function loadProjectJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            try {
+                const data = JSON.parse(e.target.result);
+                restoreState(data);
+            } catch (err) { alert("Invalid Markup JSON file."); }
+        };
+        reader.readAsText(file);
+    }
+
+    function restoreState(data) {
+        // 1. Restore Raw Data
+        document.getElementById('projectName').value = data.projectName || '';
+        document.getElementById('rawTextInput').value = data.rawText || '';
+        
+        // 2. Restore HTML DOM Snapshot
+        canvas.innerHTML = data.canvasHTML || '';
+        
+        // 3. Re-wire the click events that were lost when converting to string
+        document.querySelectorAll('.word').forEach(span => {
+            span.onclick = (e) => {
+                e.stopPropagation();
+                handleWordClick(e, span.id);
+            };
+        });
+
+        // 4. Restore Arrays and UI
+        connections = data.connections || [];
+        notes = data.notes || [];
+        setSpacing(data.spacing || 'standard');
+        
+        // Clean up UI state
+        selectedWords = [];
+        lastClickedWordId = null;
+        arrowMode = null;
+        arrowStartWordId = null;
+        
+        renderGutter();
+        requestAnimationFrame(drawArrows);
+    }
+
+    // High-Res PNG Export using html2canvas
+    function exportSnapshot() {
+        clearSelection(); // Don't want dashed boxes in the screenshot!
+        
+        // Briefly force workspace to show everything even if scrolling
+        const originalOverflow = workspace.style.overflow;
+        const originalHeight = workspace.style.height;
+        workspace.style.overflow = 'visible';
+        workspace.style.height = 'auto';
+
+        html2canvas(workspace, {
+            backgroundColor: '#e4e7ea', // match --bg-main
+            scale: 2 // double resolution for retina crispness
+        }).then(canvasOutput => {
+            // Restore workspace UI
+            workspace.style.overflow = originalOverflow;
+            workspace.style.height = originalHeight;
+            
+            const link = document.createElement('a');
+            link.download = (document.getElementById('projectName').value || 'markup_snapshot') + '.png';
+            link.href = canvasOutput.toDataURL("image/png");
+            link.click();
+        });
+    }
+
+    // X-RAY TOGGLES
+    function toggleXRay(feature) {
+        const btn = document.getElementById('tog-' + feature);
+        const isActive = btn.classList.contains('active');
+        
+        if (isActive) {
+            btn.classList.remove('active');
+            appBody.classList.add('hide-' + feature);
+        } else {
+            btn.classList.add('active');
+            appBody.classList.remove('hide-' + feature);
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // CORE EDITOR PHYSICS (Same as V1.6)
+    // ---------------------------------------------------------
+
+    canvas.addEventListener('click', (e) => { if (e.target === canvas) clearSelection(); });
+
+    function renderText() {
+        const raw = document.getElementById('rawTextInput').value;
+        if(!raw.trim()) return;
+        
+        canvas.innerHTML = '';
+        connections = []; notes = []; gutter.innerHTML = ''; svgPaths.innerHTML = '';
+        selectedWords = []; lastClickedWordId = null; arrowStartWordId = null;
+
+        const words = raw.split(/(\s+)/); 
+        let wordIndex = 0;
+
+        words.forEach(chunk => {
+            if (chunk.trim() === '') { canvas.appendChild(document.createTextNode(chunk)); } 
+            else {
+                const span = document.createElement('span');
+                span.className = 'word';
+                span.id = `w-${wordIndex++}`;
+                span.innerText = chunk;
+                span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                canvas.appendChild(span);
+            }
+        });
+        requestAnimationFrame(drawArrows);
+    }
+
+    function handleWordClick(event, id) {
+        if (arrowMode) {
+            if (arrowStartWordId) {
+                if (id !== arrowStartWordId) {
+                    connections.push({ startId: arrowStartWordId, endId: id, style: arrowMode });
+                    drawArrows();
+                }
+                document.querySelectorAll('.btn-group button').forEach(b => b.classList.remove('active'));
+                document.getElementById('btn-space-' + canvas.className.split('-')[1]).classList.add('active');
+                
+                // Keep X-Ray toggles active
+                ['tags','arrows','gutter'].forEach(f => {
+                    if(!appBody.classList.contains('hide-'+f)) document.getElementById('tog-'+f).classList.add('active');
+                });
+
+                arrowMode = null; arrowStartWordId = null; clearSelection();
+            } else {
+                arrowStartWordId = id; clearSelection(); selectedWords = [id]; document.getElementById(id).classList.add('selected');
+            }
+            return;
+        }
+
+        const currentIdx = parseInt(id.split('-')[1]);
+
+        if (event.shiftKey && lastClickedWordId) {
+            const lastIdx = parseInt(lastClickedWordId.split('-')[1]);
+            const start = Math.min(currentIdx, lastIdx); const end = Math.max(currentIdx, lastIdx);
+            if (!event.ctrlKey && !event.metaKey) clearSelection(false); 
+            for (let i = start; i <= end; i++) {
+                const wId = `w-${i}`;
+                if (!selectedWords.includes(wId)) { selectedWords.push(wId); document.getElementById(wId).classList.add('selected'); }
+            }
+        } 
+        else if (event.ctrlKey || event.metaKey) {
+            const index = selectedWords.indexOf(id);
+            if (index > -1) { selectedWords.splice(index, 1); document.getElementById(id).classList.remove('selected'); } 
+            else { selectedWords.push(id); document.getElementById(id).classList.add('selected'); }
+            lastClickedWordId = id;
+        } 
+        else {
+            clearSelection(false); selectedWords = [id]; document.getElementById(id).classList.add('selected'); lastClickedWordId = id;
+        }
+
+        document.querySelectorAll('.margin-note').forEach(n => n.classList.remove('active'));
+        if (selectedWords.length > 0) {
+            const linkedNote = notes.find(n => n.wordIds.includes(selectedWords[0]));
+            if (linkedNote) { const nc = document.getElementById(linkedNote.id); if (nc) nc.classList.add('active'); }
+        }
+    }
+
+    function clearSelection(resetLastClicked = true) {
+        selectedWords.forEach(id => { const el = document.getElementById(id); if(el) el.classList.remove('selected'); });
+        selectedWords = [];
+        if (resetLastClicked) lastClickedWordId = null;
+        document.querySelectorAll('.margin-note').forEach(n => n.classList.remove('active'));
+    }
+
+    function hexToRgba(hex, alpha) {
+        let r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+        return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+    }
+
+    // Grammar Cabinet
+    function applyGrammarTag(label, color) {
+        if (selectedWords.length === 0) return;
+        selectedWords.forEach(id => {
+            const el = document.getElementById(id);
+            const existingTag = el.querySelector('.grammar-tag');
+            if (existingTag) existingTag.remove();
+            const tag = document.createElement('span'); tag.className = 'grammar-tag'; tag.style.backgroundColor = color; tag.innerText = label;
+            el.appendChild(tag);
+        });
+        clearSelection();
+    }
+    function clearGrammarTags() {
+        if (selectedWords.length === 0) return;
+        selectedWords.forEach(id => { document.getElementById(id).querySelectorAll('.grammar-tag').forEach(t => t.remove()); });
+        clearSelection();
+    }
+
+    // Typography
+    function applyTextColor() { if (selectedWords.length === 0) return; const c = document.getElementById('customTextColor').value; selectedWords.forEach(id => { document.getElementById(id).style.color = c; }); clearSelection(); }
+    function clearTextColor() { if (selectedWords.length === 0) return; selectedWords.forEach(id => { document.getElementById(id).style.color = ''; }); clearSelection(); }
+    function applyCustomHighlight() { if (selectedWords.length === 0) return; const hc = document.getElementById('customHighlightColor').value; const bg = hexToRgba(hc, 0.2); selectedWords.forEach(id => { const el = document.getElementById(id); el.style.backgroundColor = bg; el.style.borderBottom = `2px solid ${hc}`; }); clearSelection(); }
+    function clearHighlight() { if (selectedWords.length === 0) return; selectedWords.forEach(id => { const el = document.getElementById(id); el.style.backgroundColor = ''; el.style.borderBottom = ''; }); clearSelection(); }
+
+    // Underlines
+    function applyUnderline() {
+        if (selectedWords.length === 0) return;
+        const style = document.getElementById('underlineStyle').value; const color = document.getElementById('underlineColor').value;
+        selectedWords.forEach(id => {
+            const el = document.getElementById(id);
+            const tag = el.querySelector('.grammar-tag'); if(tag) tag.remove(); 
+            const offset = 4 + (el.querySelectorAll('.ul-layer').length * 5);
+            el.innerHTML = `<span class="ul-layer" style="text-decoration: underline; text-decoration-style: ${style}; text-decoration-color: ${color}; text-underline-offset: ${offset}px; text-decoration-thickness: 2px;">${el.innerHTML}</span>`;
+            if(tag) el.appendChild(tag); 
+        });
+        clearSelection(); 
+    }
+    function clearUnderlines() {
+        if (selectedWords.length === 0) return;
+        selectedWords.forEach(id => {
+            const el = document.getElementById(id);
+            const tag = el.querySelector('.grammar-tag'); if(tag) tag.remove(); 
+            el.innerHTML = el.innerText.replace(tag ? tag.innerText : '', '').trim();
+            if(tag) el.appendChild(tag);
+        });
+        clearSelection(); 
+    }
+
+    // Spacing
+    function setSpacing(type) {
+        currentSpacing = type;
+        canvas.className = 'spacing-' + type;
+        document.getElementById('btn-space-std').classList.remove('active'); document.getElementById('btn-space-loose').classList.remove('active'); document.getElementById('btn-space-double').classList.remove('active');
+        document.getElementById('btn-space-' + type).classList.add('active');
+        setTimeout(drawArrows, 350); 
+    }
+
+    // Notes
+    function addMarginNote() {
+        const text = document.getElementById('noteInput').value.trim();
+        if (!text || selectedWords.length === 0) return;
+        const sortedIds = [...selectedWords].sort((a, b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
+        const targetText = sortedIds.map(id => { const el = document.getElementById(id); const tag = el.querySelector('.grammar-tag'); return tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText; }).join(' ');
+        const noteId = 'note-' + Date.now();
+        notes.push({ id: noteId, wordIds: sortedIds, wordText: targetText, text: text });
+        sortedIds.forEach(id => { const el = document.getElementById(id); if(!el.style.borderBottom && el.querySelectorAll('.ul-layer').length === 0) { el.style.borderBottom = "2px dotted var(--oxford-navy)"; } });
+        document.getElementById('noteInput').value = ''; renderGutter(); clearSelection(); 
+    }
+    function deleteNote(noteId, e) {
+        e.stopPropagation();
+        const noteToDelete = notes.find(n => n.id === noteId);
+        if (noteToDelete) { noteToDelete.wordIds.forEach(id => { const el = document.getElementById(id); if (el && el.style.borderBottom.includes('dotted')) { el.style.borderBottom = ""; } }); }
+        notes = notes.filter(n => n.id !== noteId); renderGutter();
+    }
+    function renderGutter() {
+        gutter.innerHTML = '';
+        notes.forEach(n => {
+            const card = document.createElement('div'); card.className = 'margin-note'; card.id = n.id;
+            card.onmouseenter = () => { clearSelection(false); n.wordIds.forEach(id => { const el = document.getElementById(id); if(el) { el.classList.add('selected'); selectedWords.push(id); } }); };
+            card.onmouseleave = () => { clearSelection(false); };
+            const displayRef = n.wordText.length > 25 ? n.wordText.substring(0, 25) + '...' : n.wordText;
+            card.innerHTML = `<div class="note-header"><span>ref: ${displayRef.replace(/[.,;!?]/g, '')}</span><button class="delete-note" onclick="deleteNote('${n.id}', event)">&times;</button></div><div class="note-body">${n.text}</div>`;
+            gutter.appendChild(card);
+        });
+    }
+
+    // Arrows
+    function toggleArrowMode(style) {
+        arrowMode = style; arrowStartWordId = null; clearSelection();
+        document.getElementById('btn-arrow-solid').classList.remove('active'); document.getElementById('btn-arrow-dashed').classList.remove('active'); document.getElementById('btn-arrow-dotted').classList.remove('active');
+        document.getElementById('btn-arrow-' + style).classList.add('active');
+    }
+    function clearArrows() { connections = []; drawArrows(); }
+    function drawArrows() {
+        svgPaths.innerHTML = ''; 
+        const workspaceRect = workspace.getBoundingClientRect();
+        connections.forEach(conn => {
+            const w1 = document.getElementById(conn.startId); const w2 = document.getElementById(conn.endId);
+            if (!w1 || !w2) return;
+            const rect1 = w1.getBoundingClientRect(); const rect2 = w2.getBoundingClientRect();
+            const x1 = (rect1.left + rect1.width / 2) - workspaceRect.left + workspace.scrollLeft; const y1 = (rect1.top) - workspaceRect.top + workspace.scrollTop - 5; 
+            const x2 = (rect2.left + rect2.width / 2) - workspaceRect.left + workspace.scrollLeft; const y2 = (rect2.top) - workspaceRect.top + workspace.scrollTop - 10; 
+            const distance = Math.abs(x2 - x1); const archHeight = Math.min(100, distance / 2); 
+            const cx1 = x1; const cy1 = Math.min(y1, y2) - archHeight - 30; const cx2 = x2; const cy2 = Math.min(y1, y2) - archHeight - 30; 
+            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+            path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`);
+            path.setAttribute('fill', 'none'); path.setAttribute('stroke-width', '2');
+            if (conn.style === 'solid') { path.setAttribute('stroke', '#1B263B'); path.setAttribute('marker-end', 'url(#head-solid)'); } 
+            else if (conn.style === 'dashed') { path.setAttribute('stroke', '#1B263B'); path.setAttribute('stroke-dasharray', '8,8'); path.setAttribute('marker-end', 'url(#head-dashed)'); } 
+            else if (conn.style === 'dotted') { path.setAttribute('stroke', '#C86428'); path.setAttribute('stroke-dasharray', '2,6'); path.setAttribute('stroke-width', '3'); path.setAttribute('marker-end', 'url(#head-dotted)'); }
+            svgPaths.appendChild(path);
+        });
+    }
+
+    workspace.addEventListener('scroll', drawArrows);
+    window.addEventListener('resize', drawArrows);
+
+</script>
+</body>
+</html>
