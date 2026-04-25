@@ -1,0 +1,115 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Σyntaxis | Exegetical Suite</title>
+    <style>
+        :root {
+            --oxford-navy: #1B263B;
+            --oxford-navy-dark: #121A2A;
+            --oxford-cream: #F8F5EE;
+            --oxford-gold: #C5A059;
+        }
+
+        body {
+            margin: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, var(--oxford-navy-dark) 0%, var(--oxford-navy) 100%);
+            font-family: -apple-system, sans-serif;
+            color: var(--oxford-cream);
+            overflow: hidden;
+        }
+
+        .splash-container {
+            text-align: center;
+            animation: fadeIn 1.5s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* The Flex Wrapper brings them onto the same line */
+        .logo-wrapper {
+            display: flex;
+            align-items: baseline;
+            justify-content: center;
+            margin-bottom: 10px;
+        }
+
+        .logo-mark {
+            font-family: Georgia, serif;
+            font-size: 120px;
+            color: var(--oxford-gold);
+            line-height: 1;
+            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
+        }
+
+        .title {
+            font-family: Georgia, serif;
+            font-size: 56px;
+            font-weight: normal;
+            letter-spacing: 2px;
+            margin: 0;
+        }
+
+        .subtitle {
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 4px;
+            color: rgba(248, 245, 238, 0.6);
+            margin-top: 5px;
+            margin-bottom: 50px;
+        }
+
+        .enter-btn {
+            display: inline-block;
+            background: transparent;
+            color: var(--oxford-gold);
+            border: 2px solid var(--oxford-gold);
+            padding: 15px 40px;
+            font-size: 14px;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            font-weight: bold;
+            text-decoration: none;
+            border-radius: 4px;
+            transition: all 0.3s ease;
+        }
+
+        .enter-btn:hover {
+            background: var(--oxford-gold);
+            color: var(--oxford-navy-dark);
+            box-shadow: 0 5px 20px rgba(197, 160, 89, 0.4);
+            transform: translateY(-2px);
+        }
+        
+        .version {
+            position: absolute;
+            bottom: 30px;
+            font-size: 10px;
+            color: rgba(255,255,255,0.2);
+            letter-spacing: 1px;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="splash-container">
+        <div class="logo-wrapper">
+            <span class="logo-mark">Σ</span>
+            <h1 class="title">yntaxis</h1>
+        </div>
+        <div class="subtitle">Structural & Exegetical Suite</div>
+        
+        <a href="app.html" class="enter-btn">Launch Suite</a>
+    </div>
+
+    <div class="version">VERSION 3.0.0 | MASTER BUILD</div>
+
+</body>
+</html>
