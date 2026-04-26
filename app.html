@@ -88,12 +88,19 @@
             background: var(--bg-main);
         }
 
-        /* The Iframe that loads your 4 safe files */
-        iframe {
+        /* The 4 Permanent App Windows */
+        .app-frame {
             width: 100%;
             height: 100%;
             border: none;
-            display: block;
+            position: absolute;
+            top: 0;
+            left: 0;
+            display: none; /* Hidden by default */
+        }
+
+        .app-frame.active {
+            display: block; /* Only the active one shows */
         }
 
     </style>
@@ -103,38 +110,55 @@
     <div id="global-nav">
         <div class="brand-logo">Σ</div>
 
-        <button class="nav-btn active" id="btn-annotator" onclick="loadApp('annotator.html', 'btn-annotator')" title="Phase 1: Observation">
+        <button class="nav-btn active" id="btn-annotator" onclick="loadApp('frame-annotator', 'btn-annotator')" title="Phase 1: Observation">
             <div class="nav-icon">👁️</div>
             <div class="nav-label">Annotate</div>
         </button>
 
-        <button class="nav-btn" id="btn-diagrammer" onclick="loadApp('diagrammer.html', 'btn-diagrammer')" title="Phase 2: Syntax & Structure">
+        <button class="nav-btn" id="btn-diagrammer" onclick="loadApp('frame-diagrammer', 'btn-diagrammer')" title="Phase 2: Syntax & Structure">
             <div class="nav-icon">🏗️</div>
             <div class="nav-label">Diagram</div>
         </button>
 
-        <button class="nav-btn" id="btn-interpreter" onclick="loadApp('interpreter.html', 'btn-interpreter')" title="Phase 3: Lexicon & Meaning">
+        <button class="nav-btn" id="btn-interpreter" onclick="loadApp('frame-interpreter', 'btn-interpreter')" title="Phase 3: Lexicon & Meaning">
             <div class="nav-icon">📖</div>
             <div class="nav-label">Interpret</div>
         </button>
         
-        <button class="nav-btn" id="btn-outliner" onclick="loadApp('outliner.html', 'btn-outliner')" title="Phase 4: Outline & Application">
+        <button class="nav-btn" id="btn-outliner" onclick="loadApp('frame-outliner', 'btn-outliner')" title="Phase 4: Outline & Application">
             <div class="nav-icon">📝</div>
             <div class="nav-label">Outline</div>
         </button>
     </div>
 
     <div id="app-window">
-        <iframe id="main-frame" src="annotator.html"></iframe>
+        <iframe id="frame-annotator" src="annotator.html" class="app-frame active"></iframe>
+        <iframe id="frame-diagrammer" src="diagrammer.html" class="app-frame"></iframe>
+        <iframe id="frame-interpreter" src="interpreter.html" class="app-frame"></iframe>
+        <iframe id="frame-outliner" src="outliner.html" class="app-frame"></iframe>
     </div>
 
     <script>
-        function loadApp(file, btnId) {
-            document.getElementById('main-frame').src = file;
+        function loadApp(frameId, btnId) {
+            // Hide all frames
+            document.querySelectorAll('.app-frame').forEach(frame => {
+                frame.classList.remove('active');
+            });
+            // Show the frame you clicked
+            const targetFrame = document.getElementById(frameId);
+            targetFrame.classList.add('active');
+
+            // Update the button colors
             document.querySelectorAll('.nav-btn').forEach(btn => {
                 btn.classList.remove('active');
             });
             document.getElementById(btnId).classList.add('active');
+
+            // The Magic Trick: This tells the app you just opened to check the Shared Brain
+            // without actually reloading the page or erasing your work!
+            if (targetFrame.contentWindow) {
+                targetFrame.contentWindow.dispatchEvent(new Event('DOMContentLoaded'));
+            }
         }
     </script>
 </body>
