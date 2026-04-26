@@ -333,7 +333,6 @@
         }
     }
 
-    // NEW: Smart Parser for NET and STEP
     function launchResource(type) {
         let textToParse = document.getElementById('verseReference').value.trim() || document.getElementById('projectName').value.trim();
         if (!textToParse) {
@@ -578,7 +577,7 @@
     };
     
     window.onmousemove = (e) => {
-        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - top) / zoomLevel;
         if (isResizing) {
             const el = selectedElements[0], f = el.flip;
             if (el.type === 'single_line') { 
@@ -632,7 +631,8 @@
                 if (apparatusData.some(v => v.targetId === el.id)) {
                     ctx.beginPath();
                     ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = 'var(--rustic-orange)';
+                    // FIXED: Canvas requires a raw hex code or rgb string, it cannot parse CSS variables directly!
+                    ctx.fillStyle = '#C86428'; 
                     ctx.fill();
                     ctx.fillStyle = el.color || '#333'; 
                 }
