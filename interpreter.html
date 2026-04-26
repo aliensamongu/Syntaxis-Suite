@@ -2,11 +2,14 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Interpreter | Master Editor</title>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <title>Σyntaxis Interpreter | True Offline</title>
+    
+    <script src="strongs-greek-dictionary.js"></script>
+    
     <style>
         :root {
-            --sidebar-width: 360px;
+            --sidebar-width: 320px;
+            --lexicon-width: 380px;
             --bg-main: #e4e7ea;
             
             /* Oxford Scholar Palette */
@@ -15,7 +18,6 @@
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
-            --rustic-orange: #C86428;
             
             --radius-small: 8px;
             --radius-medium: 12px;
@@ -23,470 +25,200 @@
 
         body {
             margin: 0; display: flex; height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            font-family: -apple-system, sans-serif;
             overflow: hidden; background: var(--bg-main);
         }
         
-        /* Sidebar */
         #sidebar {
             width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
-            z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
+            padding: 25px; box-sizing: border-box; color: var(--oxford-cream); gap: 20px;
         }
-        .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
-        .sidebar-inner::-webkit-scrollbar { width: 6px; }
-        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 
-        input[type="text"], textarea, select {
+        textarea {
             width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
             border: 1px solid var(--oxford-navy-dark); padding: 10px;
-            font-family: inherit; font-size: 13px; color: var(--oxford-navy);
-            background: var(--oxford-cream); transition: 0.1s; outline: none;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+            font-family: inherit; font-size: 13px; background: var(--oxford-cream);
+            height: 100px; resize: vertical;
         }
-        textarea { height: 80px; resize: vertical; line-height: 1.4; overflow-y: auto; }
-        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
 
         .std-btn {
             border: none; padding: 10px; border-radius: var(--radius-small);
             cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
-            transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy);
+            background: var(--oxford-gold); color: var(--oxford-navy-dark); width: 100%;
         }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
-        .std-btn.danger { background: var(--oxford-crimson); color: white; }
 
-        /* Save Menu Modals */
-        .floating-card { background: var(--oxford-navy-dark); padding: 12px; border-radius: var(--radius-small); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
-        .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
-        .proj-card:hover { border-color: var(--oxford-gold); }
-
-        /* Workspace Area */
-        #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 30px; align-items: center; }
+        #workspace { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; }
         
-        /* Containers */
-        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
-        .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        #text-canvas { 
+            width: 100%; max-width: 700px; background: white; padding: 40px; 
+            border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); 
+            font-family: Georgia, serif; font-size: 24px; color: var(--oxford-navy-dark); 
+            line-height: 2.2; cursor: text; min-height: 50vh;
+        }
 
-        /* Passage Rendering */
-        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; }
-        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, border 0.2s; position: relative; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: 0.2s; }
         .word:hover { background-color: rgba(0,0,0,0.05); }
-        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
-        .word.has-data { border-bottom: 3px solid var(--oxford-gold); font-weight: bold; color: var(--oxford-navy); }
+        .word.selected { background-color: var(--oxford-gold); color: var(--oxford-navy-dark); font-weight: bold; }
 
-        /* Lexicon Grid */
-        #lexicon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .lex-card { border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 15px; background: #faf9f5; position: relative; }
-        .lex-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .lex-word { font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: var(--oxford-navy); }
-        .lex-strongs { font-size: 11px; font-weight: bold; color: var(--oxford-gold); background: var(--oxford-navy-dark); padding: 3px 6px; border-radius: 4px; letter-spacing: 0.5px;}
-        .lex-lemma { font-family: Georgia, serif; font-style: italic; color: var(--rustic-orange); margin-bottom: 8px; font-size: 15px; }
-        .lex-parsing { font-size: 11px; text-transform: uppercase; color: var(--oxford-navy); font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; margin-bottom: 10px; }
-        .lex-def { font-size: 13px; line-height: 1.4; color: #444; margin-bottom: 10px; }
-        .lex-synth { background: white; padding: 10px; border-left: 3px solid var(--oxford-gold); font-size: 13px; font-family: Georgia, serif; font-style: italic; color: var(--oxford-navy-dark); }
-        .card-del-btn { background: none; border: none; color: var(--oxford-crimson); font-size: 16px; cursor: pointer; padding: 0; }
+        #lexicon-panel {
+            width: var(--lexicon-width); background: white; flex-shrink: 0;
+            border-left: 1px solid #d1d5da; display: flex; flex-direction: column;
+            box-shadow: -2px 0 15px rgba(0,0,0,0.05);
+        }
 
-        /* Matrix Table */
-        .matrix-table { width: 100%; border-collapse: collapse; }
-        .matrix-table th { text-align: left; padding: 12px; background: var(--oxford-navy-dark); color: var(--oxford-cream); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        .matrix-table td { padding: 15px 12px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 13px; color: var(--oxford-navy-dark); }
-        .matrix-ref { font-weight: bold; color: var(--rustic-orange); white-space: nowrap; }
-        .matrix-text { font-family: Georgia, serif; font-style: italic; }
-        .matrix-notes { line-height: 1.4; }
+        .lexicon-header { background: var(--oxford-navy-dark); color: var(--oxford-cream); padding: 20px; font-family: Georgia, serif; text-align: center; }
+        .lexicon-header h2 { font-size: 20px; margin: 0 0 15px 0; }
+
+        .strongs-search-container { display: flex; gap: 5px; }
+        .strongs-input { flex-grow: 1; padding: 8px; border-radius: 4px; border: none; font-family: monospace; font-size: 14px; text-transform: uppercase; }
+        .strongs-btn { background: var(--oxford-gold); color: var(--oxford-navy-dark); border: none; border-radius: 4px; padding: 0 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
+        .strongs-btn:hover { filter: brightness(1.1); }
+
+        .api-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
+        .loader { font-size: 14px; color: #666; text-align: center; display: none; font-style: italic; }
+
+        .api-word { font-family: Georgia, serif; font-size: 32px; color: var(--oxford-navy); margin: 0 0 5px 0; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: baseline; }
+        .strongs-tag { font-family: -apple-system, sans-serif; font-size: 12px; font-weight: bold; color: var(--oxford-crimson); background: rgba(140, 28, 19, 0.1); padding: 3px 8px; border-radius: 12px; letter-spacing: 1px;}
+        .api-phonetic { font-size: 14px; color: #666; margin-bottom: 20px; font-family: monospace; }
+        .api-pos { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--oxford-crimson); margin-top: 15px; letter-spacing: 1px; }
+        .api-def { font-size: 15px; line-height: 1.5; color: #333; margin: 5px 0 15px 0; padding-left: 10px; border-left: 3px solid var(--bg-main); }
+        .empty-state { text-align: center; color: #aaa; font-style: italic; margin-top: 50px; }
+
     </style>
 </head>
-<body id="app-body">
+<body>
 
 <div id="sidebar">
-    <div class="sidebar-inner">
-        <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
-        
-        <div class="floating-card" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Project Name (e.g. 1 Peter 3)" style="background: var(--oxford-cream);">
-            <div style="display: flex; gap: 5px;">
-                <button class="std-btn" onclick="saveToAppLocal()" style="flex: 1;">Save App</button>
-                <button class="std-btn secondary" onclick="exportProjectJSON()" style="flex: 1;">⬇ JSON</button>
-                <button class="std-btn secondary" onclick="triggerLoadJSON()" style="flex: 1;">⬆ Load</button>
-                <input type="file" id="fileInput" style="display:none;" onchange="loadProjectJSON(event)">
-            </div>
-            <button class="std-btn" onclick="exportSnapshot()" style="background: #27ae60; color: white;">📸 Snapshot (PNG)</button>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <h3>1. Base Passage</h3>
-            <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
-            <button class="std-btn secondary" onclick="renderText()">Render Passage</button>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>2. Lexicon & Morphology</h3>
-            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to edit its data.</div>
-            
-            <div id="lexicon-editor" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;">
-                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;" id="lex-target-word">No Word Selected</div>
-                
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="lexLemma" placeholder="Root Lemma (e.g. ἄγγελος)" style="flex: 2;">
-                    <input type="text" id="lexStrongs" placeholder="Strong's (e.g. G32)" style="flex: 1;">
-                </div>
-                
-                <input type="text" id="lexParsing" placeholder="Parsing (e.g. Noun - Nom - Masc - Sing)">
-                
-                <textarea id="lexDef" placeholder="Lexicon Definition (BDAG, etc.)" style="height: 60px;"></textarea>
-                <textarea id="lexSynth" placeholder="Your Synthesized Meaning..." style="height: 60px; border-left: 3px solid var(--oxford-gold);"></textarea>
-                
-                <button class="std-btn" onclick="saveLexiconData()">Save Word Data</button>
-            </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: auto;">
-            <h3>3. Intertextual Matrix</h3>
-            <input type="text" id="matRef" placeholder="Reference (e.g. Psalm 34:12)">
-            <textarea id="matText" placeholder="Quoted or Echoed Text..." style="height: 50px;"></textarea>
-            <textarea id="matNotes" placeholder="Theological Connection / Notes..." style="height: 50px;"></textarea>
-            <button class="std-btn" onclick="saveMatrixData()" style="background: var(--rustic-orange); color: white;">Add to Matrix</button>
-        </div>
-        
-        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>Saved Local Projects</h3>
-            <div id="project-list"></div>
-        </div>
+    <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
+    
+    <div style="display: flex; flex-direction: column; gap: 8px;">
+        <h3>Passage Input</h3>
+        <textarea id="rawTextInput" placeholder="Shared Brain text will appear here..."></textarea>
+        <button class="std-btn" onclick="renderText()">Render Text</button>
+    </div>
+    
+    <div style="margin-top: auto; font-size: 11px; color: rgba(255,255,255,0.5); text-align: center; line-height: 1.5;">
+        Click an English word to fetch its standard definition, or use the Strong's search bar for Greek/Hebrew.
     </div>
 </div>
 
 <div id="workspace">
-    <div class="workspace-panel">
-        <h3 class="panel-title">Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Observation</span></h3>
-        <div id="passage-container">
-            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Paste text in the sidebar and click "Render Passage" to begin...</span>
+    <div id="text-canvas">
+        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Waiting for text...</span>
+    </div>
+</div>
+
+<div id="lexicon-panel">
+    <div class="lexicon-header">
+        <h2>Lexicon Database</h2>
+        <div class="strongs-search-container">
+            <input type="text" id="strongsInput" class="strongs-input" placeholder="e.g., G2424" onkeypress="if(event.key === 'Enter') searchStrongs()">
+            <button class="strongs-btn" onclick="searchStrongs()">Search</button>
         </div>
     </div>
-
-    <div class="workspace-panel" id="lexicon-panel" style="display: none;">
-        <h3 class="panel-title">Lexical Analysis <span style="font-size: 11px; color: #888; text-transform: uppercase;">Word Study</span></h3>
-        <div id="lexicon-grid"></div>
-    </div>
-
-    <div class="workspace-panel" id="matrix-panel" style="display: none;">
-        <h3 class="panel-title">Intertextual Matrix <span style="font-size: 11px; color: #888; text-transform: uppercase;">Cross References</span></h3>
-        <table class="matrix-table">
-            <thead>
-                <tr>
-                    <th style="width: 15%;">Reference</th>
-                    <th style="width: 40%;">Text</th>
-                    <th style="width: 40%;">Theological Connection</th>
-                    <th style="width: 5%;"></th>
-                </tr>
-            </thead>
-            <tbody id="matrix-tbody"></tbody>
-        </table>
+    <div class="api-content" id="api-results">
+        <div class="empty-state">Click a word in the text or enter a Strong's number above...</div>
+        <div class="loader" id="api-loader">Fetching data...</div>
     </div>
 </div>
 
 <script>
-    const passageContainer = document.getElementById('passage-container');
-    const lexiconGrid = document.getElementById('lexicon-grid');
-    const matrixTbody = document.getElementById('matrix-tbody');
-    const lexEditor = document.getElementById('lexicon-editor');
-    
-    let selectedWordId = null;
-    
-    // Core Engine State
-    let lexiconData = {}; // Format: { "w-0": { word, lemma, strongs, parsing, def, synth } }
-    let matrixData = [];  // Format: [ { id, ref, text, notes } ]
-
-    // ---------------------------------------------------------
-    // THE SAVE, LOAD & EXPORT ENGINE 
-    // ---------------------------------------------------------
-    
-    window.addEventListener('DOMContentLoaded', () => { updateProjectList(); });
-
-    function getSavePayload() {
-        return {
-            projectName: document.getElementById('projectName').value,
-            rawText: document.getElementById('rawTextInput').value,
-            lexiconData: lexiconData,
-            matrixData: matrixData
-        };
-    }
-
-    function saveToAppLocal() {
-        const name = document.getElementById('projectName').value.trim() || prompt("Enter Project Name:");
-        if(!name) return;
-        document.getElementById('projectName').value = name; 
-        
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-        projects[name] = getSavePayload();
-        localStorage.setItem('syntaxis_interpreter_projects', JSON.stringify(projects));
-        updateProjectList();
-        alert("Project Saved to Local Browser Storage!");
-    }
-
-    function loadFromAppLocal(name) {
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-        if (projects[name]) restoreState(projects[name]);
-    }
-
-    function deleteLocalProject(name, e) {
-        e.stopPropagation();
-        if(confirm(`Are you sure you want to delete the project "${name}"?`)) {
-            const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-            delete projects[name];
-            localStorage.setItem('syntaxis_interpreter_projects', JSON.stringify(projects));
-            updateProjectList();
-        }
-    }
-
-    function updateProjectList() { 
-        const listDiv = document.getElementById('project-list'); 
-        listDiv.innerHTML = ''; 
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}'); 
-        Object.keys(projects).forEach(name => { 
-            listDiv.innerHTML += `<div class="proj-card" onclick="loadFromAppLocal('${name}')"><span>${name}</span><button onclick="deleteLocalProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold; padding:0 5px;" title="Delete Project">&times;</button></div>`; 
-        }); 
-    }
-
-    function exportProjectJSON() {
-        const payload = getSavePayload();
-        let name = (payload.projectName || 'interpreter_project') + '.json';
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-        const a = document.createElement('a');
-        a.setAttribute("href", dataStr); a.setAttribute("download", name);
-        document.body.appendChild(a); a.click(); a.remove();
-    }
-
-    function triggerLoadJSON() { document.getElementById('fileInput').click(); }
-    
-    function loadProjectJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try { restoreState(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid Interpreter JSON file."); }
-        };
-        reader.readAsText(file);
-    }
-
-    function restoreState(data) {
-        document.getElementById('projectName').value = data.projectName || '';
-        document.getElementById('rawTextInput').value = data.rawText || '';
-        lexiconData = data.lexiconData || {};
-        matrixData = data.matrixData || [];
-        
-        renderText(); // rebuilds the passage and highlights words
-        renderLexiconCards();
-        renderMatrixTable();
-        clearSelection();
-    }
-
-    function exportSnapshot() {
-        clearSelection(); 
-        html2canvas(document.getElementById('workspace'), {
-            backgroundColor: '#e4e7ea', scale: 2 
-        }).then(canvasOutput => {
-            const link = document.createElement('a');
-            link.download = (document.getElementById('projectName').value || 'interpreter_snapshot') + '.png';
-            link.href = canvasOutput.toDataURL("image/png");
-            link.click();
-        });
-    }
-
-    // ---------------------------------------------------------
-    // TEXT ENGINE
-    // ---------------------------------------------------------
-
-    // Deselect if clicking empty space
-    passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
+    const canvas = document.getElementById('text-canvas');
+    const apiResults = document.getElementById('api-results');
+    const loader = document.getElementById('api-loader');
+    let lastSelected = null;
 
     function renderText() {
-        const raw = document.getElementById('rawTextInput').value;
-        if(!raw.trim()) return;
-        
-        passageContainer.innerHTML = '';
-        selectedWordId = null;
-        lexEditor.style.opacity = '0.5';
-        lexEditor.style.pointerEvents = 'none';
-
+        const raw = document.getElementById('rawTextInput').value.trim();
+        if(!raw) return;
+        canvas.innerHTML = '';
         const words = raw.split(/(\s+)/); 
-        let wordIndex = 0;
-
-        words.forEach(chunk => {
-            if (chunk.trim() === '') { passageContainer.appendChild(document.createTextNode(chunk)); } 
-            else {
+        
+        words.forEach((chunk, index) => {
+            if (chunk.trim() === '') { 
+                canvas.appendChild(document.createTextNode(chunk)); 
+            } else {
                 const span = document.createElement('span');
                 span.className = 'word';
-                span.id = `w-${wordIndex++}`;
+                span.id = `w-${index}`;
                 span.innerText = chunk;
                 
-                // If it exists in lexiconData, add the gold underline
-                if (lexiconData[span.id]) span.classList.add('has-data');
-
-                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                passageContainer.appendChild(span);
+                span.onclick = () => {
+                    if(lastSelected) lastSelected.classList.remove('selected');
+                    span.classList.add('selected');
+                    lastSelected = span;
+                    const cleanWord = chunk.replace(/[.,;!?]/g, '');
+                    fetchEnglishDefinition(cleanWord);
+                };
+                canvas.appendChild(span);
             }
         });
     }
 
-    function handleWordClick(id) {
-        clearSelection();
-        selectedWordId = id;
-        document.getElementById(id).classList.add('selected');
-        
-        // Open the Lexicon Editor
-        lexEditor.style.opacity = '1';
-        lexEditor.style.pointerEvents = 'auto';
-        
-        const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
-        document.getElementById('lex-target-word').innerText = rawWord;
-        
-        // Populate form if data exists, otherwise clear it
-        if (lexiconData[id]) {
-            document.getElementById('lexLemma').value = lexiconData[id].lemma || '';
-            document.getElementById('lexStrongs').value = lexiconData[id].strongs || '';
-            document.getElementById('lexParsing').value = lexiconData[id].parsing || '';
-            document.getElementById('lexDef').value = lexiconData[id].def || '';
-            document.getElementById('lexSynth').value = lexiconData[id].synth || '';
-        } else {
-            document.getElementById('lexLemma').value = '';
-            document.getElementById('lexStrongs').value = '';
-            document.getElementById('lexParsing').value = '';
-            document.getElementById('lexDef').value = '';
-            document.getElementById('lexSynth').value = '';
-        }
-    }
-
-    function clearSelection() {
-        if(selectedWordId) {
-            const el = document.getElementById(selectedWordId);
-            if(el) el.classList.remove('selected');
-        }
-        selectedWordId = null;
-        lexEditor.style.opacity = '0.5';
-        lexEditor.style.pointerEvents = 'none';
-        document.getElementById('lex-target-word').innerText = "No Word Selected";
-    }
-
-    // ---------------------------------------------------------
-    // LEXICON ENGINE
-    // ---------------------------------------------------------
-
-    function saveLexiconData() {
-        if (!selectedWordId) return;
-        
-        const wordText = document.getElementById('lex-target-word').innerText;
-        const lemma = document.getElementById('lexLemma').value.trim();
-        const strongs = document.getElementById('lexStrongs').value.trim();
-        const parsing = document.getElementById('lexParsing').value.trim();
-        const def = document.getElementById('lexDef').value.trim();
-        const synth = document.getElementById('lexSynth').value.trim();
-
-        // Save to state
-        lexiconData[selectedWordId] = { word: wordText, lemma, strongs, parsing, def, synth };
-        
-        // Add visual cue to the word in the passage
-        document.getElementById(selectedWordId).classList.add('has-data');
-        
-        renderLexiconCards();
-        clearSelection();
-    }
-
-    function deleteLexiconData(id) {
-        delete lexiconData[id];
-        const el = document.getElementById(id);
-        if(el) el.classList.remove('has-data');
-        renderLexiconCards();
-    }
-
-    function renderLexiconCards() {
-        const keys = Object.keys(lexiconData);
-        if (keys.length === 0) {
-            document.getElementById('lexicon-panel').style.display = 'none';
-            return;
-        }
-        
-        document.getElementById('lexicon-panel').style.display = 'block';
-        lexiconGrid.innerHTML = '';
-        
-        keys.forEach(id => {
-            const d = lexiconData[id];
+    async function fetchEnglishDefinition(word) {
+        apiResults.innerHTML = ''; apiResults.appendChild(loader); loader.style.display = 'block';
+        try {
+            const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
+            if (!response.ok) throw new Error("Not found");
+            const data = await response.json();
+            const wordData = data[0];
+            loader.style.display = 'none';
             
-            // Build elements safely
-            const strongsHtml = d.strongs ? `<span class="lex-strongs">${d.strongs}</span>` : '';
-            const lemmaHtml = d.lemma ? `<div class="lex-lemma">Root: ${d.lemma}</div>` : '';
-            const parsingHtml = d.parsing ? `<div class="lex-parsing">${d.parsing}</div>` : '';
-            const defHtml = d.def ? `<div class="lex-def">${d.def}</div>` : '';
-            const synthHtml = d.synth ? `<div class="lex-synth">${d.synth}</div>` : '';
-
-            const card = document.createElement('div');
-            card.className = 'lex-card';
-            card.innerHTML = `
-                <div class="lex-header">
-                    <div>
-                        <div class="lex-word">${d.word} ${strongsHtml}</div>
-                    </div>
-                    <button class="card-del-btn" onclick="deleteLexiconData('${id}')" title="Delete Entry">&times;</button>
-                </div>
-                ${lemmaHtml}
-                ${parsingHtml}
-                ${defHtml}
-                ${synthHtml}
-            `;
-            lexiconGrid.appendChild(card);
-        });
-    }
-
-    // ---------------------------------------------------------
-    // MATRIX ENGINE
-    // ---------------------------------------------------------
-
-    function saveMatrixData() {
-        const ref = document.getElementById('matRef').value.trim();
-        const text = document.getElementById('matText').value.trim();
-        const notes = document.getElementById('matNotes').value.trim();
-
-        if (!ref) return;
-
-        matrixData.push({ id: Date.now(), ref, text, notes });
-        
-        document.getElementById('matRef').value = '';
-        document.getElementById('matText').value = '';
-        document.getElementById('matNotes').value = '';
-        
-        renderMatrixTable();
-    }
-
-    function deleteMatrixData(id) {
-        matrixData = matrixData.filter(m => m.id !== id);
-        renderMatrixTable();
-    }
-
-    function renderMatrixTable() {
-        if (matrixData.length === 0) {
-            document.getElementById('matrix-panel').style.display = 'none';
-            return;
+            let html = `<h3 class="api-word">${wordData.word} <span class="strongs-tag">ENG</span></h3>`;
+            if (wordData.phonetic) html += `<div class="api-phonetic">${wordData.phonetic}</div>`;
+            wordData.meanings.forEach(meaning => {
+                html += `<div class="api-pos">${meaning.partOfSpeech}</div>`;
+                meaning.definitions.slice(0, 2).forEach(def => { html += `<div class="api-def">${def.definition}</div>`; });
+            });
+            apiResults.innerHTML = html;
+        } catch (error) {
+            loader.style.display = 'none';
+            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">No general English definition found for "${word}". Try a Strong's number above.</div>`;
         }
-        
-        document.getElementById('matrix-panel').style.display = 'block';
-        matrixTbody.innerHTML = '';
-        
-        matrixData.forEach(m => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="matrix-ref">${m.ref}</td>
-                <td class="matrix-text">"${m.text}"</td>
-                <td class="matrix-notes">${m.notes}</td>
-                <td style="text-align:right;">
-                    <button class="card-del-btn" onclick="deleteMatrixData(${m.id})" title="Remove Reference">&times;</button>
-                </td>
-            `;
-            matrixTbody.appendChild(tr);
-        });
     }
+
+    // THE TRUE OFFLINE STRONG'S SEARCH
+    function searchStrongs() {
+        let query = document.getElementById('strongsInput').value.trim().toUpperCase();
+        if(!query) return;
+        
+        apiResults.innerHTML = ''; 
+        
+        // Ensure the dictionary variable loaded correctly from the new file
+        if (typeof strongsGreekDictionary !== 'undefined' && strongsGreekDictionary[query]) {
+            const data = strongsGreekDictionary[query];
+            
+            // Build the definition text from the OpenScriptures format
+            const defText = data.strongs_def || "Definition not provided in database.";
+            const derivationText = data.derivation ? `<div style="font-size: 12px; color: #666; margin-bottom: 10px;"><em>Derivation:</em> ${data.derivation}</div>` : "";
+            const kjvText = data.kjv_def ? `<div class="api-pos">KJV TRANSLATION(S)</div><div class="api-def" style="border-left: 3px solid var(--oxford-gold);">${data.kjv_def}</div>` : "";
+
+            apiResults.innerHTML = `
+                <h3 class="api-word">${data.lemma} <span class="strongs-tag">${query}</span></h3>
+                <div class="api-phonetic">${data.translit || ''}</div>
+                ${derivationText}
+                <div class="api-pos">STRONG'S DEFINITION</div>
+                <div class="api-def">${defText}</div>
+                ${kjvText}
+            `;
+        } else {
+            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">Strong's number ${query} not found in the local Greek database.<br>(Make sure it starts with 'G', e.g., G2424)</div>`;
+        }
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const sharedText = sessionStorage.getItem('syntaxis_shared_brain');
+        const myInput = document.getElementById('rawTextInput');
+        if(sharedText && myInput) {
+            myInput.value = sharedText;
+            renderText(); 
+        }
+    });
 
 </script>
 </body>
