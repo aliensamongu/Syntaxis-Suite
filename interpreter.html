@@ -171,8 +171,8 @@
                 
                 const columns = isTSV ? lines[i].split('\t') : lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 
-                // Hardcoded based on the developer X-Ray:
-                let testament = (columns[1] || "").replace(/"/g, '').trim(); // 'O' or 'N'
+                // Hardcoded from your exact X-Ray data!
+                let lang = (columns[4] || "").replace(/"/g, '').trim(); // "Hebrew" or "Greek"
                 let strongsNum = (columns[10] || "").replace(/"/g, '').trim(); // Raw number
                 let verseRef = (columns[12] || "").replace(/"/g, '').trim(); // "Genesis 1:1"
                 let engText = (columns[18] || "").replace(/"/g, '').trim(); // "In the beginning"
@@ -186,12 +186,12 @@
 
                 if (!verseRef || !engText) continue;
 
-                // Format the Strong's tag (Add G for New Testament, H for Old Testament)
+                // Format the Strong's tag (Add G for Greek, H for Hebrew)
                 let strongsTag = strongsNum;
                 if (strongsNum && !isNaN(strongsNum)) {
-                    strongsTag = (testament === 'O' ? 'H' : 'G') + strongsNum;
+                    strongsTag = (lang === 'Hebrew' ? 'H' : 'G') + strongsNum;
                 } else if (strongsNum && !strongsNum.startsWith('G') && !strongsNum.startsWith('H')) {
-                    strongsTag = (testament === 'O' ? 'H' : 'G') + strongsNum;
+                    strongsTag = (lang === 'Hebrew' ? 'H' : 'G') + strongsNum;
                 }
 
                 if (!liveBibleDB[verseRef]) liveBibleDB[verseRef] = [];
@@ -199,7 +199,7 @@
             }
 
             document.getElementById('db-status').innerHTML = `<span class="status-dot active"></span>Loaded!`;
-            canvas.innerHTML = `<span style="color: #5a9e69; font-size: 16px;">Database perfectly mapped! Try fetching <strong>John 1:1</strong> or <strong>Romans 8:28</strong>.</span>`;
+            canvas.innerHTML = `<span style="color: #5a9e69; font-size: 16px;">Database perfectly mapped! Try fetching <strong>John 1:1</strong> or <strong>Genesis 1:1</strong>.</span>`;
         };
         reader.readAsText(file);
     }
@@ -209,7 +209,7 @@
         let ref = document.getElementById('verseReference').value.trim();
         if(!ref) return;
         
-        // Quick normalization (e.g., changes "john 1:1" to "John 1:1" to match DB)
+        // Auto-capitalize formatting to match BSB standard
         const parts = ref.split(' ');
         if(parts.length >= 2) {
             let bName = parts.slice(0, -1).join(' ');
@@ -219,7 +219,7 @@
 
         const verseData = liveBibleDB[ref];
         if(!verseData) {
-            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Verse "${ref}" not found. (Make sure you capitalize the book name!)</span>`;
+            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Verse "${ref}" not found. (Check your spelling or make sure you loaded the TSV!)</span>`;
             return;
         }
 
