@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Interpreter | The Master Fetch Engine</title>
+    <title>Σyntaxis Interpreter | Passage Engine</title>
     
     <script src="strongs-greek-dictionary.js"></script>
     
@@ -111,8 +111,8 @@
         <input type="file" id="csvFileInput" accept=".csv, .tsv, .txt" style="display:none;" onchange="loadBSB(event)">
         <button class="std-btn" style="background: white; color: var(--oxford-navy-dark); margin-bottom: 15px;" onclick="document.getElementById('csvFileInput').click()">📁 Load BSB Database</button>
         
-        <input type="text" id="verseReference" placeholder="e.g. John 1:1">
-        <button class="std-btn" onclick="fetchVerse()">Fetch Tagged Verse</button>
+        <input type="text" id="verseReference" placeholder="e.g. John 1:1-5">
+        <button class="std-btn" onclick="fetchVerse()">Fetch Passage</button>
     </div>
 
     <div style="text-align: center; color: #aaa; font-size: 12px; font-style: italic;">— OR —</div>
@@ -126,7 +126,7 @@
 
 <div id="workspace">
     <div id="text-canvas">
-        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Load the BSB Database on the left, then fetch a verse!</span>
+        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Load the BSB Database on the left, then fetch a passage!</span>
     </div>
 </div>
 
@@ -171,13 +171,11 @@
                 
                 const columns = isTSV ? lines[i].split('\t') : lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
                 
-                // Hardcoded from your exact X-Ray data!
-                let lang = (columns[4] || "").replace(/"/g, '').trim(); // "Hebrew" or "Greek"
-                let strongsNum = (columns[10] || "").replace(/"/g, '').trim(); // Raw number
-                let verseRef = (columns[12] || "").replace(/"/g, '').trim(); // "Genesis 1:1"
-                let engText = (columns[18] || "").replace(/"/g, '').trim(); // "In the beginning"
+                let lang = (columns[4] || "").replace(/"/g, '').trim(); 
+                let strongsNum = (columns[10] || "").replace(/"/g, '').trim(); 
+                let verseRef = (columns[12] || "").replace(/"/g, '').trim(); 
+                let engText = (columns[18] || "").replace(/"/g, '').trim(); 
 
-                // The BSB leaves the reference column blank if it's the same verse as the line above it
                 if (verseRef) {
                     currentRef = verseRef;
                 } else {
@@ -186,12 +184,11 @@
 
                 if (!verseRef || !engText) continue;
 
-                // Format the Strong's tag (Add G for Greek, H for Hebrew)
-                let strongsTag = strongsNum;
-                if (strongsNum && !isNaN(strongsNum)) {
-                    strongsTag = (lang === 'Hebrew' ? 'H' : 'G') + strongsNum;
-                } else if (strongsNum && !strongsNum.startsWith('G') && !strongsNum.startsWith('H')) {
-                    strongsTag = (lang === 'Hebrew' ? 'H' : 'G') + strongsNum;
+                // Grab only the first valid number in case of "1722, 3588"
+                let strongsTag = null;
+                let sMatch = strongsNum.match(/\d+/);
+                if (sMatch) {
+                    strongsTag = (lang.toLowerCase().includes('hebrew') ? 'H' : 'G') + sMatch[0];
                 }
 
                 if (!liveBibleDB[verseRef]) liveBibleDB[verseRef] = [];
@@ -199,51 +196,72 @@
             }
 
             document.getElementById('db-status').innerHTML = `<span class="status-dot active"></span>Loaded!`;
-            canvas.innerHTML = `<span style="color: #5a9e69; font-size: 16px;">Database perfectly mapped! Try fetching <strong>John 1:1</strong> or <strong>Genesis 1:1</strong>.</span>`;
+            canvas.innerHTML = `<span style="color: #5a9e69; font-size: 16px;">Database perfectly mapped! Try fetching <strong>John 1:1-5</strong>.</span>`;
         };
         reader.readAsText(file);
     }
 
-    // --- OPTION A: FETCH VERSE ---
+    // --- OPTION A: FETCH PASSAGE ENGINE ---
     function fetchVerse() {
         let ref = document.getElementById('verseReference').value.trim();
         if(!ref) return;
         
-        // Auto-capitalize formatting to match BSB standard
-        const parts = ref.split(' ');
-        if(parts.length >= 2) {
-            let bName = parts.slice(0, -1).join(' ');
-            let bCap = bName.charAt(0).toUpperCase() + bName.slice(1).toLowerCase();
-            ref = bCap + " " + parts[parts.length - 1];
-        }
-
-        const verseData = liveBibleDB[ref];
-        if(!verseData) {
-            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Verse "${ref}" not found. (Check your spelling or make sure you loaded the TSV!)</span>`;
+        // Regex to parse passages like "1 John 1:1-5" or "John 1:1"
+        const match = ref.match(/^(.+?)\s+(\d+):(\d+)(?:\s*-\s*(\d+))?$/);
+        
+        if(!match) {
+            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Invalid format. Please use "Book Chapter:StartVerse-EndVerse".</span>`;
             return;
         }
 
+        let bName = match[1].trim();
+        let bCap = bName.split(' ').map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(' '); // Capitalizes "1 John"
+        let chapter = match[2];
+        let vStart = parseInt(match[3]);
+        let vEnd = match[4] ? parseInt(match[4]) : vStart;
+
         canvas.innerHTML = `<div style="font-size: 14px; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 20px; font-weight: bold;">Berean Standard Bible (Tagged)</div>`;
         
-        verseData.forEach((item, index) => {
-            if(!item.text || item.text === "-") return; 
+        let foundAny = false;
+
+        // Loop through all verses requested
+        for(let v = vStart; v <= vEnd; v++) {
+            let targetRef = `${bCap} ${chapter}:${v}`;
+            let verseData = liveBibleDB[targetRef];
             
-            const span = document.createElement('span');
-            
-            // Only add the dashed line if the word actually has a Strong's number attached
-            if(item.strongs && item.strongs !== "-" && item.strongs !== "G" && item.strongs !== "H") {
-                span.className = 'word has-tag';
-                span.dataset.strongs = item.strongs;
-            } else {
-                span.className = 'word';
+            if(verseData) {
+                foundAny = true;
+                
+                // Add the beautiful Verse Number Bubble
+                const vSpan = document.createElement('span');
+                vSpan.style.cssText = "font-size: 12px; color: var(--oxford-cream); background: var(--oxford-navy); padding: 2px 6px; border-radius: 4px; margin-right: 6px; position: relative; top: -3px; font-family: -apple-system, sans-serif;";
+                vSpan.innerText = v;
+                canvas.appendChild(vSpan);
+
+                verseData.forEach((item, index) => {
+                    if(!item.text || item.text === "-") return; 
+                    
+                    const span = document.createElement('span');
+                    
+                    if(item.strongs) {
+                        span.className = 'word has-tag';
+                        span.dataset.strongs = item.strongs;
+                    } else {
+                        span.className = 'word';
+                    }
+                    
+                    span.id = `w-${v}-${index}`;
+                    span.innerText = item.text + " ";
+                    
+                    span.onclick = () => handleWordClick(span, item.text, span.dataset.strongs);
+                    canvas.appendChild(span);
+                });
             }
-            
-            span.id = `w-${index}`;
-            span.innerText = item.text + " ";
-            
-            span.onclick = () => handleWordClick(span, item.text, span.dataset.strongs);
-            canvas.appendChild(span);
-        });
+        }
+
+        if(!foundAny) {
+            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Passage "${ref}" not found in database.</span>`;
+        }
     }
 
     // --- OPTION B: MANUAL PASTE ---
@@ -267,30 +285,45 @@
         });
     }
 
-    // --- THE CLICK HANDLER ---
+    // --- THE REWIRED TRAFFIC LIGHT CLICK HANDLER ---
     function handleWordClick(spanElement, wordText, hiddenTag) {
         if(lastSelected) lastSelected.classList.remove('selected');
         spanElement.classList.add('selected');
         lastSelected = spanElement;
 
+        // Clear the Lexicon panel immediately
+        apiResults.innerHTML = '';
+
+        // 1. Render Greek FIRST if it exists
+        if(hiddenTag) {
+            document.getElementById('strongsInput').value = hiddenTag;
+            searchStrongs(hiddenTag); 
+        } else {
+            apiResults.innerHTML = `<div class="empty-state">No original language tag found. Fetching English...</div>`;
+        }
+
+        // 2. Safely Fetch English SECOND (it will append below the Greek)
         const cleanWord = wordText.replace(/[.,;!?]/g, '');
         fetchEnglishDefinition(cleanWord);
-
-        if(hiddenTag) {
-            let cleanTag = hiddenTag.replace(/[^A-Za-z0-9]/g, '');
-            document.getElementById('strongsInput').value = cleanTag;
-            searchStrongs(cleanTag); 
-        }
     }
 
     // --- ENGLISH API ---
     async function fetchEnglishDefinition(word) {
         try {
             const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
-            if (!response.ok) return;
+            if (!response.ok) {
+                // If it was just searching english, remove the "fetching..." message
+                if (apiResults.innerHTML.includes("Fetching English")) apiResults.innerHTML = `<div class="empty-state">No English definition found for "${word}".</div>`;
+                return;
+            }
             const data = await response.json();
             const wordData = data[0];
             
+            // If the Greek failed or didn't exist, clear the placeholder state
+            if (apiResults.innerHTML.includes("No original language tag")) {
+                apiResults.innerHTML = '';
+            }
+
             let html = `<div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
                         <h3 class="api-word" style="font-size: 20px;">${wordData.word} <span class="strongs-tag" style="background: #e4e7ea; color: #666;">ENG</span></h3>`;
             wordData.meanings.forEach(meaning => {
@@ -298,6 +331,8 @@
                 meaning.definitions.slice(0, 1).forEach(def => { html += `<div class="api-def" style="font-size: 13px;">${def.definition}</div>`; });
             });
             html += `</div>`;
+            
+            // APPEND to the Lexicon Panel safely
             apiResults.innerHTML += html; 
         } catch (error) {}
     }
@@ -307,16 +342,18 @@
         let query = overrideQuery || document.getElementById('strongsInput').value.trim();
         if(!query) return;
         
-        apiResults.innerHTML = ''; 
+        // If it's a manual search box entry, clear the board
+        if(!overrideQuery) apiResults.innerHTML = ''; 
+
         if (typeof strongsGreekDictionary === 'undefined') {
-            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">Lexicon script not loaded.</div>`;
+            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">Greek Dictionary Script not loaded.</div>`;
             return;
         }
 
         let upperQuery = query.toUpperCase();
         let strongKey = upperQuery.startsWith('G') || upperQuery.startsWith('H') ? upperQuery : 'G' + upperQuery;
         
-        if (strongsGreekDictionary[strongKey] && !isNaN(upperQuery.replace(/G|H/g, ''))) {
+        if (strongsGreekDictionary[strongKey]) {
             renderGreekCard(strongKey);
             return;
         }
@@ -332,10 +369,15 @@
         }
 
         if (results.length === 0) {
-            apiResults.innerHTML = `<div class="empty-state">No Greek matches found for "${query}". (Make sure it is a New Testament word!)</div>`;
+            if(overrideQuery) {
+                apiResults.innerHTML = `<div class="empty-state">Greek dictionary does not contain ${query} yet.</div>`;
+            } else {
+                apiResults.innerHTML = `<div class="empty-state">No Greek matches found for "${query}".</div>`;
+            }
             return;
         }
-        if (results.length === 1) {
+        
+        if (results.length === 1 && !overrideQuery) {
             renderGreekCard(results[0].key);
             return;
         }
@@ -343,7 +385,7 @@
         let html = `<h3 style="font-size: 12px; color: #666; text-transform: uppercase;">Found ${results.length} matches for "${query}"</h3>`;
         results.forEach(res => {
             html += `
-            <div style="background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="searchStrongs('${res.key}')">
+            <div style="background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="apiResults.innerHTML=''; searchStrongs('${res.key}')">
                 <strong style="font-size: 18px; color: var(--oxford-navy);">${res.data.lemma}</strong> <span class="strongs-tag">${res.key}</span>
                 <div style="font-size: 11px; color: #555; margin-top: 5px;">${res.data.kjv_def ? res.data.kjv_def.substring(0, 40) + '...' : ''}</div>
             </div>`;
