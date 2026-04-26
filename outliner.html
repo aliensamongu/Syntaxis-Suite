@@ -2,7 +2,8 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Outliner | Sermon Processor</title>
+    <title>Σyntaxis Outliner | Complete Workflow</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --oxford-navy: #1B263B;
@@ -10,7 +11,8 @@
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --bg-main: #e4e7ea;
-            --radius: 8px;
+            --radius-small: 6px;
+            --radius-medium: 8px;
         }
 
         body {
@@ -19,82 +21,67 @@
             background: var(--bg-main); overflow: hidden;
         }
 
-        /* LEFT PANEL: The Outline Builder */
-        #outline-panel {
-            width: 350px; background: var(--oxford-navy); flex-shrink: 0;
-            display: flex; flex-direction: column; padding: 20px;
+        /* LEFT PANEL: The Original UI restored */
+        #sidebar {
+            width: 380px; background: var(--oxford-navy); flex-shrink: 0;
+            display: flex; flex-direction: column; padding: 25px;
             box-sizing: border-box; color: var(--oxford-cream);
             border-right: 1px solid var(--oxford-navy-dark);
+            overflow-y: auto;
         }
 
-        h2 { margin: 0 0 15px 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
+        h3 { font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 25px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         
-        .verse-reference {
-            width: 100%; box-sizing: border-box; padding: 10px; border-radius: var(--radius);
-            border: 1px solid rgba(255,255,255,0.2); background: rgba(0,0,0,0.2);
-            color: var(--oxford-cream); font-family: Georgia, serif; margin-bottom: 20px;
+        .ui-input {
+            width: 100%; box-sizing: border-box; padding: 12px; border-radius: var(--radius-small);
+            border: none; background: var(--oxford-cream); font-family: inherit; font-size: 14px;
+            margin-bottom: 10px; color: var(--oxford-navy-dark);
         }
 
-        .btn-gold {
+        .btn-row { display: flex; gap: 8px; margin-bottom: 10px; }
+        
+        .btn {
             background: var(--oxford-gold); color: var(--oxford-navy-dark);
-            border: none; padding: 10px; border-radius: var(--radius);
-            font-weight: bold; text-transform: uppercase; font-size: 11px;
-            cursor: pointer; width: 100%; margin-bottom: 15px; transition: 0.2s;
+            border: none; padding: 10px; border-radius: var(--radius-small);
+            font-weight: bold; font-size: 11px; text-transform: uppercase;
+            cursor: pointer; flex-grow: 1; transition: 0.2s;
         }
-        .btn-gold:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-dark { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.2); }
+        .btn-green { background: #5a9e69; color: white; width: 100%; margin-bottom: 20px; }
+        .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-        /* Drag & Drop List Styling */
-        #outline-list {
-            flex-grow: 1; overflow-y: auto; display: flex; flex-direction: column; gap: 8px;
-        }
+        textarea.ui-input { resize: vertical; min-height: 80px; }
+        .prop-box { border-left: 4px solid var(--oxford-gold); }
 
+        /* The Drag & Drop Outline inside the sidebar */
+        #outline-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        
         .point-card {
             background: var(--oxford-cream); color: var(--oxford-navy-dark);
-            border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px;
-            cursor: grab;
+            border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px; cursor: grab;
         }
         .point-card:active { cursor: grabbing; }
         .drag-handle { color: #aaa; cursor: grab; font-size: 18px; }
-        .point-input {
-            flex-grow: 1; border: none; background: transparent; 
-            font-family: inherit; font-size: 13px; outline: none;
-        }
-        .delete-btn {
-            background: none; border: none; color: #aaa; cursor: pointer; font-weight: bold;
-        }
+        .point-input { flex-grow: 1; border: none; background: transparent; font-family: inherit; font-size: 13px; outline: none; }
+        .sub-point { margin-left: 20px; border-left: 3px solid var(--oxford-gold); }
+        .delete-btn { background: none; border: none; color: #aaa; cursor: pointer; font-weight: bold; }
         .delete-btn:hover { color: #8C1C13; }
 
-        .sub-point { margin-left: 20px; border-left: 2px solid var(--oxford-gold); }
-
-        /* RIGHT PANEL: The Word Processor */
-        #editor-panel {
-            flex-grow: 1; display: flex; flex-direction: column; background: var(--bg-main);
-        }
-
-        /* The Formatting Toolbar */
+        /* RIGHT PANEL: Word Processor */
+        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+        
         #toolbar {
             background: white; padding: 10px 20px; border-bottom: 1px solid #ccc;
             display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
+        .tool-btn { background: var(--bg-main); border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-family: serif; }
+        .tool-select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
 
-        .tool-btn {
-            background: var(--bg-main); border: 1px solid #ccc; border-radius: 4px;
-            padding: 5px 10px; cursor: pointer; font-weight: bold; font-family: serif;
-        }
-        .tool-btn:hover { background: #d0d4d8; }
+        #document-wrapper { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; }
         
-        .tool-select, .tool-color {
-            padding: 4px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer;
-        }
-
-        /* The Actual Paper Canvas */
-        #document-wrapper {
-            flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center;
-        }
-
         #sermon-editor {
-            width: 100%; max-width: 800px; min-height: 800px; background: white;
-            padding: 60px; box-sizing: border-box; border-radius: 4px;
+            width: 100%; max-width: 850px; min-height: 1000px; background: white;
+            padding: 80px; box-sizing: border-box; border-radius: 4px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1); font-family: Georgia, serif;
             font-size: 16px; line-height: 1.8; color: #333; outline: none;
         }
@@ -103,21 +90,36 @@
 </head>
 <body>
 
-<div id="outline-panel">
-    <h2>Sermon Outline</h2>
-    <textarea class="verse-reference" id="rawTextInput" rows="3" placeholder="Shared passage text goes here..."></textarea>
+<div id="sidebar">
     
-    <div style="display: flex; gap: 5px; margin-bottom: 15px;">
-        <button class="btn-gold" style="margin-bottom: 0;" onclick="addPoint('main')">+ Main Point</button>
-        <button class="btn-gold" style="margin-bottom: 0; background: rgba(255,255,255,0.1); color: white;" onclick="addPoint('sub')">+ Sub</button>
+    <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. 1 Peter 3)">
+    <div class="btn-row">
+        <button class="btn" onclick="alert('Save script connected!')">Save App</button>
+        <button class="btn btn-dark" onclick="alert('JSON Download connected!')">⬇ JSON</button>
+        <button class="btn btn-dark" onclick="alert('Load JSON connected!')">⬆ Load</button>
     </div>
+    <button class="btn btn-green">📸 Snapshot (PNG)</button>
 
-    <div id="outline-list">
-        </div>
+    <h3>1. Proposition Builder</h3>
+    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Define the core meaning of the passage.</div>
+    <textarea id="exIdea" class="ui-input" placeholder="Exegetical Idea (What it meant to them...)"></textarea>
+    <textarea id="thProp" class="ui-input prop-box" placeholder="Theological Proposition (What it means timelessly...)"></textarea>
 
-    <div style="margin-top: 20px;">
-        <button class="btn-gold" onclick="pushToEditor()">📥 Push to Document</button>
+    <h3>2. Outline Engine</h3>
+    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Drag and drop to reorder. Numbering is automatic.</div>
+    
+    <div id="outline-list"></div>
+    
+    <div class="btn-row">
+        <button class="btn" onclick="addPoint('main')">+ Main Point</button>
+        <button class="btn" style="background: #999;" onclick="addPoint('sub')">+ Sub</button>
     </div>
+    <button class="btn btn-dark" style="margin-bottom: 20px;" onclick="document.getElementById('outline-list').innerHTML = ''">Clear Entire Outline</button>
+
+    <button class="btn" style="background: white; color: var(--oxford-navy-dark); border: 2px solid var(--oxford-gold); padding: 15px; font-size: 13px;" onclick="pushToEditor()">📥 Push Framework to Document</button>
+
+    <h3>Saved Local Projects</h3>
+    <div id="saved-projects-list" style="color: rgba(255,255,255,0.5); font-size: 11px; font-style: italic;">List will populate here...</div>
 </div>
 
 <div id="editor-panel">
@@ -125,41 +127,35 @@
         <button class="tool-btn" onclick="formatDoc('bold')" title="Bold"><b>B</b></button>
         <button class="tool-btn" onclick="formatDoc('italic')" title="Italic"><i>I</i></button>
         <button class="tool-btn" onclick="formatDoc('underline')" title="Underline"><u>U</u></button>
-        
         <div style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></div>
-        
         <select class="tool-select" onchange="formatDoc('fontSize', this.value)">
             <option value="3">Normal Size</option>
             <option value="4">Large</option>
             <option value="5">Heading</option>
             <option value="6">Title</option>
         </select>
-
-        <input type="color" class="tool-color" onchange="formatDoc('foreColor', this.value)" title="Text Color">
-        
+        <input type="color" class="tool-select" style="padding: 0;" onchange="formatDoc('foreColor', this.value)" title="Text Color">
         <div style="width: 1px; height: 20px; background: #ccc; margin: 0 5px;"></div>
-        
         <button class="tool-btn" onclick="formatDoc('justifyLeft')">⬅</button>
         <button class="tool-btn" onclick="formatDoc('justifyCenter')">➡⬅</button>
     </div>
 
     <div id="document-wrapper">
         <div id="sermon-editor" contenteditable="true">
-            <h1 style="text-align: center;">Sermon Title</h1>
-            <p>Start typing your manuscript here...</p>
+            <h1 style="text-align: center; color: var(--oxford-navy);">Sermon Title</h1>
+            <p>Start drafting here, or use the sidebar to construct and push your outline...</p>
         </div>
     </div>
 </div>
 
 <script>
-    // --- 1. WORD PROCESSOR LOGIC ---
-    // This executes standard rich-text formatting commands on the editable div
+    // 1. WORD PROCESSOR
     function formatDoc(command, value = null) {
         document.execCommand(command, false, value);
         document.getElementById('sermon-editor').focus();
     }
 
-    // --- 2. OUTLINE BUILDER LOGIC ---
+    // 2. OUTLINE BUILDER (Drag and Drop)
     const outlineList = document.getElementById('outline-list');
     let draggedItem = null;
 
@@ -174,84 +170,78 @@
             <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
         `;
 
-        // Drag & Drop Event Listeners
         card.addEventListener('dragstart', function() {
             draggedItem = card;
             setTimeout(() => card.style.opacity = '0.5', 0);
         });
 
         card.addEventListener('dragend', function() {
-            setTimeout(() => {
-                card.style.opacity = '1';
-                draggedItem = null;
-            }, 0);
+            setTimeout(() => { card.style.opacity = '1'; draggedItem = null; }, 0);
         });
 
-        card.addEventListener('dragover', function(e) {
-            e.preventDefault();
-        });
+        card.addEventListener('dragover', e => e.preventDefault());
 
         card.addEventListener('drop', function(e) {
             e.preventDefault();
             if (card !== draggedItem) {
-                // Determine if we should drop above or below based on mouse position
                 const rect = card.getBoundingClientRect();
                 const dropAbove = e.clientY < rect.top + rect.height / 2;
-                if (dropAbove) {
-                    outlineList.insertBefore(draggedItem, card);
-                } else {
-                    outlineList.insertBefore(draggedItem, card.nextSibling);
-                }
+                if (dropAbove) outlineList.insertBefore(draggedItem, card);
+                else outlineList.insertBefore(draggedItem, card.nextSibling);
             }
         });
 
         outlineList.appendChild(card);
     }
 
-    // --- 3. THE BRIDGE (Push to Document) ---
+    // 3. THE BRIDGE (Push everything to the document)
     function pushToEditor() {
         const editor = document.getElementById('sermon-editor');
+        const projName = document.getElementById('projectName').value || "Sermon Framework";
+        const exIdea = document.getElementById('exIdea').value;
+        const thProp = document.getElementById('thProp').value;
         const points = document.querySelectorAll('.point-card');
         
-        if(points.length === 0) return;
+        let injectedHTML = `<hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">`;
+        injectedHTML += `<h2 style="color: var(--oxford-navy);">${projName}</h2>`;
 
-        let injectedHTML = '<div style="margin: 30px 0; padding: 20px; background: #f8f9fa; border-left: 4px solid #C5A059;">';
-        injectedHTML += '<h3 style="margin-top: 0;">Sermon Outline</h3><ul style="list-style-type: none; padding-left: 0;">';
+        // Inject Propositions
+        if(exIdea || thProp) {
+            injectedHTML += `<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">`;
+            if(exIdea) injectedHTML += `<p><strong>Exegetical Idea:</strong> <br><em>${exIdea}</em></p>`;
+            if(thProp) injectedHTML += `<p><strong>Theological Proposition:</strong> <br><span style="color: var(--oxford-gold); font-weight: bold;">${thProp}</span></p>`;
+            injectedHTML += `</div>`;
+        }
 
-        let mainCount = 1;
-        let subCount = 'a';
+        // Inject Outline
+        if(points.length > 0) {
+            injectedHTML += `<h3 style="margin-top: 30px; border-bottom: 2px solid var(--oxford-gold); display: inline-block;">Message Outline</h3>`;
+            injectedHTML += `<ul style="list-style-type: none; padding-left: 0; margin-top: 15px;">`;
 
-        points.forEach(point => {
-            const isSub = point.classList.contains('sub-point');
-            const text = point.querySelector('.point-input').value || "(Empty Point)";
-            
-            if(isSub) {
-                injectedHTML += `<li style="margin-left: 30px; margin-bottom: 8px;"><strong>${subCount}.</strong> ${text}</li>`;
-                subCount = String.fromCharCode(subCount.charCodeAt(0) + 1); // Increments a, b, c
-            } else {
-                injectedHTML += `<li style="margin-bottom: 10px; font-size: 18px;"><strong>${mainCount}.</strong> ${text}</li>`;
-                mainCount++;
-                subCount = 'a'; // Reset sub-point counter for the next main point
-            }
-        });
+            let mainCount = 1;
+            let subCount = 'a';
 
-        injectedHTML += '</ul></div><p>...</p>';
+            points.forEach(point => {
+                const isSub = point.classList.contains('sub-point');
+                const text = point.querySelector('.point-input').value || "(Empty Point)";
+                
+                if(isSub) {
+                    injectedHTML += `<li style="margin-left: 40px; margin-bottom: 10px; font-size: 16px;"><strong>${subCount}.</strong> ${text}</li>`;
+                    subCount = String.fromCharCode(subCount.charCodeAt(0) + 1);
+                } else {
+                    injectedHTML += `<li style="margin-bottom: 15px; font-size: 18px; margin-top: 20px;"><strong>${mainCount}.</strong> ${text}</li>`;
+                    mainCount++;
+                    subCount = 'a'; 
+                }
+            });
+            injectedHTML += `</ul>`;
+        }
+
+        injectedHTML += `<p><br>Start your manuscript here...</p>`;
         
-        // Append the outline to the end of whatever is currently in the editor
+        // Append to editor
         editor.innerHTML += injectedHTML;
     }
-
-    // THE SHARED BRAIN RECEIVER
-    window.addEventListener('DOMContentLoaded', () => {
-        const sharedText = sessionStorage.getItem('syntaxis_shared_brain');
-        const myInput = document.getElementById('rawTextInput');
-        if(sharedText && myInput && !myInput.value) {
-            myInput.value = sharedText;
-        }
-        
-        // Add one default point to get them started
-        addPoint('main');
-    });
 
 </script>
 </body>
