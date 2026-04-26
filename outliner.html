@@ -12,7 +12,6 @@
             --oxford-gold: #C5A059;
             --bg-main: #e4e7ea;
             --radius-small: 6px;
-            --radius-medium: 8px;
         }
 
         body {
@@ -21,13 +20,12 @@
             background: var(--bg-main); overflow: hidden;
         }
 
-        /* LEFT PANEL: The Original UI restored */
+        /* LEFT PANEL: Restored Sidebar UI */
         #sidebar {
             width: 380px; background: var(--oxford-navy); flex-shrink: 0;
             display: flex; flex-direction: column; padding: 25px;
             box-sizing: border-box; color: var(--oxford-cream);
-            border-right: 1px solid var(--oxford-navy-dark);
-            overflow-y: auto;
+            border-right: 1px solid var(--oxford-navy-dark); overflow-y: auto;
         }
 
         h3 { font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 25px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
@@ -53,13 +51,9 @@
         textarea.ui-input { resize: vertical; min-height: 80px; }
         .prop-box { border-left: 4px solid var(--oxford-gold); }
 
-        /* The Drag & Drop Outline inside the sidebar */
+        /* Outline List */
         #outline-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        
-        .point-card {
-            background: var(--oxford-cream); color: var(--oxford-navy-dark);
-            border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px; cursor: grab;
-        }
+        .point-card { background: var(--oxford-cream); color: var(--oxford-navy-dark); border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px; cursor: grab; }
         .point-card:active { cursor: grabbing; }
         .drag-handle { color: #aaa; cursor: grab; font-size: 18px; }
         .point-input { flex-grow: 1; border: none; background: transparent; font-family: inherit; font-size: 13px; outline: none; }
@@ -68,7 +62,7 @@
         .delete-btn:hover { color: #8C1C13; }
 
         /* RIGHT PANEL: Word Processor */
-        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; background: var(--bg-main); }
+        #editor-panel { flex-grow: 1; display: flex; flex-direction: column; background: var(--bg-main); position: relative;}
         
         #toolbar {
             background: white; padding: 10px 20px; border-bottom: 1px solid #ccc;
@@ -93,12 +87,14 @@
 <div id="sidebar">
     
     <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. 1 Peter 3)">
+    
     <div class="btn-row">
-        <button class="btn" onclick="alert('Save script connected!')">Save App</button>
-        <button class="btn btn-dark" onclick="alert('JSON Download connected!')">⬇ JSON</button>
-        <button class="btn btn-dark" onclick="alert('Load JSON connected!')">⬆ Load</button>
+        <button class="btn" onclick="saveLocalApp()">Save App</button>
+        <button class="btn btn-dark" onclick="downloadJSON()">⬇ JSON</button>
+        <button class="btn btn-dark" onclick="document.getElementById('fileInput').click()">⬆ Load</button>
+        <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadJSON(event)">
     </div>
-    <button class="btn btn-green">📸 Snapshot (PNG)</button>
+    <button class="btn btn-green" onclick="takeSnapshot()">📸 Snapshot (PNG)</button>
 
     <h3>1. Proposition Builder</h3>
     <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Define the core meaning of the passage.</div>
@@ -119,7 +115,7 @@
     <button class="btn" style="background: white; color: var(--oxford-navy-dark); border: 2px solid var(--oxford-gold); padding: 15px; font-size: 13px;" onclick="pushToEditor()">📥 Push Framework to Document</button>
 
     <h3>Saved Local Projects</h3>
-    <div id="saved-projects-list" style="color: rgba(255,255,255,0.5); font-size: 11px; font-style: italic;">List will populate here...</div>
+    <div id="saved-projects-list" style="color: rgba(255,255,255,0.5); font-size: 11px; font-style: italic;">Save an app to see it here...</div>
 </div>
 
 <div id="editor-panel">
@@ -155,32 +151,24 @@
         document.getElementById('sermon-editor').focus();
     }
 
-    // 2. OUTLINE BUILDER (Drag and Drop)
+    // 2. OUTLINE BUILDER
     const outlineList = document.getElementById('outline-list');
     let draggedItem = null;
 
-    function addPoint(type) {
+    function addPoint(type, value = '') {
         const card = document.createElement('div');
         card.className = type === 'sub' ? 'point-card sub-point' : 'point-card';
         card.draggable = true;
 
         card.innerHTML = `
             <span class="drag-handle">⋮⋮</span>
-            <input type="text" class="point-input" placeholder="${type === 'main' ? 'Main Point...' : 'Sub Point...'}">
+            <input type="text" class="point-input" placeholder="${type === 'main' ? 'Main Point...' : 'Sub Point...'}" value="${value}">
             <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
         `;
 
-        card.addEventListener('dragstart', function() {
-            draggedItem = card;
-            setTimeout(() => card.style.opacity = '0.5', 0);
-        });
-
-        card.addEventListener('dragend', function() {
-            setTimeout(() => { card.style.opacity = '1'; draggedItem = null; }, 0);
-        });
-
+        card.addEventListener('dragstart', function() { draggedItem = card; setTimeout(() => card.style.opacity = '0.5', 0); });
+        card.addEventListener('dragend', function() { setTimeout(() => { card.style.opacity = '1'; draggedItem = null; }, 0); });
         card.addEventListener('dragover', e => e.preventDefault());
-
         card.addEventListener('drop', function(e) {
             e.preventDefault();
             if (card !== draggedItem) {
@@ -194,7 +182,7 @@
         outlineList.appendChild(card);
     }
 
-    // 3. THE BRIDGE (Push everything to the document)
+    // 3. THE BRIDGE
     function pushToEditor() {
         const editor = document.getElementById('sermon-editor');
         const projName = document.getElementById('projectName').value || "Sermon Framework";
@@ -205,7 +193,6 @@
         let injectedHTML = `<hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">`;
         injectedHTML += `<h2 style="color: var(--oxford-navy);">${projName}</h2>`;
 
-        // Inject Propositions
         if(exIdea || thProp) {
             injectedHTML += `<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">`;
             if(exIdea) injectedHTML += `<p><strong>Exegetical Idea:</strong> <br><em>${exIdea}</em></p>`;
@@ -213,35 +200,106 @@
             injectedHTML += `</div>`;
         }
 
-        // Inject Outline
         if(points.length > 0) {
             injectedHTML += `<h3 style="margin-top: 30px; border-bottom: 2px solid var(--oxford-gold); display: inline-block;">Message Outline</h3>`;
             injectedHTML += `<ul style="list-style-type: none; padding-left: 0; margin-top: 15px;">`;
-
-            let mainCount = 1;
-            let subCount = 'a';
-
+            let mainCount = 1; let subCount = 'a';
             points.forEach(point => {
                 const isSub = point.classList.contains('sub-point');
                 const text = point.querySelector('.point-input').value || "(Empty Point)";
-                
                 if(isSub) {
                     injectedHTML += `<li style="margin-left: 40px; margin-bottom: 10px; font-size: 16px;"><strong>${subCount}.</strong> ${text}</li>`;
                     subCount = String.fromCharCode(subCount.charCodeAt(0) + 1);
                 } else {
                     injectedHTML += `<li style="margin-bottom: 15px; font-size: 18px; margin-top: 20px;"><strong>${mainCount}.</strong> ${text}</li>`;
-                    mainCount++;
-                    subCount = 'a'; 
+                    mainCount++; subCount = 'a'; 
                 }
             });
             injectedHTML += `</ul>`;
         }
-
         injectedHTML += `<p><br>Start your manuscript here...</p>`;
-        
-        // Append to editor
         editor.innerHTML += injectedHTML;
     }
+
+    // 4. SAVE & EXPORT LOGIC
+    function getAppData() {
+        const points = Array.from(document.querySelectorAll('.point-card')).map(card => ({
+            text: card.querySelector('.point-input').value,
+            isSub: card.classList.contains('sub-point')
+        }));
+        return {
+            projectName: document.getElementById('projectName').value,
+            exIdea: document.getElementById('exIdea').value,
+            thProp: document.getElementById('thProp').value,
+            editorContent: document.getElementById('sermon-editor').innerHTML,
+            outlinePoints: points
+        };
+    }
+
+    function loadAppData(data) {
+        if(data.projectName) document.getElementById('projectName').value = data.projectName;
+        if(data.exIdea) document.getElementById('exIdea').value = data.exIdea;
+        if(data.thProp) document.getElementById('thProp').value = data.thProp;
+        if(data.editorContent) document.getElementById('sermon-editor').innerHTML = data.editorContent;
+        if(data.outlinePoints) {
+            document.getElementById('outline-list').innerHTML = '';
+            data.outlinePoints.forEach(pt => addPoint(pt.isSub ? 'sub' : 'main', pt.text));
+        }
+    }
+
+    function saveLocalApp() {
+        const projName = document.getElementById('projectName').value || 'Untitled Outline';
+        localStorage.setItem('syntaxis_outliner_' + projName, JSON.stringify(getAppData()));
+        updateProjectList();
+    }
+
+    function updateProjectList() {
+        const list = document.getElementById('saved-projects-list');
+        list.innerHTML = '';
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('syntaxis_outliner_')) {
+                const name = key.replace('syntaxis_outliner_', '');
+                const div = document.createElement('div');
+                div.style.padding = '8px'; div.style.background = 'rgba(0,0,0,0.2)'; 
+                div.style.marginBottom = '5px'; div.style.borderRadius = '4px'; div.style.cursor = 'pointer';
+                div.innerText = name;
+                div.onclick = () => loadAppData(JSON.parse(localStorage.getItem(key)));
+                list.appendChild(div);
+            }
+        });
+        if(list.innerHTML === '') list.innerHTML = 'Save an app to see it here...';
+    }
+
+    function downloadJSON() {
+        const data = getAppData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement("a");
+        a.href = url;
+        a.download = (data.projectName || "Sermon_Outline") + ".json";
+        a.click();
+    }
+
+    function loadJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => loadAppData(JSON.parse(e.target.result));
+        reader.readAsText(file);
+    }
+
+    function takeSnapshot() {
+        const editor = document.getElementById('sermon-editor');
+        html2canvas(editor, { scale: 2 }).then(canvas => {
+            const a = document.createElement('a');
+            a.href = canvas.toDataURL("image/png");
+            a.download = (document.getElementById('projectName').value || "Sermon_Document") + ".png";
+            a.click();
+        });
+    }
+
+    // Initialize list on load
+    window.addEventListener('DOMContentLoaded', updateProjectList);
 
 </script>
 </body>
