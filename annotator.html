@@ -40,6 +40,36 @@
         .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; position: relative; }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
         .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; white-space: nowrap; }
+    /* UNIVERSAL APP NAV STYLING */
+        .app-nav { 
+            display: flex; 
+            gap: 5px; 
+            margin-bottom: 20px; 
+            margin-top: 10px; 
+        }
+        .app-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 8px 4px; 
+            font-size: 9px; 
+            color: #F8F5EE; /* Oxford Cream */
+            text-decoration: none; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+            background: #121A2A; /* Oxford Navy Dark */
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 4px; 
+            transition: 0.2s; 
+        }
+        .app-nav a:hover { 
+            border-color: #C5A059; /* Oxford Gold */
+        }
+        .app-nav a.active { 
+            background: #C5A059; /* Oxford Gold */
+            color: #121A2A; /* Oxford Navy Dark */
+            border-color: #C5A059; 
+        }
     </style>
 </head>
 <body>
