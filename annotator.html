@@ -2,12 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Annotator | Master Editor V5</title>
+    <title>Σyntaxis Annotator | Master Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
             --sidebar-width: 320px;
-            --gutter-width: 340px;
             --bg-main: #e4e7ea;
             --oxford-navy: #1B263B;
             --oxford-navy-dark: #121A2A;
@@ -20,94 +19,40 @@
 
         body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, sans-serif; overflow: hidden; background: var(--bg-main); }
         
-        /* Sidebar */
         #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; color: var(--oxford-cream); box-shadow: 2px 0 15px rgba(0,0,0,0.15); z-index: 100; }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
-        .sidebar-inner::-webkit-scrollbar { width: 6px; }
-        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
+        /* APP NAVIGATION TABS */
+        .app-nav { display: flex; gap: 5px; margin-bottom: 5px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: var(--oxford-gold); }
+        .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
+
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 
         textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); padding: 10px; font-size: 13px; background: var(--oxford-cream); height: 80px; resize: none; border: 1px solid var(--oxford-navy-dark); outline: none; }
         .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); width: 100%; transition: 0.2s; }
-        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
-        /* Project Palette UI */
-        .swatch { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: 0.1s; }
-        .swatch.active { border-color: var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
-        .swatch-color { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); }
-        .swatch-name { font-size: 11px; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--oxford-cream); }
-        .swatch-delete { background: none; border: none; color: var(--oxford-crimson); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
-
-        /* X-Ray UI */
-        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
-        .btn-group button { flex: 1 1 30%; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; transition: 0.1s; }
-        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
         
-        /* X-Ray Logic Classes */
-        .hide-tags .grammar-tag { display: none !important; }
-        .hide-arrows #svg-layer { display: none !important; }
-        .hide-gutter #gutter { display: none !important; }
-        .hide-hl .word { background-color: transparent !important; }
-        .hide-ul .word { text-decoration: none !important; }
-
-        /* Workspace */
-        #workspace { flex-grow: 1; position: relative; overflow: auto; padding: 60px; display: flex; gap: 40px; align-items: flex-start; scroll-behavior: smooth; }
+        #workspace { flex-grow: 1; position: relative; overflow: auto; padding: 60px; display: flex; gap: 40px; align-items: flex-start; }
         #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 60px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 24px; line-height: 2.8; position: relative; z-index: 10; min-height: 70vh; }
         
-        /* Word Styling */
-        .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; transition: 0.2s; position: relative; }
-        .word:hover { background: rgba(0,0,0,0.05); }
+        .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; position: relative; }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
-        .word.note-hover { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.2); z-index: 5; }
-        
         .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; white-space: nowrap; }
-
-        /* Gutter & Notes */
-        #gutter { width: var(--gutter-width); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
-        .margin-note { background: white; padding: 15px; border-radius: var(--radius-small); border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: grab; position: relative; transition: transform 0.2s, border-color 0.2s, background 0.2s; }
-        .margin-note.active-hover { border-color: var(--oxford-gold); background: #faf9f5; }
-        .margin-note.dragging { opacity: 0.5; transform: scale(0.95); }
-        .note-header { font-size: 10px; font-weight: bold; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
-        .note-body { font-size: 13px; color: var(--oxford-navy-dark); outline: none; min-height: 20px; line-height: 1.4; }
-        .drag-handle { cursor: grab; font-size: 14px; color: #ccc; margin-right: 8px; }
-
-        /* Context Menu */
-        #context-menu { position: absolute; display: none; background: var(--oxford-navy-dark); color: white; padding: 6px; border-radius: var(--radius-small); box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 1000; font-size: 12px; min-width: 140px; border: 1px solid rgba(255,255,255,0.1); }
-        .menu-item { padding: 8px 12px; cursor: pointer; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; position: relative; }
-        .menu-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); }
-        .submenu { position: absolute; left: 100%; top: 0; background: var(--oxford-navy-dark); border-radius: var(--radius-small); display: none; min-width: 120px; border: 1px solid rgba(255,255,255,0.1); padding: 4px; color: white; }
-        .menu-item:hover > .submenu { display: block; }
-        
-        #svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
     </style>
 </head>
-<body id="app-body">
+<body>
 
 <div id="sidebar">
     <div class="sidebar-inner">
         <h2>Σyntaxis</h2>
         
-        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius-small);">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
-                <h3 style="margin:0; border:none; padding:0;">Project Palette</h3>
-                <button class="std-btn" style="width: auto; padding: 4px 8px; font-size: 10px; background: rgba(255,255,255,0.1); color: var(--oxford-cream);" onclick="addNewSwatch()">+ Add Label</button>
-                <input type="color" id="newSwatchColor" style="display:none;" onchange="handleNewSwatchColor(event)">
-            </div>
-            <div id="palette-list" style="display: flex; flex-direction: column; gap: 8px;">
-                </div>
-        </div>
-
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <h3>Visibility (X-Ray)</h3>
-            <div class="btn-group">
-                <button id="tog-tags" class="active" onclick="toggleXRay('tags')">Tags</button>
-                <button id="tog-arrows" class="active" onclick="toggleXRay('arrows')">Arrows</button>
-                <button id="tog-hl" class="active" onclick="toggleXRay('hl')">Highlight</button>
-                <button id="tog-ul" class="active" onclick="toggleXRay('ul')">Underline</button>
-                <button id="tog-gutter" class="active" onclick="toggleXRay('gutter')">Gutter</button>
-            </div>
+        <div class="app-nav">
+            <a href="annotator.html" class="active">Annotate</a>
+            <a href="app.html">Diagram</a>
+            <a href="interpreter.html">Interpret</a>
+            <a href="outliner.html">Outline</a>
         </div>
 
         <div>
@@ -116,498 +61,42 @@
             <button class="std-btn" onclick="renderText()" style="margin-top:8px;">Render Canvas</button>
         </div>
         
-        <div style="background: rgba(0,0,0,0.1); padding: 10px; border-radius: var(--radius-small); font-size: 11px; line-height: 1.5; color: #aaa;">
-            <strong>Pro Tip:</strong><br>
-            • <strong>Left-Click:</strong> Select word<br>
-            • <strong>Shift+Click:</strong> Select phrase<br>
-            • <strong>Cmd+Click:</strong> Multi-select<br>
-            • <strong>Right-Click:</strong> Open Tools Menu
-        </div>
-
         <div style="margin-top: auto;">
             <button class="std-btn" style="background: #27ae60; color: white; margin-bottom:8px;" onclick="exportSnapshot()">📸 Snapshot (PNG)</button>
-            <button class="std-btn" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2);" onclick="resetProject()">Reset Project</button>
         </div>
     </div>
 </div>
 
 <div id="workspace">
     <div id="text-canvas"></div>
-    <div id="gutter"></div>
-    <svg id="svg-layer">
-        <defs id="svg-defs"></defs>
-        <g id="arrow-paths"></g>
-    </svg>
-</div>
-
-<div id="context-menu" onclick="event.stopPropagation()">
-    <div class="menu-item" onclick="applyTag(getActiveLabel())">
-        Tag: <span id="dynamic-tag-name" style="color:var(--oxford-gold); font-weight:bold; margin-left:5px;">Label</span>
-    </div>
-    
-    <div class="menu-item">Grammar Tag ➔
-        <div class="submenu">
-            <div class="menu-item" onclick="applyTag('SUBJ')">Subject</div>
-            <div class="menu-item" onclick="applyTag('VERB')">Verb</div>
-            <div class="menu-item" onclick="applyTag('DO')">Direct Obj</div>
-            <div class="menu-item" onclick="applyTag('PREP')">Preposition</div>
-            <div class="menu-item" onclick="applyTag('ADJ')">Adjective</div>
-        </div>
-    </div>
-    <div class="menu-item">Highlight ➔
-        <div class="submenu">
-            <div class="menu-item" onclick="applyHighlight('box')">Solid Box</div>
-            <div class="menu-item" onclick="applyHighlight('soft')">Soft Wash</div>
-        </div>
-    </div>
-    <div class="menu-item">Underline ➔
-        <div class="submenu">
-            <div class="menu-item" onclick="applyUnderline('solid')">Solid</div>
-            <div class="menu-item" onclick="applyUnderline('double')">Double</div>
-            <div class="menu-item" onclick="applyUnderline('wavy')">Squiggly</div>
-            <div class="menu-item" onclick="applyUnderline('dashed')">Dashed</div>
-        </div>
-    </div>
-    <div class="menu-item">Arrow From Here ➔
-        <div class="submenu">
-            <div class="menu-item" onclick="startArrow('solid')">Solid</div>
-            <div class="menu-item" onclick="startArrow('dashed')">Dashed</div>
-            <div class="menu-item" onclick="startArrow('dotted')">Dotted</div>
-        </div>
-    </div>
-    <div class="menu-item" onclick="addNote()">Add Margin Note</div>
-    <hr style="opacity: 0.1; margin: 4px 0;">
-    <div class="menu-item" style="color: var(--oxford-gold)" onclick="clearWords()">Clear Markups</div>
 </div>
 
 <script>
     const canvas = document.getElementById('text-canvas');
-    const menu = document.getElementById('context-menu');
-    const gutter = document.getElementById('gutter');
-    const svgPaths = document.getElementById('arrow-paths');
-    const svgDefs = document.getElementById('svg-defs');
-    const workspace = document.getElementById('workspace');
-    
-    let selectedWords = [];
-    let lastClickedWordId = null;
-    let arrowPendingStyle = null;
-    let connections = [];
-    let notes = [];
-
-    // --- PROJECT PALETTE ENGINE ---
-    let projectPalette = [];
-    let activeColor = '';
-
-    function initDefaultPalette() {
-        projectPalette = [
-            { id: 'p1', color: '#8C1C13', name: 'Primary (Red)' },
-            { id: 'p2', color: '#1B263B', name: 'Secondary (Navy)' },
-            { id: 'p3', color: '#C5A059', name: 'Accent (Gold)' }
-        ];
-        activeColor = '#8C1C13';
-        renderPalette();
-    }
-
-    function renderPalette() {
-        const list = document.getElementById('palette-list');
-        list.innerHTML = '';
-        projectPalette.forEach(sw => {
-            const isActive = activeColor === sw.color;
-            list.innerHTML += `
-                <div class="swatch ${isActive ? 'active' : ''}" onclick="setActiveColor('${sw.color}')">
-                    <div class="swatch-color" style="background: ${sw.color};"></div>
-                    <div class="swatch-name">${sw.name}</div>
-                    ${projectPalette.length > 1 ? `<button class="swatch-delete" onclick="deleteSwatch('${sw.id}', event)">&times;</button>` : ''}
-                </div>
-            `;
-        });
-    }
-
-    function setActiveColor(color) {
-        activeColor = color;
-        renderPalette();
-    }
-
-    function addNewSwatch() { document.getElementById('newSwatchColor').click(); }
-    
-    function handleNewSwatchColor(e) {
-        const name = prompt("Enter a label for this color (e.g. 'God's Sovereignty'):");
-        if (name && name.trim() !== '') {
-            const color = e.target.value;
-            projectPalette.push({ id: 'p' + Date.now(), color, name });
-            activeColor = color;
-            renderPalette();
-        }
-        // Reset the input value so the change event fires even if they pick the same color again
-        document.getElementById('newSwatchColor').value = '#000000';
-    }
-
-    function deleteSwatch(id, e) {
-        e.stopPropagation();
-        projectPalette = projectPalette.filter(sw => sw.id !== id);
-        if(!projectPalette.some(sw => sw.color === activeColor)) {
-            activeColor = projectPalette[0].color;
-        }
-        renderPalette();
-    }
-
-    function getActiveLabel() {
-        const sw = projectPalette.find(sw => sw.color === activeColor);
-        return sw ? sw.name : 'TAG';
-    }
-
-    // Initialize palette on load
-    window.addEventListener('DOMContentLoaded', initDefaultPalette);
-
-
-    // --- X-RAY TOGGLES ---
-    function toggleXRay(feature) {
-        const btn = document.getElementById('tog-' + feature);
-        const isActive = btn.classList.contains('active');
-        if (isActive) {
-            btn.classList.remove('active');
-            document.body.classList.add('hide-' + feature);
-        } else {
-            btn.classList.add('active');
-            document.body.classList.remove('hide-' + feature);
-        }
-    }
-
-
-    // --- CORE RENDERING ---
-    workspace.onclick = (e) => {
-        if (e.target === workspace || e.target === canvas) {
-            clearSelection();
-            closeMenu();
-        }
-    };
-    workspace.oncontextmenu = (e) => {
-        if (e.target === workspace || e.target === canvas) {
-            e.preventDefault();
-            closeMenu();
-        }
-    };
-
     function renderText() {
         const raw = document.getElementById('rawTextInput').value;
-        canvas.innerHTML = ''; notes = []; connections = [];
-        selectedWords = []; lastClickedWordId = null;
-        renderGutter(); drawArrows(); closeMenu();
-        
+        canvas.innerHTML = '';
         const words = raw.split(/(\s+)/);
-        let wordIndex = 0;
-        
         words.forEach(chunk => {
             if (chunk.trim() === '') {
                 canvas.appendChild(document.createTextNode(chunk));
             } else {
                 const span = document.createElement('span');
                 span.className = 'word'; 
-                span.id = `w-${wordIndex++}`; 
                 span.innerText = chunk;
-                
-                span.onclick = (e) => { 
-                    e.stopPropagation(); 
-                    handleLeftClick(e, span.id); 
-                };
-                
-                span.oncontextmenu = (e) => {
-                    e.preventDefault();
-                    e.stopPropagation();
-                    handleRightClick(e, span.id);
-                };
-                
+                span.onclick = () => span.classList.toggle('selected');
                 canvas.appendChild(span);
             }
         });
     }
-
-    // --- LEFT CLICK (SELECTION ENGINE) ---
-    function handleLeftClick(event, id) {
-        if (arrowPendingStyle) {
-            selectedWords.forEach(startId => {
-                if (startId !== id) {
-                    connections.push({ start: startId, end: id, style: arrowPendingStyle, color: activeColor });
-                }
-            });
-            drawArrows();
-            arrowPendingStyle = null;
-            clearSelection();
-            return;
-        }
-
-        const currentIdx = parseInt(id.split('-')[1]);
-
-        if (event.shiftKey && lastClickedWordId) {
-            const lastIdx = parseInt(lastClickedWordId.split('-')[1]);
-            const start = Math.min(currentIdx, lastIdx); 
-            const end = Math.max(currentIdx, lastIdx);
-            if (!event.ctrlKey && !event.metaKey) clearSelection(false); 
-            for (let i = start; i <= end; i++) {
-                const wId = `w-${i}`;
-                if (!selectedWords.includes(wId)) { 
-                    selectedWords.push(wId); 
-                    document.getElementById(wId).classList.add('selected'); 
-                }
-            }
-        } 
-        else if (event.ctrlKey || event.metaKey) {
-            const index = selectedWords.indexOf(id);
-            if (index > -1) { 
-                selectedWords.splice(index, 1); 
-                document.getElementById(id).classList.remove('selected'); 
-            } else { 
-                selectedWords.push(id); 
-                document.getElementById(id).classList.add('selected'); 
-            }
-            lastClickedWordId = id;
-        } 
-        else {
-            clearSelection(false); 
-            selectedWords = [id]; 
-            document.getElementById(id).classList.add('selected'); 
-            lastClickedWordId = id;
-        }
-        closeMenu();
-    }
-
-    // --- RIGHT CLICK (MENU TRIGGER) ---
-    function handleRightClick(e, id) {
-        if (!selectedWords.includes(id)) {
-            clearSelection(false);
-            selectedWords = [id];
-            document.getElementById(id).classList.add('selected');
-            lastClickedWordId = id;
-        }
-
-        // Dynamically update the Context Menu to show the user's active label!
-        document.getElementById('dynamic-tag-name').innerText = getActiveLabel();
-
-        menu.style.display = 'block';
-        menu.style.left = `${e.pageX}px`;
-        menu.style.top = `${e.pageY - 20}px`;
-    }
-
-    function clearSelection(resetLastClicked = true) {
-        selectedWords.forEach(id => { 
-            const el = document.getElementById(id); 
-            if(el) el.classList.remove('selected'); 
-        });
-        selectedWords = [];
-        if (resetLastClicked) lastClickedWordId = null;
-    }
-
-
-    // --- MARKUP TOOLS ---
-    function applyTag(label) {
-        selectedWords.forEach(id => {
-            const el = document.getElementById(id);
-            const existing = el.querySelector('.grammar-tag');
-            if (existing) existing.remove();
-            const tag = document.createElement('span');
-            tag.className = 'grammar-tag'; tag.style.background = activeColor; tag.innerText = label;
-            el.appendChild(tag);
-        });
-        closeMenu(); clearSelection();
-    }
-
-    function applyHighlight(type) {
-        const bg = hexToRgba(activeColor, type === 'box' ? 0.3 : 0.15);
-        selectedWords.forEach(id => {
-            document.getElementById(id).style.backgroundColor = bg;
-        });
-        closeMenu(); clearSelection();
-    }
-
-    function applyUnderline(style) {
-        selectedWords.forEach(id => {
-            const el = document.getElementById(id);
-            el.style.textDecoration = `underline ${style}`;
-            el.style.textDecorationColor = activeColor;
-            el.style.textUnderlineOffset = "8px";
-        });
-        closeMenu(); clearSelection();
-    }
-
-    function startArrow(style) {
-        arrowPendingStyle = style;
-        closeMenu();
-    }
-
-    function clearWords() {
-        selectedWords.forEach(id => {
-            const el = document.getElementById(id);
-            el.style = '';
-            el.querySelectorAll('.grammar-tag').forEach(t => t.remove());
-            connections = connections.filter(c => c.start !== id && c.end !== id);
-        });
-        drawArrows(); 
-        closeMenu(); clearSelection();
-    }
-
-    // --- GUTTER & NOTES ---
-    function addNote() {
-        if (selectedWords.length === 0) return;
-        
-        const sortedIds = [...selectedWords].sort((a, b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
-        
-        const targetText = sortedIds.map(id => { 
-            const el = document.getElementById(id); 
-            const tag = el.querySelector('.grammar-tag'); 
-            return tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText; 
-        }).join(' ');
-
-        notes.push({ 
-            id: Date.now(), 
-            wordIds: sortedIds, 
-            ref: targetText.replace(/[.,;!?]/g, ''), 
-            text: "Type your analysis here..." 
-        });
-        
-        renderGutter();
-        closeMenu(); clearSelection();
-    }
-
-    function renderGutter() {
-        gutter.innerHTML = '';
-        notes.forEach((note, index) => {
-            const card = document.createElement('div');
-            card.className = 'margin-note';
-            card.draggable = true;
-            card.dataset.index = index;
-            
-            card.innerHTML = `
-                <div class="note-header">
-                    <span><span class="drag-handle">⠿</span> ${note.ref}</span>
-                    <button onclick="deleteNote(${index})" style="background:none; border:none; color:var(--oxford-crimson); cursor:pointer;">&times;</button>
-                </div>
-                <div class="note-body" contenteditable="true" onblur="updateNoteText(${index}, this.innerText)">${note.text}</div>
-            `;
-            
-            card.onmouseenter = () => {
-                card.classList.add('active-hover');
-                if (note.wordIds) {
-                    note.wordIds.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.classList.add('note-hover');
-                    });
-                }
-            };
-            card.onmouseleave = () => {
-                card.classList.remove('active-hover');
-                if (note.wordIds) {
-                    note.wordIds.forEach(id => {
-                        const el = document.getElementById(id);
-                        if (el) el.classList.remove('note-hover');
-                    });
-                }
-            };
-
-            card.addEventListener('dragstart', () => card.classList.add('dragging'));
-            card.addEventListener('dragend', () => card.classList.remove('dragging'));
-            gutter.appendChild(card);
-        });
-    }
-
-    function updateNoteText(index, val) { notes[index].text = val; }
-    function deleteNote(index) { notes.splice(index, 1); renderGutter(); }
-
-    // --- DRAG REORDER LOGIC ---
-    gutter.addEventListener('dragover', e => {
-        e.preventDefault();
-        const dragging = document.querySelector('.dragging');
-        const afterElement = getDragAfterElement(gutter, e.clientY);
-        if (afterElement == null) {
-            gutter.appendChild(dragging);
-        } else {
-            gutter.insertBefore(dragging, afterElement);
-        }
-    });
-
-    gutter.addEventListener('drop', e => {
-        const newOrder = Array.from(gutter.querySelectorAll('.margin-note')).map(card => {
-            return notes[card.dataset.index];
-        });
-        notes = newOrder;
-        renderGutter();
-    });
-
-    function getDragAfterElement(container, y) {
-        const draggableElements = [...container.querySelectorAll('.margin-note:not(.dragging)')];
-        return draggableElements.reduce((closest, child) => {
-            const box = child.getBoundingClientRect();
-            const offset = y - box.top - box.height / 2;
-            if (offset < 0 && offset > closest.offset) {
-                return { offset: offset, element: child };
-            } else { return closest; }
-        }, { offset: Number.NEGATIVE_INFINITY }).element;
-    }
-
-    // --- ARROW PHYSICS ---
-    function drawArrows() {
-        svgPaths.innerHTML = ''; svgDefs.innerHTML = '';
-        const rect = workspace.getBoundingClientRect();
-        connections.forEach((c, i) => {
-            const w1 = document.getElementById(c.start); const w2 = document.getElementById(c.end);
-            if (!w1 || !w2) return;
-            const r1 = w1.getBoundingClientRect(); const r2 = w2.getBoundingClientRect();
-            const x1 = (r1.left + r1.width/2) - rect.left + workspace.scrollLeft;
-            const y1 = r1.top - rect.top + workspace.scrollTop - 8;
-            const x2 = (r2.left + r2.width/2) - rect.left + workspace.scrollLeft;
-            const y2 = r2.top - rect.top + workspace.scrollTop - 8;
-
-            const mid = `head-${i}`;
-            svgDefs.innerHTML += `<marker id="${mid}" viewBox="0 0 10 10" refX="8" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="${c.color}" /></marker>`;
-
-            const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
-            const arch = Math.min(120, Math.abs(x2-x1)/1.8);
-            path.setAttribute('d', `M ${x1} ${y1} C ${x1} ${y1-arch}, ${x2} ${y2-arch}, ${x2} ${y2}`);
-            path.setAttribute('stroke', c.color);
-            path.setAttribute('stroke-width', '2.5');
-            path.setAttribute('fill', 'none');
-            path.setAttribute('marker-end', `url(#${mid})`);
-            if (c.style === 'dashed') path.setAttribute('stroke-dasharray', '8,8');
-            if (c.style === 'dotted') path.setAttribute('stroke-dasharray', '2,6');
-            svgPaths.appendChild(path);
-        });
-    }
-
-    // --- SYSTEM LOGIC ---
-    function resetProject() {
-        if(confirm("Are you sure? This will wipe the canvas and reset your color palette.")) {
-            document.getElementById('rawTextInput').value = '';
-            canvas.innerHTML = ''; connections = []; notes = [];
-            drawArrows(); renderGutter();
-            
-            // Reset X-Rays
-            ['tags','arrows','hl','ul','gutter'].forEach(f => {
-                document.getElementById('tog-'+f).classList.add('active');
-                document.body.classList.remove('hide-'+f);
-            });
-            
-            initDefaultPalette();
-        }
-    }
-
-    function closeMenu() { menu.style.display = 'none'; }
-    
-    function hexToRgba(hex, a) {
-        const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
-        return `rgba(${r}, ${g}, ${b}, ${a})`;
-    }
-    
     function exportSnapshot() {
-        clearSelection(); 
-        html2canvas(workspace, { backgroundColor: '#e4e7ea', scale: 2 }).then(canvasOutput => {
+        html2canvas(document.getElementById('workspace'), { backgroundColor: '#e4e7ea' }).then(canvasOutput => {
             const link = document.createElement('a');
-            link.download = 'syntaxis_snapshot.png';
-            link.href = canvasOutput.toDataURL("image/png");
+            link.download = 'annotator_snapshot.png';
+            link.href = canvasOutput.toDataURL();
             link.click();
         });
     }
-    
-    workspace.onscroll = drawArrows;
-    window.onresize = drawArrows;
 </script>
 </body>
 </html>

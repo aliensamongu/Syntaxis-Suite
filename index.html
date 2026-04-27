@@ -12,123 +12,118 @@
         }
 
         body {
-            margin: 0;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            background: linear-gradient(135deg, var(--oxford-navy-dark) 0%, var(--oxford-navy) 100%);
-            font-family: -apple-system, sans-serif;
-            color: var(--oxford-cream);
-            overflow: hidden;
+            margin: 0; display: flex; flex-direction: column; justify-content: center; align-items: center;
+            min-height: 100vh; background: linear-gradient(135deg, var(--oxford-navy-dark) 0%, var(--oxford-navy) 100%);
+            font-family: -apple-system, sans-serif; color: var(--oxford-cream); overflow-x: hidden;
         }
 
-        .splash-container {
-            text-align: center;
-            animation: fadeIn 1.5s ease-out;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        .logo-wrapper {
-            display: flex;
-            align-items: baseline;
-            justify-content: center;
-            margin-bottom: 10px;
-        }
-
-        .logo-mark {
-            font-family: Georgia, serif;
-            font-size: 120px;
-            color: var(--oxford-gold);
-            line-height: 1;
-            text-shadow: 0 10px 30px rgba(0,0,0,0.5);
-        }
-
-        .title {
-            font-family: Georgia, serif;
-            font-size: 56px;
-            font-weight: normal;
-            letter-spacing: 2px;
-            margin: 0;
-        }
-
-        .subtitle {
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 4px;
-            color: rgba(248, 245, 238, 0.6);
-            margin-top: 5px;
-            margin-bottom: 50px;
-        }
-
-        .enter-btn {
-            display: inline-block;
-            background: transparent;
-            color: var(--oxford-gold);
-            border: 2px solid var(--oxford-gold);
-            padding: 15px 40px;
-            font-size: 14px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            font-weight: bold;
-            text-decoration: none;
-            border-radius: 4px;
-            transition: all 0.3s ease;
-            margin-bottom: 25px;
-        }
-
-        .enter-btn:hover {
-            background: var(--oxford-gold);
-            color: var(--oxford-navy-dark);
-            box-shadow: 0 5px 20px rgba(197, 160, 89, 0.4);
-            transform: translateY(-2px);
-        }
-
-        .guide-link {
-            color: rgba(248, 245, 238, 0.5);
-            font-size: 11px;
-            text-transform: uppercase;
-            letter-spacing: 2px;
-            text-decoration: none;
-            transition: color 0.2s;
-        }
-
-        .guide-link:hover {
-            color: var(--oxford-gold);
-            text-decoration: underline;
-        }
+        .header-container { text-align: center; animation: fadeInDown 1s ease-out; margin-bottom: 40px; margin-top: 20px; }
         
-        .version {
-            position: absolute;
-            bottom: 30px;
-            font-size: 10px;
-            color: rgba(255,255,255,0.2);
-            letter-spacing: 1px;
+        .logo-wrapper { display: flex; align-items: baseline; justify-content: center; margin-bottom: 5px; }
+        .logo-mark { font-family: Georgia, serif; font-size: 80px; color: var(--oxford-gold); line-height: 1; text-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+        .title { font-family: Georgia, serif; font-size: 40px; font-weight: normal; letter-spacing: 2px; margin: 0; }
+        .subtitle { font-size: 12px; text-transform: uppercase; letter-spacing: 4px; color: rgba(248, 245, 238, 0.6); }
+
+        .dashboard {
+            display: flex; gap: 20px; flex-wrap: wrap; justify-content: center; max-width: 1200px;
+            animation: fadeInUp 1s ease-out 0.2s both; z-index: 10; padding: 0 20px;
         }
+
+        .app-card {
+            background: rgba(255,255,255,0.03); border: 1px solid rgba(255,255,255,0.08); border-radius: 12px;
+            width: 220px; padding: 35px 20px; display: flex; flex-direction: column; align-items: center; text-align: center;
+            transition: all 0.3s ease; text-decoration: none; color: var(--oxford-cream); box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .app-card:hover {
+            background: rgba(255,255,255,0.06); border-color: rgba(197, 160, 89, 0.4);
+            transform: translateY(-10px); box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+        }
+
+        .icon-container { height: 90px; display: flex; justify-content: center; align-items: center; margin-bottom: 20px; }
+
+        .app-title { font-family: Georgia, serif; font-size: 20px; color: var(--oxford-gold); margin: 0 0 10px 0; }
+        .app-desc { font-size: 12px; color: rgba(248,245,238,0.7); line-height: 1.5; margin: 0 0 25px 0; flex-grow: 1; }
+
+        .launch-btn {
+            background: transparent; color: var(--oxford-gold); border: 1px solid var(--oxford-gold);
+            padding: 10px 20px; font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-weight: bold;
+            border-radius: 4px; transition: all 0.3s ease; width: 100%; box-sizing: border-box;
+        }
+        .app-card:hover .launch-btn { background: var(--oxford-gold); color: var(--oxford-navy-dark); }
+
+        /* The Custom Icons */
+        .icon-annotator { font-family: Georgia, serif; color: var(--oxford-gold); font-size: 64px; font-weight: bold; line-height: 1; display: flex; align-items: baseline; }
+        .icon-interpreter { font-family: -apple-system, sans-serif; color: var(--oxford-gold); font-size: 60px; font-weight: 300; letter-spacing: -5px; }
+        .icon-outliner { font-family: Georgia, serif; color: var(--oxford-gold); font-size: 24px; font-weight: bold; line-height: 1.2; text-align: left; }
+
+        .footer-links { animation: fadeIn 2s ease-out 1s both; margin-top: 40px; margin-bottom: 20px; display: flex; flex-direction: column; align-items: center; gap: 10px; }
+        .guide-link { color: rgba(248, 245, 238, 0.5); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; text-decoration: none; transition: color 0.2s; }
+        .guide-link:hover { color: var(--oxford-gold); text-decoration: underline; }
+        .version { font-size: 10px; color: rgba(255,255,255,0.2); letter-spacing: 1px; }
+
+        @keyframes fadeInDown { from { opacity: 0; transform: translateY(-30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
     </style>
 </head>
 <body>
 
-    <div class="splash-container">
+    <div class="header-container">
         <div class="logo-wrapper">
             <span class="logo-mark">Σ</span>
             <h1 class="title">yntaxis</h1>
         </div>
         <div class="subtitle">Structural & Exegetical Suite</div>
-        
-        <a href="app.html" class="enter-btn">Launch Suite</a>
-        
-        <a href="https://www.dropbox.com/scl/fi/sh1qkdybq5g15k5szkgut/Syntaxis-User-Guide.pages?rlkey=h5w3uz94hms9z7xprdk68rml4&st=jw7wi4vu&dl=1" class="guide-link">User Guide</a>
     </div>
 
-    <div class="version">VERSION 3.0.0 | MASTER BUILD</div>
+    <div class="dashboard">
+        <a href="annotator.html" class="app-card">
+            <div class="icon-container">
+                <div class="icon-annotator">A<span style="font-size: 42px; margin-left: 2px;">A</span></div>
+            </div>
+            <h2 class="app-title">Annotator</h2>
+            <p class="app-desc">In-situ grammatical markup, high-resolution highlights, and margin notes.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+
+        <a href="app.html" class="app-card">
+            <div class="icon-container">
+                <img src="Diagram-Logo.1.png" alt="Diagram Logo" style="width: 80px; height: auto;">
+            </div>
+            <h2 class="app-title">Diagrammer</h2>
+            <p class="app-desc">Build complex structural sentence diagrams with smart-snapping logic.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+
+        <a href="interpreter.html" class="app-card">
+            <div class="icon-container">
+                <div class="icon-interpreter">[ ]</div>
+            </div>
+            <h2 class="app-title">Interpreter</h2>
+            <p class="app-desc">Fetch and decode original languages using the Berean Standard database.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+
+        <a href="outliner.html" class="app-card">
+            <div class="icon-container">
+                <div class="icon-outliner">
+                    <div>I. —</div>
+                    <div style="margin-left: 15px;">A. —</div>
+                    <div style="margin-left: 30px;">1. —</div>
+                </div>
+            </div>
+            <h2 class="app-title">Outliner</h2>
+            <p class="app-desc">Draft hierarchical sermon outlines and structural observations seamlessly.</p>
+            <div class="launch-btn">Launch</div>
+        </a>
+    </div>
+
+    <div class="footer-links">
+        <a href="https://www.dropbox.com/scl/fi/sh1qkdybq5g15k5szkgut/Syntaxis-User-Guide.pages?rlkey=h5w3uz94hms9z7xprdk68rml4&st=jw7wi4vu&dl=1" class="guide-link">User Guide</a>
+        <div class="version">VERSION 4.0.0 | MASTER BUILD</div>
+    </div>
 
 </body>
 </html>
