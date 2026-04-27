@@ -121,14 +121,12 @@
         }
         .edit-btn:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
 
-        /* Conviction Badge CSS */
         .ms-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: var(--oxford-cream); margin-right: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-highly { background: #3A4A63; } 
         .badge-likely { background: var(--oxford-gold); color: var(--oxford-navy); }
         .badge-possible { background: var(--rustic-orange); }
         .badge-unlikely { background: var(--oxford-crimson); }
 
-        /* Quick-Key CSS */
         .quick-keys { display: flex; gap: 5px; margin-bottom: 10px; }
         .quick-key { flex: 1; background: var(--oxford-navy-dark); border: 1px solid var(--oxford-navy-dark); border-radius: 4px; cursor: pointer; padding: 6px 0; font-family: Georgia, serif; font-size: 16px; color: var(--oxford-cream); transition: 0.1s; text-align: center; }
         .quick-key:hover { background: var(--oxford-gold); color: var(--oxford-navy); border-color: var(--oxford-gold); }
@@ -577,7 +575,7 @@
     };
     
     window.onmousemove = (e) => {
-        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - top) / zoomLevel;
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
         if (isResizing) {
             const el = selectedElements[0], f = el.flip;
             if (el.type === 'single_line') { 
@@ -631,7 +629,6 @@
                 if (apparatusData.some(v => v.targetId === el.id)) {
                     ctx.beginPath();
                     ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2);
-                    // FIXED: Canvas requires a raw hex code or rgb string, it cannot parse CSS variables directly!
                     ctx.fillStyle = '#C86428'; 
                     ctx.fill();
                     ctx.fillStyle = el.color || '#333'; 
