@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Annotator | Master Editor V4</title>
+    <title>Σyntaxis Annotator | Master Editor V4.1</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -41,6 +41,10 @@
         .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; transition: 0.2s; position: relative; }
         .word:hover { background: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
+        
+        /* THE "GOLD SHINY THING" HOVER EFFECT */
+        .word.note-hover { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.2); z-index: 5; }
+        
         .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; }
 
         /* Gutter & Notes */
@@ -48,8 +52,9 @@
         .margin-note { 
             background: white; padding: 15px; border-radius: var(--radius-small); 
             border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            cursor: grab; position: relative; transition: transform 0.2s;
+            cursor: grab; position: relative; transition: transform 0.2s, border-color 0.2s, background 0.2s;
         }
+        .margin-note.active-hover { border-color: var(--oxford-gold); background: #faf9f5; }
         .margin-note.dragging { opacity: 0.5; transform: scale(0.95); }
         .note-header { font-size: 10px; font-weight: bold; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
         .note-body { font-size: 13px; color: var(--oxford-navy-dark); outline: none; min-height: 20px; line-height: 1.4; }
@@ -196,13 +201,11 @@
                 span.id = `w-${wordIndex++}`; 
                 span.innerText = chunk;
                 
-                // LEFT CLICK - Select logic
                 span.onclick = (e) => { 
                     e.stopPropagation(); 
                     handleLeftClick(e, span.id); 
                 };
                 
-                // RIGHT CLICK - Menu logic
                 span.oncontextmenu = (e) => {
                     e.preventDefault();
                     e.stopPropagation();
@@ -216,7 +219,6 @@
 
     // --- LEFT CLICK (SELECTION ENGINE) ---
     function handleLeftClick(event, id) {
-        // 1. If an arrow is pending, connect all selected words to this target
         if (arrowPendingStyle) {
             selectedWords.forEach(startId => {
                 if (startId !== id) {
@@ -229,7 +231,6 @@
             return;
         }
 
-        // 2. Standard Shift/Ctrl Selection Physics
         const currentIdx = parseInt(id.split('-')[1]);
 
         if (event.shiftKey && lastClickedWordId) {
@@ -267,8 +268,6 @@
 
     // --- RIGHT CLICK (MENU TRIGGER) ---
     function handleRightClick(e, id) {
-        // If the user right-clicks a word that isn't already in their selection,
-        // assume they just want to edit that specific word and clear the old selection.
         if (!selectedWords.includes(id)) {
             clearSelection(false);
             selectedWords = [id];
@@ -292,7 +291,7 @@
 
     function getInk() { return document.getElementById('globalColor').value; }
 
-    // --- MARKUP TOOLS (NOW LOOP OVER ALL SELECTED WORDS) ---
+    // --- MARKUP TOOLS ---
     function applyTag(label) {
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
@@ -325,7 +324,6 @@
     }
 
     function startArrow(style) {
-        // Leaves the selection active. The next left-click finishes the arrow.
         arrowPendingStyle = style;
         closeMenu();
     }
@@ -345,17 +343,21 @@
     function addNote() {
         if (selectedWords.length === 0) return;
         
-        // Ensure phrases are ordered chronologically regardless of click order
         const sortedIds = [...selectedWords].sort((a, b) => parseInt(a.split('-')[1]) - parseInt(b.split('-')[1]));
         
-        // Strip out tags so the reference is just clean text
         const targetText = sortedIds.map(id => { 
             const el = document.getElementById(id); 
             const tag = el.querySelector('.grammar-tag'); 
             return tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText; 
         }).join(' ');
 
-        notes.push({ id: Date.now(), ref: targetText.replace(/[.,;!?]/g, ''), text: "Type your analysis here..." });
+        // Saved the wordIds back into the note object!
+        notes.push({ 
+            id: Date.now(), 
+            wordIds: sortedIds, 
+            ref: targetText.replace(/[.,;!?]/g, ''), 
+            text: "Type your analysis here..." 
+        });
         
         renderGutter();
         closeMenu(); clearSelection();
@@ -377,7 +379,26 @@
                 <div class="note-body" contenteditable="true" onblur="updateNoteText(${index}, this.innerText)">${note.text}</div>
             `;
             
-            // Drag and Drop Logic
+            // Hover Magic: Restored and Improved!
+            card.onmouseenter = () => {
+                card.classList.add('active-hover');
+                if (note.wordIds) {
+                    note.wordIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.add('note-hover');
+                    });
+                }
+            };
+            card.onmouseleave = () => {
+                card.classList.remove('active-hover');
+                if (note.wordIds) {
+                    note.wordIds.forEach(id => {
+                        const el = document.getElementById(id);
+                        if (el) el.classList.remove('note-hover');
+                    });
+                }
+            };
+
             card.addEventListener('dragstart', () => card.classList.add('dragging'));
             card.addEventListener('dragend', () => card.classList.remove('dragging'));
             gutter.appendChild(card);
@@ -454,7 +475,7 @@
         return `rgba(${r}, ${g}, ${b}, ${a})`;
     }
     function exportSnapshot() {
-        clearSelection(); // Don't want dashed boxes in the export
+        clearSelection(); 
         html2canvas(workspace, { backgroundColor: '#e4e7ea', scale: 2 }).then(canvasOutput => {
             const link = document.createElement('a');
             link.download = 'syntaxis_snapshot.png';
