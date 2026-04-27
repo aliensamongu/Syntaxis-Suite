@@ -20,56 +20,34 @@
         body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, sans-serif; overflow: hidden; background: var(--bg-main); }
         
         #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; color: var(--oxford-cream); box-shadow: 2px 0 15px rgba(0,0,0,0.15); z-index: 100; }
-        .sidebar-inner { padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .sidebar-inner { padding: 25px; display: flex; flex-direction: column; gap: 15px; overflow-y: auto; }
         
-        /* APP NAVIGATION TABS */
+        /* UNIVERSAL APP NAV */
         .app-nav { display: flex; gap: 5px; margin-bottom: 5px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: var(--oxford-gold); }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
 
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
-        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-top: 10px; }
 
-        textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); padding: 10px; font-size: 13px; background: var(--oxford-cream); height: 80px; resize: none; border: 1px solid var(--oxford-navy-dark); outline: none; }
-        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); width: 100%; transition: 0.2s; }
+        .ui-input { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); padding: 10px; font-size: 13px; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: 1px solid var(--oxford-navy-dark); outline: none; }
+        textarea.ui-input { height: 80px; resize: none; }
+        
+        .btn-row { display: flex; gap: 5px; margin-top: 5px; }
+        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 10px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); flex: 1; transition: 0.2s; text-align: center; }
+        .std-btn:hover { filter: brightness(1.1); }
+        .btn-dark { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
         
         #workspace { flex-grow: 1; position: relative; overflow: auto; padding: 60px; display: flex; gap: 40px; align-items: flex-start; }
-        #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 60px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 24px; line-height: 2.8; position: relative; z-index: 10; min-height: 70vh; }
+        #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 60px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 24px; line-height: 2.8; position: relative; z-index: 10; min-height: 70vh; outline: none; }
         
         .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; position: relative; }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
-        .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; white-space: nowrap; }
-    /* UNIVERSAL APP NAV STYLING */
-        .app-nav { 
-            display: flex; 
-            gap: 5px; 
-            margin-bottom: 20px; 
-            margin-top: 10px; 
-        }
-        .app-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 8px 4px; 
-            font-size: 9px; 
-            color: #F8F5EE; /* Oxford Cream */
-            text-decoration: none; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-            background: #121A2A; /* Oxford Navy Dark */
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 4px; 
-            transition: 0.2s; 
-        }
-        .app-nav a:hover { 
-            border-color: #C5A059; /* Oxford Gold */
-        }
-        .app-nav a.active { 
-            background: #C5A059; /* Oxford Gold */
-            color: #121A2A; /* Oxford Navy Dark */
-            border-color: #C5A059; 
-        }
+
+        #saved-list { margin-top: 10px; display: flex; flex-direction: column; gap: 5px; }
+        .saved-item { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 11px; cursor: pointer; display: flex; justify-content: space-between; }
+        .saved-item:hover { background: rgba(255,255,255,0.05); }
     </style>
 </head>
 <body>
@@ -85,14 +63,28 @@
             <a href="outliner.html">Outline</a>
         </div>
 
+        <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. Rom 1:16)">
+        
+        <div class="btn-row">
+            <button class="std-btn" onclick="saveLocalApp()">Save App</button>
+            <button class="std-btn btn-dark" onclick="downloadJSON()">JSON</button>
+            <button class="std-btn btn-dark" onclick="document.getElementById('fileInput').click()">Load</button>
+            <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadJSON(event)">
+        </div>
+
         <div>
             <h3>Passage Input</h3>
-            <textarea id="rawTextInput" placeholder="Paste Greek or English here..."></textarea>
-            <button class="std-btn" onclick="renderText()" style="margin-top:8px;">Render Canvas</button>
+            <textarea id="rawTextInput" class="ui-input" placeholder="Paste Greek or English here..."></textarea>
+            <button class="std-btn" onclick="renderText()" style="margin-top:8px; width: 100%;">Render Canvas</button>
         </div>
-        
-        <div style="margin-top: auto;">
-            <button class="std-btn" style="background: #27ae60; color: white; margin-bottom:8px;" onclick="exportSnapshot()">📸 Snapshot (PNG)</button>
+
+        <div style="margin-top: 10px;">
+            <button class="std-btn" style="background: #27ae60; color: white; width: 100%;" onclick="exportSnapshot()">📸 Snapshot (PNG)</button>
+        </div>
+
+        <div id="saved-section">
+            <h3>Saved Local Projects</h3>
+            <div id="saved-list"></div>
         </div>
     </div>
 </div>
@@ -103,7 +95,17 @@
 
 <script>
     const canvas = document.getElementById('text-canvas');
-    function renderText() {
+    
+    function renderText(savedHtml = null) {
+        if (savedHtml) {
+            canvas.innerHTML = savedHtml;
+            // Re-attach click listeners to words
+            document.querySelectorAll('.word').forEach(span => {
+                span.onclick = () => span.classList.toggle('selected');
+            });
+            return;
+        }
+
         const raw = document.getElementById('rawTextInput').value;
         canvas.innerHTML = '';
         const words = raw.split(/(\s+)/);
@@ -119,6 +121,69 @@
             }
         });
     }
+
+    // --- SAVE / LOAD LOGIC ---
+
+    function getAppData() {
+        return {
+            projectName: document.getElementById('projectName').value,
+            rawText: document.getElementById('rawTextInput').value,
+            canvasHTML: canvas.innerHTML
+        };
+    }
+
+    function loadAppData(data) {
+        if (data.projectName) document.getElementById('projectName').value = data.projectName;
+        if (data.rawText) document.getElementById('rawTextInput').value = data.rawText;
+        if (data.canvasHTML) renderText(data.canvasHTML);
+    }
+
+    function saveLocalApp() {
+        const name = document.getElementById('projectName').value.trim() || "Untitled Annotation";
+        localStorage.setItem('syntaxis_annotator_' + name, JSON.stringify(getAppData()));
+        updateProjectList();
+    }
+
+    function updateProjectList() {
+        const list = document.getElementById('saved-list');
+        list.innerHTML = '';
+        Object.keys(localStorage).forEach(key => {
+            if (key.startsWith('syntaxis_annotator_')) {
+                const name = key.replace('syntaxis_annotator_', '');
+                const div = document.createElement('div');
+                div.className = 'saved-item';
+                div.innerHTML = `<span>${name}</span><span onclick="deleteProject('${key}', event)" style="color:#e74c3c;">✕</span>`;
+                div.onclick = () => loadAppData(JSON.parse(localStorage.getItem(key)));
+                list.appendChild(div);
+            }
+        });
+    }
+
+    function deleteProject(key, e) {
+        e.stopPropagation();
+        if(confirm("Delete this saved annotation?")) {
+            localStorage.removeItem(key);
+            updateProjectList();
+        }
+    }
+
+    function downloadJSON() {
+        const data = getAppData();
+        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = (data.projectName || "annotation") + ".json";
+        a.click();
+    }
+
+    function loadJSON(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+        const reader = new FileReader();
+        reader.onload = e => loadAppData(JSON.parse(e.target.result));
+        reader.readAsText(file);
+    }
+
     function exportSnapshot() {
         html2canvas(document.getElementById('workspace'), { backgroundColor: '#e4e7ea' }).then(canvasOutput => {
             const link = document.createElement('a');
@@ -127,6 +192,8 @@
             link.click();
         });
     }
+
+    window.addEventListener('DOMContentLoaded', updateProjectList);
 </script>
 </body>
 </html>
