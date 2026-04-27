@@ -153,6 +153,36 @@
         
         .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
         .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
+    /* UNIVERSAL APP NAV STYLING */
+        .app-nav { 
+            display: flex; 
+            gap: 5px; 
+            margin-bottom: 20px; 
+            margin-top: 10px; 
+        }
+        .app-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 8px 4px; 
+            font-size: 9px; 
+            color: #F8F5EE; /* Oxford Cream */
+            text-decoration: none; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+            background: #121A2A; /* Oxford Navy Dark */
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 4px; 
+            transition: 0.2s; 
+        }
+        .app-nav a:hover { 
+            border-color: #C5A059; /* Oxford Gold */
+        }
+        .app-nav a.active { 
+            background: #C5A059; /* Oxford Gold */
+            color: #121A2A; /* Oxford Navy Dark */
+            border-color: #C5A059; 
+        }
     </style>
 </head>
 <body>
