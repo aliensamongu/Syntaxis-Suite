@@ -28,6 +28,13 @@
             border-right: 1px solid var(--oxford-navy-dark); overflow-y: auto;
         }
 
+        /* UNIVERSAL APP NAV Styling */
+        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: var(--oxford-gold); }
+        .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
+
+        h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 25px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         
         .ui-input {
@@ -85,6 +92,14 @@
 <body>
 
 <div id="sidebar">
+    <h2>Σyntaxis</h2>
+
+    <div class="app-nav">
+        <a href="annotator.html">Annotate</a>
+        <a href="app.html">Diagram</a>
+        <a href="interpreter.html">Interpret</a>
+        <a href="outliner.html" class="active">Outline</a>
+    </div>
     
     <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. 1 Peter 3)">
     
