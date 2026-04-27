@@ -97,6 +97,36 @@
         .matrix-ref { font-weight: bold; color: var(--rustic-orange); white-space: nowrap; }
         .matrix-text { font-family: Georgia, serif; font-style: italic; }
         .matrix-notes { line-height: 1.4; }
+    /* UNIVERSAL APP NAV STYLING */
+        .app-nav { 
+            display: flex; 
+            gap: 5px; 
+            margin-bottom: 20px; 
+            margin-top: 10px; 
+        }
+        .app-nav a { 
+            flex: 1; 
+            text-align: center; 
+            padding: 8px 4px; 
+            font-size: 9px; 
+            color: #F8F5EE; /* Oxford Cream */
+            text-decoration: none; 
+            text-transform: uppercase; 
+            font-weight: bold; 
+            letter-spacing: 1px; 
+            background: #121A2A; /* Oxford Navy Dark */
+            border: 1px solid rgba(255,255,255,0.05); 
+            border-radius: 4px; 
+            transition: 0.2s; 
+        }
+        .app-nav a:hover { 
+            border-color: #C5A059; /* Oxford Gold */
+        }
+        .app-nav a.active { 
+            background: #C5A059; /* Oxford Gold */
+            color: #121A2A; /* Oxford Navy Dark */
+            border-color: #C5A059; 
+        }
     </style>
 </head>
 <body id="app-body">
