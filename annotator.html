@@ -2,11 +2,11 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Annotator | Master Editor V4.1</title>
+    <title>Σyntaxis Annotator | Master Editor V5</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
-            --sidebar-width: 300px;
+            --sidebar-width: 320px;
             --gutter-width: 340px;
             --bg-main: #e4e7ea;
             --oxford-navy: #1B263B;
@@ -23,15 +23,34 @@
         /* Sidebar */
         #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; color: var(--oxford-cream); box-shadow: 2px 0 15px rgba(0,0,0,0.15); z-index: 100; }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; gap: 20px; overflow-y: auto; }
+        .sidebar-inner::-webkit-scrollbar { width: 6px; }
+        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 
-        .master-palette { background: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius-small); display: flex; align-items: center; gap: 12px; border: 1px solid rgba(255,255,255,0.05); }
-        #globalColor { width: 40px; height: 40px; border: none; background: transparent; cursor: pointer; border-radius: 50%; }
-
-        textarea { width: 100%; border-radius: var(--radius-small); padding: 10px; font-size: 13px; background: var(--oxford-cream); height: 80px; resize: none; border: 1px solid var(--oxford-navy-dark); outline: none; }
+        textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); padding: 10px; font-size: 13px; background: var(--oxford-cream); height: 80px; resize: none; border: 1px solid var(--oxford-navy-dark); outline: none; }
         .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); width: 100%; transition: 0.2s; }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        /* Project Palette UI */
+        .swatch { display: flex; align-items: center; gap: 10px; padding: 8px; background: rgba(0,0,0,0.2); border-radius: 4px; cursor: pointer; border: 1px solid transparent; transition: 0.1s; }
+        .swatch.active { border-color: var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
+        .swatch-color { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; border: 1px solid rgba(255,255,255,0.3); }
+        .swatch-name { font-size: 11px; flex-grow: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; color: var(--oxford-cream); }
+        .swatch-delete { background: none; border: none; color: var(--oxford-crimson); cursor: pointer; font-size: 14px; padding: 0; line-height: 1; }
+
+        /* X-Ray UI */
+        .btn-group { display: flex; gap: 5px; flex-wrap: wrap; }
+        .btn-group button { flex: 1 1 30%; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: 4px; cursor: pointer; font-size: 10px; font-weight: bold; transition: 0.1s; }
+        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
+        
+        /* X-Ray Logic Classes */
+        .hide-tags .grammar-tag { display: none !important; }
+        .hide-arrows #svg-layer { display: none !important; }
+        .hide-gutter #gutter { display: none !important; }
+        .hide-hl .word { background-color: transparent !important; }
+        .hide-ul .word { text-decoration: none !important; }
 
         /* Workspace */
         #workspace { flex-grow: 1; position: relative; overflow: auto; padding: 60px; display: flex; gap: 40px; align-items: flex-start; scroll-behavior: smooth; }
@@ -41,19 +60,13 @@
         .word { display: inline-block; padding: 0 4px; border-radius: 4px; cursor: pointer; transition: 0.2s; position: relative; }
         .word:hover { background: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.1); }
-        
-        /* THE "GOLD SHINY THING" HOVER EFFECT */
         .word.note-hover { outline: 2px dashed var(--oxford-gold); background: rgba(197, 160, 89, 0.2); z-index: 5; }
         
-        .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; }
+        .grammar-tag { position: absolute; top: -14px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: sans-serif; font-weight: 800; color: white; padding: 1px 4px; border-radius: 3px; line-height: 1; pointer-events: none; white-space: nowrap; }
 
         /* Gutter & Notes */
         #gutter { width: var(--gutter-width); flex-shrink: 0; display: flex; flex-direction: column; gap: 12px; }
-        .margin-note { 
-            background: white; padding: 15px; border-radius: var(--radius-small); 
-            border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05);
-            cursor: grab; position: relative; transition: transform 0.2s, border-color 0.2s, background 0.2s;
-        }
+        .margin-note { background: white; padding: 15px; border-radius: var(--radius-small); border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05); cursor: grab; position: relative; transition: transform 0.2s, border-color 0.2s, background 0.2s; }
         .margin-note.active-hover { border-color: var(--oxford-gold); background: #faf9f5; }
         .margin-note.dragging { opacity: 0.5; transform: scale(0.95); }
         .note-header { font-size: 10px; font-weight: bold; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 8px; display: flex; justify-content: space-between; align-items: center; }
@@ -61,11 +74,7 @@
         .drag-handle { cursor: grab; font-size: 14px; color: #ccc; margin-right: 8px; }
 
         /* Context Menu */
-        #context-menu {
-            position: absolute; display: none; background: var(--oxford-navy-dark); color: white;
-            padding: 6px; border-radius: var(--radius-small); box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-            z-index: 1000; font-size: 12px; min-width: 140px; border: 1px solid rgba(255,255,255,0.1);
-        }
+        #context-menu { position: absolute; display: none; background: var(--oxford-navy-dark); color: white; padding: 6px; border-radius: var(--radius-small); box-shadow: 0 10px 30px rgba(0,0,0,0.4); z-index: 1000; font-size: 12px; min-width: 140px; border: 1px solid rgba(255,255,255,0.1); }
         .menu-item { padding: 8px 12px; cursor: pointer; border-radius: 4px; display: flex; justify-content: space-between; align-items: center; position: relative; }
         .menu-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); }
         .submenu { position: absolute; left: 100%; top: 0; background: var(--oxford-navy-dark); border-radius: var(--radius-small); display: none; min-width: 120px; border: 1px solid rgba(255,255,255,0.1); padding: 4px; color: white; }
@@ -74,17 +83,30 @@
         #svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
     </style>
 </head>
-<body>
+<body id="app-body">
 
 <div id="sidebar">
     <div class="sidebar-inner">
         <h2>Σyntaxis</h2>
         
-        <div class="master-palette">
-            <input type="color" id="globalColor" value="#8C1C13">
-            <div>
-                <h3 style="border:none; padding:0;">Ink Color</h3>
-                <div style="font-size: 10px; opacity: 0.7;">Applies to all new marks</div>
+        <div style="background: rgba(0,0,0,0.2); padding: 15px; border-radius: var(--radius-small);">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                <h3 style="margin:0; border:none; padding:0;">Project Palette</h3>
+                <button class="std-btn" style="width: auto; padding: 4px 8px; font-size: 10px; background: rgba(255,255,255,0.1); color: var(--oxford-cream);" onclick="addNewSwatch()">+ Add Label</button>
+                <input type="color" id="newSwatchColor" style="display:none;" onchange="handleNewSwatchColor(event)">
+            </div>
+            <div id="palette-list" style="display: flex; flex-direction: column; gap: 8px;">
+                </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>Visibility (X-Ray)</h3>
+            <div class="btn-group">
+                <button id="tog-tags" class="active" onclick="toggleXRay('tags')">Tags</button>
+                <button id="tog-arrows" class="active" onclick="toggleXRay('arrows')">Arrows</button>
+                <button id="tog-hl" class="active" onclick="toggleXRay('hl')">Highlight</button>
+                <button id="tog-ul" class="active" onclick="toggleXRay('ul')">Underline</button>
+                <button id="tog-gutter" class="active" onclick="toggleXRay('gutter')">Gutter</button>
             </div>
         </div>
 
@@ -98,13 +120,13 @@
             <strong>Pro Tip:</strong><br>
             • <strong>Left-Click:</strong> Select word<br>
             • <strong>Shift+Click:</strong> Select phrase<br>
-            • <strong>Cmd/Ctrl+Click:</strong> Multi-select<br>
+            • <strong>Cmd+Click:</strong> Multi-select<br>
             • <strong>Right-Click:</strong> Open Tools Menu
         </div>
 
         <div style="margin-top: auto;">
             <button class="std-btn" style="background: #27ae60; color: white; margin-bottom:8px;" onclick="exportSnapshot()">📸 Snapshot (PNG)</button>
-            <button class="std-btn" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2);" onclick="location.reload()">Reset Canvas</button>
+            <button class="std-btn" style="background: transparent; color: white; border: 1px solid rgba(255,255,255,0.2);" onclick="resetProject()">Reset Project</button>
         </div>
     </div>
 </div>
@@ -119,6 +141,10 @@
 </div>
 
 <div id="context-menu" onclick="event.stopPropagation()">
+    <div class="menu-item" onclick="applyTag(getActiveLabel())">
+        Tag: <span id="dynamic-tag-name" style="color:var(--oxford-gold); font-weight:bold; margin-left:5px;">Label</span>
+    </div>
+    
     <div class="menu-item">Grammar Tag ➔
         <div class="submenu">
             <div class="menu-item" onclick="applyTag('SUBJ')">Subject</div>
@@ -168,7 +194,87 @@
     let connections = [];
     let notes = [];
 
-    // Close menu when clicking empty workspace
+    // --- PROJECT PALETTE ENGINE ---
+    let projectPalette = [];
+    let activeColor = '';
+
+    function initDefaultPalette() {
+        projectPalette = [
+            { id: 'p1', color: '#8C1C13', name: 'Primary (Red)' },
+            { id: 'p2', color: '#1B263B', name: 'Secondary (Navy)' },
+            { id: 'p3', color: '#C5A059', name: 'Accent (Gold)' }
+        ];
+        activeColor = '#8C1C13';
+        renderPalette();
+    }
+
+    function renderPalette() {
+        const list = document.getElementById('palette-list');
+        list.innerHTML = '';
+        projectPalette.forEach(sw => {
+            const isActive = activeColor === sw.color;
+            list.innerHTML += `
+                <div class="swatch ${isActive ? 'active' : ''}" onclick="setActiveColor('${sw.color}')">
+                    <div class="swatch-color" style="background: ${sw.color};"></div>
+                    <div class="swatch-name">${sw.name}</div>
+                    ${projectPalette.length > 1 ? `<button class="swatch-delete" onclick="deleteSwatch('${sw.id}', event)">&times;</button>` : ''}
+                </div>
+            `;
+        });
+    }
+
+    function setActiveColor(color) {
+        activeColor = color;
+        renderPalette();
+    }
+
+    function addNewSwatch() { document.getElementById('newSwatchColor').click(); }
+    
+    function handleNewSwatchColor(e) {
+        const name = prompt("Enter a label for this color (e.g. 'God's Sovereignty'):");
+        if (name && name.trim() !== '') {
+            const color = e.target.value;
+            projectPalette.push({ id: 'p' + Date.now(), color, name });
+            activeColor = color;
+            renderPalette();
+        }
+        // Reset the input value so the change event fires even if they pick the same color again
+        document.getElementById('newSwatchColor').value = '#000000';
+    }
+
+    function deleteSwatch(id, e) {
+        e.stopPropagation();
+        projectPalette = projectPalette.filter(sw => sw.id !== id);
+        if(!projectPalette.some(sw => sw.color === activeColor)) {
+            activeColor = projectPalette[0].color;
+        }
+        renderPalette();
+    }
+
+    function getActiveLabel() {
+        const sw = projectPalette.find(sw => sw.color === activeColor);
+        return sw ? sw.name : 'TAG';
+    }
+
+    // Initialize palette on load
+    window.addEventListener('DOMContentLoaded', initDefaultPalette);
+
+
+    // --- X-RAY TOGGLES ---
+    function toggleXRay(feature) {
+        const btn = document.getElementById('tog-' + feature);
+        const isActive = btn.classList.contains('active');
+        if (isActive) {
+            btn.classList.remove('active');
+            document.body.classList.add('hide-' + feature);
+        } else {
+            btn.classList.add('active');
+            document.body.classList.remove('hide-' + feature);
+        }
+    }
+
+
+    // --- CORE RENDERING ---
     workspace.onclick = (e) => {
         if (e.target === workspace || e.target === canvas) {
             clearSelection();
@@ -182,7 +288,6 @@
         }
     };
 
-    // --- CORE RENDERING ---
     function renderText() {
         const raw = document.getElementById('rawTextInput').value;
         canvas.innerHTML = ''; notes = []; connections = [];
@@ -222,7 +327,7 @@
         if (arrowPendingStyle) {
             selectedWords.forEach(startId => {
                 if (startId !== id) {
-                    connections.push({ start: startId, end: id, style: arrowPendingStyle, color: getInk() });
+                    connections.push({ start: startId, end: id, style: arrowPendingStyle, color: activeColor });
                 }
             });
             drawArrows();
@@ -275,6 +380,9 @@
             lastClickedWordId = id;
         }
 
+        // Dynamically update the Context Menu to show the user's active label!
+        document.getElementById('dynamic-tag-name').innerText = getActiveLabel();
+
         menu.style.display = 'block';
         menu.style.left = `${e.pageX}px`;
         menu.style.top = `${e.pageY - 20}px`;
@@ -289,7 +397,6 @@
         if (resetLastClicked) lastClickedWordId = null;
     }
 
-    function getInk() { return document.getElementById('globalColor').value; }
 
     // --- MARKUP TOOLS ---
     function applyTag(label) {
@@ -298,14 +405,14 @@
             const existing = el.querySelector('.grammar-tag');
             if (existing) existing.remove();
             const tag = document.createElement('span');
-            tag.className = 'grammar-tag'; tag.style.background = getInk(); tag.innerText = label;
+            tag.className = 'grammar-tag'; tag.style.background = activeColor; tag.innerText = label;
             el.appendChild(tag);
         });
         closeMenu(); clearSelection();
     }
 
     function applyHighlight(type) {
-        const bg = hexToRgba(getInk(), type === 'box' ? 0.3 : 0.15);
+        const bg = hexToRgba(activeColor, type === 'box' ? 0.3 : 0.15);
         selectedWords.forEach(id => {
             document.getElementById(id).style.backgroundColor = bg;
         });
@@ -313,11 +420,10 @@
     }
 
     function applyUnderline(style) {
-        const color = getInk();
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
             el.style.textDecoration = `underline ${style}`;
-            el.style.textDecorationColor = color;
+            el.style.textDecorationColor = activeColor;
             el.style.textUnderlineOffset = "8px";
         });
         closeMenu(); clearSelection();
@@ -351,7 +457,6 @@
             return tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText; 
         }).join(' ');
 
-        // Saved the wordIds back into the note object!
         notes.push({ 
             id: Date.now(), 
             wordIds: sortedIds, 
@@ -379,7 +484,6 @@
                 <div class="note-body" contenteditable="true" onblur="updateNoteText(${index}, this.innerText)">${note.text}</div>
             `;
             
-            // Hover Magic: Restored and Improved!
             card.onmouseenter = () => {
                 card.classList.add('active-hover');
                 if (note.wordIds) {
@@ -468,12 +572,30 @@
         });
     }
 
-    // --- HELPERS ---
+    // --- SYSTEM LOGIC ---
+    function resetProject() {
+        if(confirm("Are you sure? This will wipe the canvas and reset your color palette.")) {
+            document.getElementById('rawTextInput').value = '';
+            canvas.innerHTML = ''; connections = []; notes = [];
+            drawArrows(); renderGutter();
+            
+            // Reset X-Rays
+            ['tags','arrows','hl','ul','gutter'].forEach(f => {
+                document.getElementById('tog-'+f).classList.add('active');
+                document.body.classList.remove('hide-'+f);
+            });
+            
+            initDefaultPalette();
+        }
+    }
+
     function closeMenu() { menu.style.display = 'none'; }
+    
     function hexToRgba(hex, a) {
         const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
         return `rgba(${r}, ${g}, ${b}, ${a})`;
     }
+    
     function exportSnapshot() {
         clearSelection(); 
         html2canvas(workspace, { backgroundColor: '#e4e7ea', scale: 2 }).then(canvasOutput => {
@@ -483,6 +605,7 @@
             link.click();
         });
     }
+    
     workspace.onscroll = drawArrows;
     window.onresize = drawArrows;
 </script>
