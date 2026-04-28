@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Annotator | Master Editor</title>
+    <title>Trinitas Markup | Master Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -67,6 +67,12 @@
         .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
         .btn-group button:hover:not(.active) { background: rgba(255,255,255,0.1); }
 
+        /* Navigation Tabs */
+        .app-nav { display: flex; gap: 5px; margin-bottom: 5px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: var(--oxford-gold); }
+        .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
+
         /* Label Styles */
         .saved-item { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 12px; cursor: pointer; transition: 0.2s; margin-top: 5px; display: flex; justify-content: space-between; align-items: center; }
         .saved-item:hover { background: rgba(255,255,255,0.05); }
@@ -115,6 +121,13 @@
 <div id="sidebar">
     <div class="sidebar-inner">
         <h2>Σyntaxis <span style="font-weight: 300;">Markup</span></h2>
+        
+        <div class="app-nav">
+            <a href="annotator.html" class="active">Annotate</a>
+            <a href="app.html">Diagram</a>
+            <a href="interpreter.html">Interpret</a>
+            <a href="outliner.html">Outline</a>
+        </div>
         
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. Rom 1:16)">
@@ -373,7 +386,6 @@
     }
 
     // --- MARKUP ENGINE ---
-    // Helper function for randomness
     function getRandomInt(min, max) {
         return Math.floor(Math.random() * (max - min + 1)) + min;
     }
@@ -389,29 +401,20 @@
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
             if (type === 'highlight') {
-                // Remove existing transform first so they don't stack
                 el.style.transform = ''; 
                 
-                // NEW NATURAL HIGHLIGHTER LOOK
-                el.style.backgroundColor = hexToRgba(color, 0.5); // Richer highlight
-                el.style.borderBottom = ''; // Remove the old computerized border
+                el.style.backgroundColor = hexToRgba(color, 0.5);
+                el.style.borderBottom = ''; 
                 
-                // 1. Imperfect Shapes (irregular rounding)
                 el.style.borderRadius = '3px 8px / 8px 3px';
-                
-                // 2. Softer Edges (simulating ink soak/bleed)
                 el.style.boxShadow = `0 0 4px ${hexToRgba(color, 0.4)}`;
                 
-                // 3. Human Imperfection (random slight rotate and skew)
-                // Need display inline-block for transform to work effectively
                 el.style.display = 'inline-block';
-                // Rotate between -0.5 and 0.5 degrees. Skew between -1 and 1 degrees.
                 const rot = getRandomInt(-5, 5) / 10;
                 const skew = getRandomInt(-10, 10) / 10;
                 el.style.transform = `rotate(${rot}deg) skew(${skew}deg)`;
 
             } else if (type === 'underline') {
-                // Reset highlight styles if we are underlining instead
                 el.style.transform = ''; el.style.boxShadow = ''; el.style.backgroundColor = '';
 
                 const existingTag = el.querySelector('.grammar-tag');
@@ -456,7 +459,6 @@
         if (selectedWords.length === 0) return;
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
-            // Clear all highlight complexity
             el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
             
             const existingTag = el.querySelector('.grammar-tag');
@@ -472,7 +474,6 @@
     function clearAllWorkspace() {
         if(confirm("Clear all formatting, notes, and arrows?")) {
             document.querySelectorAll('.word').forEach(el => {
-                // Clear all highlight complexity
                 el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
                 el.style = '';
                 const tag = el.querySelector('.grammar-tag');
@@ -667,8 +668,8 @@
             projectName: document.getElementById('projectName').value,
             rawText: document.getElementById('rawTextInput').value,
             canvasHTML: canvas.innerHTML,
-            savedNotes: notes,             // Permanently bundles notes!
-            savedConnections: connections  // Permanently bundles arrows!
+            savedNotes: notes,             
+            savedConnections: connections  
         };
     }
 
