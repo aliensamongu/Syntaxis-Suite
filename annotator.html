@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Trinitas Markup | Master Editor</title>
+    <title>Σyntaxis Annotator | Master Editor</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -88,7 +88,7 @@
         #text-canvas.spacing-loose { line-height: 2.8; }
         #text-canvas.spacing-double { line-height: 4.0; }
 
-        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, color 0.2s; position: relative; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, color 0.2s, transform 0.2s; position: relative; }
         .word:hover { background-color: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
 
@@ -373,6 +373,11 @@
     }
 
     // --- MARKUP ENGINE ---
+    // Helper function for randomness
+    function getRandomInt(min, max) {
+        return Math.floor(Math.random() * (max - min + 1)) + min;
+    }
+
     function applyMarkup(type) {
         if (selectedWords.length === 0) {
             alert("Please click to select some words in the canvas first!");
@@ -384,9 +389,31 @@
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
             if (type === 'highlight') {
-                el.style.backgroundColor = hexToRgba(color, 0.2);
-                el.style.borderBottom = `2px solid ${color}`;
+                // Remove existing transform first so they don't stack
+                el.style.transform = ''; 
+                
+                // NEW NATURAL HIGHLIGHTER LOOK
+                el.style.backgroundColor = hexToRgba(color, 0.5); // Richer highlight
+                el.style.borderBottom = ''; // Remove the old computerized border
+                
+                // 1. Imperfect Shapes (irregular rounding)
+                el.style.borderRadius = '3px 8px / 8px 3px';
+                
+                // 2. Softer Edges (simulating ink soak/bleed)
+                el.style.boxShadow = `0 0 4px ${hexToRgba(color, 0.4)}`;
+                
+                // 3. Human Imperfection (random slight rotate and skew)
+                // Need display inline-block for transform to work effectively
+                el.style.display = 'inline-block';
+                // Rotate between -0.5 and 0.5 degrees. Skew between -1 and 1 degrees.
+                const rot = getRandomInt(-5, 5) / 10;
+                const skew = getRandomInt(-10, 10) / 10;
+                el.style.transform = `rotate(${rot}deg) skew(${skew}deg)`;
+
             } else if (type === 'underline') {
+                // Reset highlight styles if we are underlining instead
+                el.style.transform = ''; el.style.boxShadow = ''; el.style.backgroundColor = '';
+
                 const existingTag = el.querySelector('.grammar-tag');
                 if(existingTag) existingTag.remove(); 
 
@@ -429,6 +456,9 @@
         if (selectedWords.length === 0) return;
         selectedWords.forEach(id => {
             const el = document.getElementById(id);
+            // Clear all highlight complexity
+            el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
+            
             const existingTag = el.querySelector('.grammar-tag');
             if(existingTag) existingTag.remove(); 
             
@@ -442,6 +472,8 @@
     function clearAllWorkspace() {
         if(confirm("Clear all formatting, notes, and arrows?")) {
             document.querySelectorAll('.word').forEach(el => {
+                // Clear all highlight complexity
+                el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
                 el.style = '';
                 const tag = el.querySelector('.grammar-tag');
                 el.innerHTML = tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText.trim();
