@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Outliner | Complete Workflow</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
     <style>
         :root {
             --oxford-navy: #1B263B;
@@ -52,7 +53,7 @@
             cursor: pointer; flex-grow: 1; transition: 0.2s;
         }
         .btn-dark { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.2); }
-        .btn-green { background: #5a9e69; color: white; width: 100%; margin-bottom: 20px; }
+        .btn-green { background: #5a9e69; color: white; width: 100%; }
         .btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
         textarea.ui-input { resize: vertical; min-height: 80px; }
@@ -60,6 +61,11 @@
 
         /* Outline List */
         #outline-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
+        
+        /* ADDED: Styling for new Parent/Child grouping */
+        .point-group { display: flex; flex-direction: column; gap: 4px; }
+        .sub-points-container { display: flex; flex-direction: column; gap: 4px; }
+
         .point-card { background: var(--oxford-cream); color: var(--oxford-navy-dark); border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px; cursor: grab; }
         .point-card:active { cursor: grabbing; }
         .drag-handle { color: #aaa; cursor: grab; font-size: 18px; }
@@ -78,7 +84,8 @@
         .tool-btn { background: var(--bg-main); border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-family: serif; }
         .tool-select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
 
-        #document-wrapper { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; }
+        /* FIX: Added align-items: flex-start; so the editor can grow infinitely downwards */
+        #document-wrapper { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; }
         
         #sermon-editor {
             width: 100%; max-width: 850px; min-height: 1000px; background: white;
@@ -87,36 +94,6 @@
             font-size: 16px; line-height: 1.8; color: #333; outline: none;
         }
 
-/* UNIVERSAL APP NAV STYLING */
-        .app-nav { 
-            display: flex; 
-            gap: 5px; 
-            margin-bottom: 20px; 
-            margin-top: 10px; 
-        }
-        .app-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 8px 4px; 
-            font-size: 9px; 
-            color: #F8F5EE; /* Oxford Cream */
-            text-decoration: none; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-            background: #121A2A; /* Oxford Navy Dark */
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 4px; 
-            transition: 0.2s; 
-        }
-        .app-nav a:hover { 
-            border-color: #C5A059; /* Oxford Gold */
-        }
-        .app-nav a.active { 
-            background: #C5A059; /* Oxford Gold */
-            color: #121A2A; /* Oxford Navy Dark */
-            border-color: #C5A059; 
-        }    
     </style>
 </head>
 <body>
@@ -139,7 +116,11 @@
         <button class="btn btn-dark" onclick="document.getElementById('fileInput').click()">⬆ Load</button>
         <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadJSON(event)">
     </div>
-    <button class="btn btn-green" onclick="takeSnapshot()">📸 Snapshot (PNG)</button>
+    
+    <div style="display: flex; gap: 8px; margin-bottom: 20px;">
+        <button class="btn btn-green" onclick="takeSnapshot()">📸 PNG</button>
+        <button class="btn" style="background: #e74c3c; color: white;" onclick="exportPDF()">📄 Export PDF</button>
+    </div>
 
     <h3>1. Proposition Builder</h3>
     <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Define the core meaning of the passage.</div>
@@ -196,35 +177,101 @@
         document.getElementById('sermon-editor').focus();
     }
 
-    // 2. OUTLINE BUILDER
+    // 2. OUTLINE BUILDER (Rewritten for Parent/Child Drag & Drop)
     const outlineList = document.getElementById('outline-list');
-    let draggedItem = null;
+    let draggedGroup = null;
+    let draggedSub = null;
 
     function addPoint(type, value = '') {
-        const card = document.createElement('div');
-        card.className = type === 'sub' ? 'point-card sub-point' : 'point-card';
-        card.draggable = true;
+        if (type === 'main') {
+            const group = document.createElement('div');
+            group.className = 'point-group';
+            group.draggable = true;
 
-        card.innerHTML = `
-            <span class="drag-handle">⋮⋮</span>
-            <input type="text" class="point-input" placeholder="${type === 'main' ? 'Main Point...' : 'Sub Point...'}" value="${value}">
-            <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
-        `;
+            const card = document.createElement('div');
+            card.className = 'point-card main-point';
+            card.innerHTML = `
+                <span class="drag-handle">⋮⋮</span>
+                <input type="text" class="point-input" placeholder="Main Point..." value="${value}">
+                <button class="delete-btn" onclick="this.closest('.point-group').remove()">✕</button>
+            `;
+            
+            const subContainer = document.createElement('div');
+            subContainer.className = 'sub-points-container';
+            
+            // --- MAIN POINT GROUP DRAG LOGIC ---
+            group.addEventListener('dragstart', function(e) {
+                if(e.target !== group) return; // Prevent subpoints from dragging the parent
+                draggedGroup = group;
+                setTimeout(() => group.style.opacity = '0.5', 0);
+                e.stopPropagation();
+            });
+            group.addEventListener('dragend', function(e) {
+                if(e.target !== group) return;
+                setTimeout(() => { group.style.opacity = '1'; draggedGroup = null; }, 0);
+                e.stopPropagation();
+            });
+            group.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+            group.addEventListener('drop', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                // Handling dropping a Main Point
+                if (draggedGroup && draggedGroup !== group) {
+                    const rect = group.getBoundingClientRect();
+                    const dropAbove = e.clientY < rect.top + rect.height / 2;
+                    if (dropAbove) outlineList.insertBefore(draggedGroup, group);
+                    else outlineList.insertBefore(draggedGroup, group.nextSibling);
+                }
+                // Handling dropping a Sub Point INTO a Main Point's territory
+                if (draggedSub) {
+                    subContainer.appendChild(draggedSub);
+                }
+            });
 
-        card.addEventListener('dragstart', function() { draggedItem = card; setTimeout(() => card.style.opacity = '0.5', 0); });
-        card.addEventListener('dragend', function() { setTimeout(() => { card.style.opacity = '1'; draggedItem = null; }, 0); });
-        card.addEventListener('dragover', e => e.preventDefault());
-        card.addEventListener('drop', function(e) {
-            e.preventDefault();
-            if (card !== draggedItem) {
-                const rect = card.getBoundingClientRect();
-                const dropAbove = e.clientY < rect.top + rect.height / 2;
-                if (dropAbove) outlineList.insertBefore(draggedItem, card);
-                else outlineList.insertBefore(draggedItem, card.nextSibling);
+            group.appendChild(card);
+            group.appendChild(subContainer);
+            outlineList.appendChild(group);
+
+        } else {
+            // SUB POINT LOGIC
+            const groups = document.querySelectorAll('.point-group');
+            if (groups.length === 0) {
+                addPoint('main', 'Main Point'); // Auto-create a parent if none exists
             }
-        });
+            const lastGroup = document.querySelectorAll('.point-group')[document.querySelectorAll('.point-group').length - 1];
+            const subContainer = lastGroup.querySelector('.sub-points-container');
 
-        outlineList.appendChild(card);
+            const card = document.createElement('div');
+            card.className = 'point-card sub-point';
+            card.draggable = true;
+            card.innerHTML = `
+                <span class="drag-handle">⋮⋮</span>
+                <input type="text" class="point-input" placeholder="Sub Point..." value="${value}">
+                <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
+            `;
+
+            // --- SUB POINT DRAG LOGIC ---
+            card.addEventListener('dragstart', function(e) {
+                draggedSub = card;
+                setTimeout(() => card.style.opacity = '0.5', 0);
+                e.stopPropagation(); // Stop the parent group from firing its drag event!
+            });
+            card.addEventListener('dragend', function(e) {
+                setTimeout(() => { card.style.opacity = '1'; draggedSub = null; }, 0);
+                e.stopPropagation();
+            });
+            card.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
+            card.addEventListener('drop', function(e) {
+                e.preventDefault(); e.stopPropagation();
+                if (draggedSub && draggedSub !== card) {
+                    const rect = card.getBoundingClientRect();
+                    const dropAbove = e.clientY < rect.top + rect.height / 2;
+                    if (dropAbove) card.parentElement.insertBefore(draggedSub, card);
+                    else card.parentElement.insertBefore(draggedSub, card.nextSibling);
+                }
+            });
+
+            subContainer.appendChild(card);
+        }
     }
 
     // 3. THE BRIDGE
@@ -341,6 +388,19 @@
             a.download = (document.getElementById('projectName').value || "Sermon_Document") + ".png";
             a.click();
         });
+    }
+
+    // NEW: PDF Export logic
+    function exportPDF() {
+        const editor = document.getElementById('sermon-editor');
+        const opt = {
+            margin:       0.5,
+            filename:     (document.getElementById('projectName').value || "Sermon_Document") + '.pdf',
+            image:        { type: 'jpeg', quality: 0.98 },
+            html2canvas:  { scale: 2 },
+            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
+        };
+        html2pdf().set(opt).from(editor).save();
     }
 
     // Initialize list on load
