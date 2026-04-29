@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Interpreter | Passage Engine</title>
+    <title>Σyntaxis Interpreter | Multi-Engine</title>
     
     <script src="strongs-greek-dictionary.js"></script>
     
@@ -37,12 +37,12 @@
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
 
-        input[type="text"], textarea {
+        input[type="text"], textarea, select {
             width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
             border: 1px solid var(--oxford-navy-dark); padding: 10px;
             font-family: inherit; font-size: 13px; background: var(--oxford-cream); outline: none;
         }
-        input[type="text"]:focus { border-color: var(--oxford-gold); }
+        input[type="text"]:focus, select:focus { border-color: var(--oxford-gold); }
         textarea { height: 100px; resize: vertical; }
 
         .std-btn {
@@ -84,17 +84,12 @@
         .strongs-btn { background: var(--oxford-gold); color: var(--oxford-navy-dark); border: none; border-radius: 4px; padding: 0 15px; font-weight: bold; cursor: pointer; text-transform: uppercase; font-size: 11px; }
 
         .api-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
-        .loader { font-size: 14px; color: #666; text-align: center; display: none; font-style: italic; }
-
         .api-word { font-family: Georgia, serif; font-size: 32px; color: var(--oxford-navy); margin: 0 0 5px 0; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; display: flex; justify-content: space-between; align-items: baseline; }
         .strongs-tag { font-family: -apple-system, sans-serif; font-size: 12px; font-weight: bold; color: var(--oxford-crimson); background: rgba(140, 28, 19, 0.1); padding: 3px 8px; border-radius: 12px; letter-spacing: 1px;}
         .api-phonetic { font-size: 14px; color: #666; margin-bottom: 20px; font-family: monospace; }
         .api-pos { font-size: 11px; text-transform: uppercase; font-weight: bold; color: var(--oxford-crimson); margin-top: 15px; letter-spacing: 1px; }
         .api-def { font-size: 15px; line-height: 1.5; color: #333; margin: 5px 0 15px 0; padding-left: 10px; border-left: 3px solid var(--bg-main); }
         .empty-state { text-align: center; color: #aaa; font-style: italic; margin-top: 50px; }
-
-        .status-dot { display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--oxford-crimson); margin-right: 5px; }
-        .status-dot.active { background: #5a9e69; }
     </style>
 </head>
 <body>
@@ -103,11 +98,15 @@
     <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
     
     <div class="panel-box">
-        <h3 style="display: flex; justify-content: space-between; align-items: center;">
-            Option A: ASV Data Core
-            <span id="db-status" style="color: #aaa; font-weight: normal; text-transform: none;"><span class="status-dot active"></span>Ready</span>
-        </h3>
+        <h3>Option A: Library Search</h3>
         
+        <select id="versionSelect" style="margin-top: 10px; font-weight: bold; cursor: pointer;">
+            <option value="asv">ASV (American Standard)</option>
+            <option value="kjv">KJV (King James)</option>
+            <option value="web">WEB (World English)</option>
+            <option value="bsb">BSB (Berean Standard)</option>
+        </select>
+
         <input type="text" id="verseReference" placeholder="e.g. gen 1:1-5" style="margin-top: 10px;">
         <button class="std-btn" onclick="fetchVerse()">Fetch Passage</button>
     </div>
@@ -123,7 +122,7 @@
 
 <div id="workspace">
     <div id="text-canvas">
-        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Type a reference like "gen 1:1-5" on the left and fetch a passage!</span>
+        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a translation on the left, type a reference, and fetch!</span>
     </div>
 </div>
 
@@ -145,24 +144,24 @@
     const apiResults = document.getElementById('api-results');
     let lastSelected = null;
 
-    // --- NEW JSON ASV ENGINE VARIABLES ---
-    let bibleCache = null;
+    // --- NEW MULTI-CACHE SYSTEM ---
+    let bibleCaches = {}; // This now holds multiple Bibles!
+    
     const bookAliases = {
         "gen": "genesis", "ex": "exodus", "lev": "leviticus", "num": "numbers", "deut": "deuteronomy",
         "matt": "matthew", "mk": "mark", "mrk": "mark", "lk": "luke", "jn": "john", "jhn": "john",
         "rom": "romans", "cor": "1 corinthians", "rev": "revelation"
     };
 
-    // --- OPTION A: THE NEW JSON FETCH ENGINE ---
     async function fetchVerse() {
         let ref = document.getElementById('verseReference').value.trim();
+        let selectedVersion = document.getElementById('versionSelect').value;
+        
         if(!ref) return;
         
-        // This regex breaks apart input like "1 John 1:1-5" or just "John 3"
         const match = ref.match(/^([\d\s]*[a-zA-Z\s]+)\s+(\d+)(?::(\d+)(?:\s*-\s*(\d+))?)?$/);
-        
         if(!match) {
-            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Invalid format. Try "Book Chapter:Verse-Verse" (e.g., gen 1:1-5).</span>`;
+            canvas.innerHTML = `<span style="color: var(--oxford-crimson); font-size: 16px;">Invalid format. Try "Book Chapter:Verse-Verse".</span>`;
             return;
         }
 
@@ -170,49 +169,43 @@
         let chapterNum = match[2];
         let vStart = match[3];
         let vEnd = match[4];
-        
-        // If they didn't type verses, set to "all" to grab the whole chapter
         let verseRange = vStart ? (vEnd ? `${vStart}-${vEnd}` : vStart) : "all";
 
-        canvas.innerHTML = `<span style="color: #aaa; font-style: italic;">Digging through the archives...</span>`;
+        canvas.innerHTML = `<span style="color: #aaa; font-style: italic;">Accessing the ${selectedVersion.toUpperCase()} archives...</span>`;
 
-        // 1. Load Data
-        if (!bibleCache) {
+        // 1. DYNAMIC FILE LOADER
+        if (!bibleCaches[selectedVersion]) {
             try {
-                const response = await fetch('asv.json'); 
+                // It dynamically looks for asv.json, kjv.json, etc. based on the dropdown!
+                const response = await fetch(selectedVersion + '.json'); 
                 if (!response.ok) {
-                    canvas.innerHTML = `<span style="color: red;">🚨 Error: asv.json file not found. Make sure it's in the same folder!</span>`;
+                    canvas.innerHTML = `<span style="color: red;">🚨 Error: Could not find <strong>${selectedVersion}.json</strong>. Did you download it and put it in this folder?</span>`;
                     return;
                 }
-                bibleCache = await response.json();
+                bibleCaches[selectedVersion] = await response.json();
             } catch (error) {
-                canvas.innerHTML = `<span style="color: red;">🚨 Error: Broken JSON or fetch failed.</span>`;
+                canvas.innerHTML = `<span style="color: red;">🚨 Error: Broken JSON or fetch failed for ${selectedVersion}.json.</span>`;
                 return;
             }
         }
 
-        // 2. Locate Book & Chapter
+        // Pull the correct bible from our cache vault
+        let activeBible = bibleCaches[selectedVersion];
+
+        // 2. Locate Data
         let cleanInput = bookInput.toLowerCase().trim();
         let searchName = bookAliases[cleanInput] || cleanInput; 
         searchName = searchName.toLowerCase();
         
-        const targetBook = bibleCache.books.find(b => 
-            b.name.toLowerCase() === searchName || 
-            b.name.toLowerCase().startsWith(searchName)
+        const targetBook = activeBible.books.find(b => 
+            b.name.toLowerCase() === searchName || b.name.toLowerCase().startsWith(searchName)
         );
         
-        if (!targetBook) {
-            canvas.innerHTML = `<span style="color: red;">Error: Could not find book "${bookInput}".</span>`;
-            return;
-        }
+        if (!targetBook) { canvas.innerHTML = `<span style="color: red;">Error: Could not find book "${bookInput}".</span>`; return; }
 
         const targetChapter = targetBook.chapters.find(c => c.chapter == chapterNum);
-        if (!targetChapter) {
-            canvas.innerHTML = `<span style="color: red;">Error: Could not find Chapter ${chapterNum} in ${targetBook.name}.</span>`;
-            return;
-        }
+        if (!targetChapter) { canvas.innerHTML = `<span style="color: red;">Error: Could not find Chapter ${chapterNum}.</span>`; return; }
 
-        // 3. Locate Verses
         let versesToReturn = [];
         let vInput = verseRange.toString().trim();
 
@@ -220,21 +213,15 @@
             versesToReturn = targetChapter.verses;
         } else if (vInput.includes("-")) {
             let parts = vInput.split("-");
-            let start = parseInt(parts[0]);
-            let end = parseInt(parts[1]);
-            versesToReturn = targetChapter.verses.filter(v => v.verse >= start && v.verse <= end);
+            versesToReturn = targetChapter.verses.filter(v => v.verse >= parseInt(parts[0]) && v.verse <= parseInt(parts[1]));
         } else {
-            let singleV = parseInt(vInput);
-            versesToReturn = targetChapter.verses.filter(v => v.verse == singleV);
+            versesToReturn = targetChapter.verses.filter(v => v.verse == parseInt(vInput));
         }
 
-        if (versesToReturn.length === 0) {
-            canvas.innerHTML = `<span style="color: red;">Error: No verses found for "${verseRange}".</span>`;
-            return;
-        }
+        if (versesToReturn.length === 0) { canvas.innerHTML = `<span style="color: red;">Error: No verses found.</span>`; return; }
 
-        // 4. Render to Canvas with Clickable Words
-        canvas.innerHTML = `<div style="font-size: 14px; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 20px; font-weight: bold;">American Standard Version (ASV)</div>`;
+        // 3. Render Canvas
+        canvas.innerHTML = `<div style="font-size: 14px; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 20px; font-weight: bold;">${selectedVersion.toUpperCase()} Translation</div>`;
         
         versesToReturn.forEach(v => {
             const vSpan = document.createElement('span');
@@ -242,38 +229,55 @@
             vSpan.innerText = v.verse;
             canvas.appendChild(vSpan);
 
-            // Split the text into individual words, keeping the spaces intact
-            const words = v.text.split(/(\s+)/); 
+            // Break the sentence into chunks
+            const chunks = v.text.split(/(\s+)/); 
             
-            words.forEach((chunk, index) => {
+            chunks.forEach((chunk, index) => {
                 if (chunk.trim() === '') { 
                     canvas.appendChild(document.createTextNode(chunk)); 
                 } else {
+                    let strongsTag = null;
+                    let displayText = chunk;
+
+                    // THE UNIVERSAL STRONGS PARSER
+                    // This scans the word for anything looking like <G1234>, [H430], or {G50}
+                    const strongsMatch = chunk.match(/[<\[{]?([GH]\d+)[>\]}]?/i);
+
+                    if (strongsMatch) {
+                        strongsTag = strongsMatch[1].toUpperCase(); // Grab the pure G1234
+                        displayText = chunk.replace(strongsMatch[0], ''); // Delete the messy brackets from the screen
+                    }
+
+                    if (displayText.trim() === '' && strongsTag) {
+                        // Edge case: if the chunk was *only* a tag, attach it to the previous word if possible
+                        return; 
+                    }
+
                     const span = document.createElement('span');
-                    span.className = 'word';
+                    span.className = strongsTag ? 'word has-tag' : 'word';
                     span.id = `w-${v.verse}-${index}`;
-                    span.innerText = chunk;
                     
-                    // The ASV JSON doesn't have Strong's tags, so we pass 'null' for the Greek
-                    // Your handleWordClick function will handle the English definition perfectly!
-                    span.onclick = () => handleWordClick(span, chunk, null);
+                    if (strongsTag) {
+                        span.innerHTML = displayText + `<sup style="color:var(--oxford-gold); font-size:10px; margin-left:3px; font-weight:bold;">${strongsTag}</sup>`;
+                    } else {
+                        span.innerText = displayText;
+                    }
+                    
+                    span.onclick = () => handleWordClick(span, displayText, strongsTag);
                     canvas.appendChild(span);
                 }
             });
         });
     }
 
-    // --- OPTION B: MANUAL PASTE ENGINE (Untouched) ---
     function renderManualText() {
         const raw = document.getElementById('rawTextInput').value.trim();
         if(!raw) return;
         canvas.innerHTML = '';
         const words = raw.split(/(\s+)/); 
-        
         words.forEach((chunk, index) => {
-            if (chunk.trim() === '') { 
-                canvas.appendChild(document.createTextNode(chunk)); 
-            } else {
+            if (chunk.trim() === '') { canvas.appendChild(document.createTextNode(chunk)); } 
+            else {
                 const span = document.createElement('span');
                 span.className = 'word';
                 span.id = `w-${index}`;
@@ -284,26 +288,23 @@
         });
     }
 
-    // --- THE TRAFFIC LIGHT CLICK HANDLER (Untouched) ---
     function handleWordClick(spanElement, wordText, hiddenTag) {
         if(lastSelected) lastSelected.classList.remove('selected');
         spanElement.classList.add('selected');
         lastSelected = spanElement;
-
         apiResults.innerHTML = '';
 
         if(hiddenTag) {
             document.getElementById('strongsInput').value = hiddenTag;
             searchStrongs(hiddenTag); 
         } else {
-            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson); font-weight: bold;">No original language tag found in this database. Fetching English...</div>`;
+            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson); font-weight: bold;">No original language tag found. Fetching English...</div>`;
         }
 
-        const cleanWord = wordText.replace(/[.,;!?]/g, '');
+        const cleanWord = wordText.replace(/[.,;!?()]/g, '');
         fetchEnglishDefinition(cleanWord);
     }
 
-    // --- ENGLISH API (Untouched) ---
     async function fetchEnglishDefinition(word) {
         try {
             const response = await fetch(`https://api.dictionaryapi.dev/api/v2/entries/en/${word}`);
@@ -314,9 +315,7 @@
             const data = await response.json();
             const wordData = data[0];
             
-            if (apiResults.innerHTML.includes("No original language tag")) {
-                apiResults.innerHTML = '';
-            }
+            if (apiResults.innerHTML.includes("No original language tag")) apiResults.innerHTML = '';
 
             let html = `<div style="margin-top: 30px; border-top: 1px solid #ccc; padding-top: 20px;">
                         <h3 class="api-word" style="font-size: 20px;">${wordData.word} <span class="strongs-tag" style="background: #e4e7ea; color: #666;">ENG</span></h3>`;
@@ -325,34 +324,26 @@
                 meaning.definitions.slice(0, 1).forEach(def => { html += `<div class="api-def" style="font-size: 13px;">${def.definition}</div>`; });
             });
             html += `</div>`;
-            
             apiResults.innerHTML += html; 
         } catch (error) {}
     }
 
-    // --- GREEK ENGINE (Untouched) ---
     function searchStrongs(overrideQuery = null) {
         let query = overrideQuery || document.getElementById('strongsInput').value.trim();
         if(!query) return;
-        
         if(!overrideQuery) apiResults.innerHTML = ''; 
 
         if (typeof strongsGreekDictionary === 'undefined') {
-            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">Greek Dictionary Script not loaded.</div>`;
-            return;
+            apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson);">Greek Dictionary Script not loaded.</div>`; return;
         }
 
         let upperQuery = query.toUpperCase();
         let strongKey = upperQuery.startsWith('G') || upperQuery.startsWith('H') ? upperQuery : 'G' + upperQuery;
         
-        if (strongsGreekDictionary[strongKey]) {
-            renderGreekCard(strongKey);
-            return;
-        }
+        if (strongsGreekDictionary[strongKey]) { renderGreekCard(strongKey); return; }
 
         let results = [];
         let searchWord = query.toLowerCase();
-        
         for (const [key, data] of Object.entries(strongsGreekDictionary)) {
             let kjv = (data.kjv_def || "").toLowerCase();
             let def = (data.strongs_def || "").toLowerCase();
@@ -361,23 +352,15 @@
         }
 
         if (results.length === 0) {
-            if(overrideQuery) {
-                apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson); font-weight: bold;">Greek dictionary does not contain ${query} yet.</div>`;
-            } else {
-                apiResults.innerHTML = `<div class="empty-state">No Greek matches found for "${query}".</div>`;
-            }
+            if(overrideQuery) { apiResults.innerHTML = `<div class="empty-state" style="color: var(--oxford-crimson); font-weight: bold;">Dictionary does not contain ${query}.</div>`; } 
+            else { apiResults.innerHTML = `<div class="empty-state">No matches found for "${query}".</div>`; }
             return;
         }
-        
-        if (results.length === 1 && !overrideQuery) {
-            renderGreekCard(results[0].key);
-            return;
-        }
+        if (results.length === 1 && !overrideQuery) { renderGreekCard(results[0].key); return; }
 
         let html = `<h3 style="font-size: 12px; color: #666; text-transform: uppercase;">Found ${results.length} matches for "${query}"</h3>`;
         results.forEach(res => {
-            html += `
-            <div style="background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="apiResults.innerHTML=''; searchStrongs('${res.key}')">
+            html += `<div style="background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); padding: 12px; margin-bottom: 8px; cursor: pointer;" onclick="apiResults.innerHTML=''; searchStrongs('${res.key}')">
                 <strong style="font-size: 18px; color: var(--oxford-navy);">${res.data.lemma}</strong> <span class="strongs-tag">${res.key}</span>
                 <div style="font-size: 11px; color: #555; margin-top: 5px;">${res.data.kjv_def ? res.data.kjv_def.substring(0, 40) + '...' : ''}</div>
             </div>`;
