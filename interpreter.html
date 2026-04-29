@@ -107,6 +107,9 @@
             <option value="bsb">BSB (Berean Standard)</option>
         </select>
 
+        <input type="file" id="csvFileInput" accept=".csv, .tsv, .txt" style="display:none;" onchange="loadBSBToCache(event)">
+        <button class="std-btn" style="background: white; color: var(--oxford-navy-dark); margin-top: 10px;" onclick="document.getElementById('csvFileInput').click()">📁 Load Local CSV/TSV</button>
+
         <input type="text" id="verseReference" placeholder="e.g. gen 1:1-5" style="margin-top: 10px;">
         <button class="std-btn" onclick="fetchVerse()">Fetch Passage</button>
     </div>
@@ -144,14 +147,97 @@
     const apiResults = document.getElementById('api-results');
     let lastSelected = null;
 
-    // --- NEW MULTI-CACHE SYSTEM ---
-    let bibleCaches = {}; // This now holds multiple Bibles!
+    let bibleCaches = {}; 
     
     const bookAliases = {
         "gen": "genesis", "ex": "exodus", "lev": "leviticus", "num": "numbers", "deut": "deuteronomy",
         "matt": "matthew", "mk": "mark", "mrk": "mark", "lk": "luke", "jn": "john", "jhn": "john",
         "rom": "romans", "cor": "1 corinthians", "rev": "revelation"
     };
+
+    // --- NEW INVISIBLE TRANSLATOR (CSV to JSON) ---
+    function loadBSBToCache(event) {
+        const file = event.target.files[0];
+        if (!file) return;
+
+        canvas.innerHTML = `<span style="color: var(--oxford-gold); font-size: 16px;"><strong>Translating Spreadsheet to Memory...</strong> (This may take a few seconds)</span>`;
+        const isTSV = file.name.toLowerCase().endsWith('.tsv') || file.name.toLowerCase().endsWith('.txt');
+
+        const reader = new FileReader();
+        reader.onload = function(e) {
+            const text = e.target.result;
+            const lines = text.split('\n');
+            
+            // Build the empty 3D folder structure
+            let newBsbJson = { translation: "Berean Standard Bible", books: [] };
+            let currentBookObj = null;
+            let currentChapterObj = null;
+            let currentRef = "";
+
+            for (let i = 1; i < lines.length; i++) {
+                if (!lines[i].trim()) continue;
+                
+                const columns = isTSV ? lines[i].split('\t') : lines[i].split(/,(?=(?:(?:[^"]*"){2})*[^"]*$)/);
+                let lang = (columns[4] || "").replace(/"/g, '').trim(); 
+                
+                let strongsNum = "";
+                for(let col = 9; col <= 11; col++) {
+                    let tempVal = (columns[col] || "").replace(/"/g, '').trim();
+                    if(tempVal.match(/\d+/)) { strongsNum = tempVal; break; }
+                }
+                
+                let verseRef = (columns[12] || "").replace(/"/g, '').trim(); 
+                let engText = (columns[18] || "").replace(/"/g, '').trim(); 
+
+                if (verseRef) { currentRef = verseRef; } 
+                else { verseRef = currentRef; }
+
+                if (!verseRef || !engText || engText === "-") continue;
+
+                // Format the tag like <G1234> so our engine recognizes it!
+                let sMatch = strongsNum.match(/\d+/);
+                let formattedStrongs = sMatch ? `<${(lang.toLowerCase().includes('hebrew') ? 'H' : 'G') + sMatch[0]}>` : "";
+                
+                // Parse the Reference (e.g., "John 1:1")
+                const refMatch = verseRef.match(/^([\d\s]*[a-zA-Z\s]+)\s+(\d+):(\d+)$/);
+                if(!refMatch) continue;
+
+                let bName = refMatch[1].trim();
+                let cNum = parseInt(refMatch[2]);
+                let vNum = parseInt(refMatch[3]);
+
+                // Create the Folders dynamically
+                if (!currentBookObj || currentBookObj.name !== bName) {
+                    currentBookObj = { name: bName, chapters: [] };
+                    newBsbJson.books.push(currentBookObj);
+                    currentChapterObj = null;
+                }
+                if (!currentChapterObj || currentChapterObj.chapter !== cNum) {
+                    currentChapterObj = { chapter: cNum, verses: [] };
+                    currentBookObj.chapters.push(currentChapterObj);
+                }
+
+                let targetVerseObj = currentChapterObj.verses.find(v => v.verse === vNum);
+                if (!targetVerseObj) {
+                    targetVerseObj = { verse: vNum, text: "" };
+                    currentChapterObj.verses.push(targetVerseObj);
+                }
+
+                // Add the word and the tag to the verse!
+                let finalWordChunk = engText + (formattedStrongs ? ` ${formattedStrongs}` : "");
+                targetVerseObj.text += (targetVerseObj.text ? " " : "") + finalWordChunk;
+            }
+
+            // Save it securely in the bsb slot!
+            bibleCaches["bsb"] = newBsbJson;
+            
+            // Force the dropdown menu to switch to BSB automatically
+            document.getElementById('versionSelect').value = "bsb";
+            
+            canvas.innerHTML = `<span style="color: #5a9e69; font-size: 16px;"><strong>Success!</strong> The BSB Database has been loaded into memory. Try fetching <strong>John 1:1-5</strong>.</span>`;
+        };
+        reader.readAsText(file);
+    }
 
     async function fetchVerse() {
         let ref = document.getElementById('verseReference').value.trim();
@@ -173,13 +259,11 @@
 
         canvas.innerHTML = `<span style="color: #aaa; font-style: italic;">Accessing the ${selectedVersion.toUpperCase()} archives...</span>`;
 
-        // 1. DYNAMIC FILE LOADER
         if (!bibleCaches[selectedVersion]) {
             try {
-                // It dynamically looks for asv.json, kjv.json, etc. based on the dropdown!
                 const response = await fetch(selectedVersion + '.json'); 
                 if (!response.ok) {
-                    canvas.innerHTML = `<span style="color: red;">🚨 Error: Could not find <strong>${selectedVersion}.json</strong>. Did you download it and put it in this folder?</span>`;
+                    canvas.innerHTML = `<span style="color: red;">🚨 Error: Could not find <strong>${selectedVersion}.json</strong>.<br><br>If you are trying to use the BSB, make sure you click the white "Load Local CSV" button first!</span>`;
                     return;
                 }
                 bibleCaches[selectedVersion] = await response.json();
@@ -189,10 +273,8 @@
             }
         }
 
-        // Pull the correct bible from our cache vault
         let activeBible = bibleCaches[selectedVersion];
 
-        // 2. Locate Data
         let cleanInput = bookInput.toLowerCase().trim();
         let searchName = bookAliases[cleanInput] || cleanInput; 
         searchName = searchName.toLowerCase();
@@ -220,7 +302,6 @@
 
         if (versesToReturn.length === 0) { canvas.innerHTML = `<span style="color: red;">Error: No verses found.</span>`; return; }
 
-        // 3. Render Canvas
         canvas.innerHTML = `<div style="font-size: 14px; color: var(--oxford-gold); text-transform: uppercase; margin-bottom: 20px; font-weight: bold;">${selectedVersion.toUpperCase()} Translation</div>`;
         
         versesToReturn.forEach(v => {
@@ -229,7 +310,6 @@
             vSpan.innerText = v.verse;
             canvas.appendChild(vSpan);
 
-            // Break the sentence into chunks
             const chunks = v.text.split(/(\s+)/); 
             
             chunks.forEach((chunk, index) => {
@@ -239,19 +319,14 @@
                     let strongsTag = null;
                     let displayText = chunk;
 
-                    // THE UNIVERSAL STRONGS PARSER
-                    // This scans the word for anything looking like <G1234>, [H430], or {G50}
                     const strongsMatch = chunk.match(/[<\[{]?([GH]\d+)[>\]}]?/i);
 
                     if (strongsMatch) {
-                        strongsTag = strongsMatch[1].toUpperCase(); // Grab the pure G1234
-                        displayText = chunk.replace(strongsMatch[0], ''); // Delete the messy brackets from the screen
+                        strongsTag = strongsMatch[1].toUpperCase(); 
+                        displayText = chunk.replace(strongsMatch[0], ''); 
                     }
 
-                    if (displayText.trim() === '' && strongsTag) {
-                        // Edge case: if the chunk was *only* a tag, attach it to the previous word if possible
-                        return; 
-                    }
+                    if (displayText.trim() === '' && strongsTag) return; 
 
                     const span = document.createElement('span');
                     span.className = strongsTag ? 'word has-tag' : 'word';
