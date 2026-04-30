@@ -181,10 +181,13 @@
         #native-title { font-family: Georgia, serif; font-size: 32px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 15px; margin-bottom: 30px; margin-top: 0;}
         #native-content { font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
         #native-content p { margin-bottom: 20px; }
-        #native-content h1, #native-content h2, #native-content h3, #native-content h4 { color: var(--oxford-navy); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 30px;}
+        
+        /* Formats the CCEL <div3 title="Verses 1-5"> into nice section headers */
+        #native-content h4 { color: var(--oxford-gold); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 35px; font-size: 20px;}
+        
         .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
         
-        /* Clean Custom ThML Styling */
+        /* CCEL ThML Specific Rendering Rules */
         span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
         span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
         div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
@@ -368,7 +371,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE STRING SLICER NATIVE ENGINE (100% Regex, No DOM Limits)
+    // THE STRING SLICER NATIVE ENGINE (Upgraded Hierarchical Cutter)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -384,13 +387,11 @@
             
             const xmlText = await response.text();
 
-            // Extract the metadata title via quick Regex
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
             if (titleMatch) {
                 authorLabel.innerText = titleMatch[1];
             }
 
-            // Extract the core search (e.g., "John 1:1" -> "John" and "1")
             const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             if (!match) {
                 nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1').</p>";
@@ -400,7 +401,6 @@
             const searchBook = match[1].trim(); 
             const chap = match[2]; 
 
-            // Standardize Abbreviation for the Regex Target
             const abbrevs = {
                 "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
                 "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
@@ -410,7 +410,6 @@
             const firstWord = searchBook.split(' ')[0].toLowerCase();
             let fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook;
 
-            // Converter for Roman Numerals (CCEL Chapters are often Roman)
             function getRoman(val) {
                 const num = parseInt(val);
                 if(isNaN(num) || num <= 0) return val;
@@ -424,10 +423,7 @@
             }
             const romanChap = getRoman(chap);
 
-            // ==========================================
-            // THE SLICER: Phase 1 (Isolate the Book)
-            // ==========================================
-            // We split the massive 20MB string exactly where CCEL defines the Book tag
+            // Phase 1 (Isolate the Book)
             const bookRegex = new RegExp(`<div[1-3][^>]*(?:title|n)="[^"]*\\b${fullBookName}\\b[^"]*"[^>]*>`, 'i');
             const bookSplit = xmlText.split(bookRegex);
 
@@ -436,37 +432,32 @@
                 return;
             }
 
-            // We throw away the rest of the Bible and only keep the Book of John!
             const isolatedBookContent = bookSplit[1];
 
-            // ==========================================
-            // THE SLICER: Phase 2 (Isolate the Chapter)
-            // ==========================================
-            // Now we split the Book exactly where the Chapter begins
-            const chapRegex = new RegExp(`<div[2-5][^>]*(?:title|n)="[^"]*(?:Chapter\\s+)?(?:${chap}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
-            const chapSplit = isolatedBookContent.split(chapRegex);
+            // Phase 2 (Isolate the Chapter & Record its Depth Level)
+            const chapRegex = new RegExp(`<div([2-5])[^>]*(?:title|n)="[^"]*(?:Chapter\\s+)?(?:${chap}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
+            const chapMatch = isolatedBookContent.match(chapRegex);
 
-            if (chapSplit.length < 2) {
+            if (!chapMatch) {
                 nativeContent.innerHTML = `<p>Could not locate Chapter <strong>${chap}</strong> within ${fullBookName}.</p>`;
                 return;
             }
 
-            // We grab the Chapter content!
-            let finalContent = chapSplit[1];
+            // Capture the hierarchical level (e.g. "2" if it was a <div2>)
+            const chapLevel = chapMatch[1]; 
+            
+            // Grab everything from the start of this chapter to the very end of the file
+            let finalContent = isolatedBookContent.substring(chapMatch.index + chapMatch[0].length);
 
-            // ==========================================
-            // THE SLICER: Phase 3 (Cut off the end)
-            // ==========================================
-            // We split at the start of the NEXT chapter or book so we don't render the whole rest of the file
-            const endRegex = /<div[1-5][^>]*title=/i;
+            // Phase 3 (Cut off at the NEXT Book or Chapter, ignoring sub-divisions like verses)
+            // If our chapter was a <div2>, we only stop when we see the next <div1> or <div2>
+            const endRegex = new RegExp(`<div[1-${chapLevel}]\\b`, 'i');
             finalContent = finalContent.split(endRegex)[0];
 
-
-            // ==========================================
-            // THE SLICER: Phase 4 (Format for Display)
-            // ==========================================
-            // Turn ugly XML tags into beautiful HTML layout
+            // Phase 4 (Format for Display)
             finalContent = finalContent
+                // Find CCEL's sub-divisions (usually verses) and format their titles as headers
+                .replace(/<div[3-6][^>]*title="([^"]+)"[^>]*>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px;">$1</h4>')
                 .replace(/<p[^>]*>/ig, '<p>')
                 .replace(/<\/p>/ig, '</p>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">')
