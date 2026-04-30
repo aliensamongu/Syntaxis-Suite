@@ -72,9 +72,7 @@
             transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
         }
         
-        body.drawer-open #workspace {
-            margin-right: 60vw; 
-        }
+        body.drawer-open #workspace { margin-right: 60vw; }
 
         /* Containers */
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
@@ -129,25 +127,16 @@
             border-bottom: 4px solid var(--oxford-navy-dark);
         }
         
-        .lexicon-header-top {
-            display: flex; justify-content: space-between; align-items: center; width: 100%;
-        }
+        .lexicon-header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
         
-        .lexicon-title {
-            font-family: Georgia, serif; font-size: 22px; color: var(--oxford-cream); margin: 0;
-            display: flex; align-items: center; gap: 10px;
-        }
+        .lexicon-title { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-cream); margin: 0; display: flex; align-items: center; gap: 10px; }
         .lexicon-title span { color: var(--oxford-gold); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-family: -apple-system, sans-serif; opacity: 0.8;}
         
-        .lexicon-btn-icon {
-            background: transparent; border: none; color: rgba(248, 245, 238, 0.5); 
-            cursor: pointer; font-size: 20px; padding: 6px; transition: 0.2s;
-            border-radius: 4px; display: flex; align-items: center; justify-content: center;
-        }
+        .lexicon-btn-icon { background: transparent; border: none; color: rgba(248, 245, 238, 0.5); cursor: pointer; font-size: 20px; padding: 6px; transition: 0.2s; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
         .lexicon-btn-icon:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
 
         .lexicon-controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .lexicon-controls-row { display: flex; gap: 10px; width: 100%; }
+        .lexicon-controls-row { display: flex; gap: 10px; width: 100%; align-items: center; }
         .lexicon-controls input, .lexicon-controls select { 
             padding: 12px 15px; border-radius: var(--radius-small); 
             border: 1px solid var(--oxford-navy-dark); font-size: 13px; outline: none;
@@ -157,6 +146,19 @@
         .lexicon-controls select { flex: 1; font-weight: bold; cursor: pointer; }
         .lexicon-controls input { flex: 2; }
         .lexicon-controls input:focus, .lexicon-controls select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+
+        /* THE HARDWARE TOGGLE SWITCH */
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .toggle-label { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; transition: 0.3s; }
+        #lbl-lex { color: var(--oxford-gold); }
+        #lbl-com { color: rgba(248, 245, 238, 0.4); }
+        
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; margin: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--oxford-navy-dark); transition: .4s; border-radius: 20px; border: 1px solid var(--oxford-gold); }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: var(--oxford-gold); transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--oxford-navy-dark); border-color: var(--oxford-cream); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: var(--oxford-cream); }
 
         .lexicon-iframe-container { flex-grow: 1; background: #fff; position: relative; }
         #lexicon-iframe { width: 100%; height: 100%; border: none; }
@@ -203,7 +205,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
                 <h3 style="border: none; padding: 0;">2. Lexicon & Morphology</h3>
-                <button onclick="toggleLexicon()" style="background:var(--oxford-gold); color:var(--oxford-navy); border:none; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; padding:4px 8px; transition:0.2s;">📖 Smart Lexicon</button>
+                <button onclick="toggleLexicon()" style="background:var(--oxford-gold); color:var(--oxford-navy); border:none; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; padding:4px 8px; transition:0.2s;">📖 Drawer</button>
             </div>
             
             <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to edit its data.</div>
@@ -284,13 +286,25 @@
             <div class="lexicon-controls-row">
                 <input type="text" id="lexiconSearchInput" placeholder="Word, Strong's (G3056), or Ref (John 1:1)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
             </div>
-            <div class="lexicon-controls-row">
-                <select id="lexiconSource" onchange="executeLexiconSearch()">
-                    <option value="studybible">StudyBible.info</option>
-                    <option value="blb">Blue Letter Bible (Secure)</option>
-                    <option value="step">STEP Bible (Secure)</option>
-                </select>
-                <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
+            <div class="lexicon-controls-row" style="justify-content: space-between;">
+                
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-lex">Lexicon</span>
+                    <label class="switch">
+                        <input type="checkbox" id="resourceToggle" onchange="updateToggleState()">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label" id="lbl-com">Commentary</span>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex: 1; justify-content: flex-end;">
+                    <select id="lexiconSource" onchange="executeLexiconSearch()" style="width: 180px; flex: none;">
+                        <option value="studybible">StudyBible.info</option>
+                        <option value="blb">Blue Letter Bible (Secure)</option>
+                        <option value="step">STEP Bible (Secure)</option>
+                    </select>
+                    <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
+                </div>
             </div>
         </div>
     </div>
@@ -313,14 +327,21 @@
     const lexEditor = document.getElementById('lexicon-editor');
     
     let selectedWordId = null;
-    
-    // Core Engine State
     let lexiconData = {}; 
     let matrixData = [];  
 
     // ---------------------------------------------------------
     // LEXICON SWITCHBOARD ENGINE 
     // ---------------------------------------------------------
+    
+    // Updates UI colors based on the toggle switch position
+    function updateToggleState() {
+        const isComm = document.getElementById('resourceToggle').checked;
+        document.getElementById('lbl-lex').style.color = isComm ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
+        document.getElementById('lbl-com').style.color = isComm ? "var(--oxford-cream)" : "rgba(248, 245, 238, 0.4)";
+        executeLexiconSearch(); // Automatically re-run the search on toggle
+    }
+
     function toggleLexicon(autoSearch = false) {
         const drawer = document.getElementById('lexicon-drawer');
         const isOpen = drawer.classList.contains('open');
@@ -337,6 +358,10 @@
                 } else if (wordText && wordText !== "No Word Selected") {
                     query = wordText;
                 }
+                
+                // If they are auto-searching a word, make sure toggle flips to Lexicon
+                document.getElementById('resourceToggle').checked = false;
+                updateToggleState();
             }
             
             if (query) {
@@ -354,6 +379,8 @@
         if (!query) return;
         
         const source = document.getElementById('lexiconSource').value;
+        const isCommentaryMode = document.getElementById('resourceToggle').checked;
+        
         const iframe = document.getElementById('lexicon-iframe');
         const fallback = document.getElementById('lexicon-fallback');
         const fallbackBtn = document.getElementById('fallback-launch-btn');
@@ -361,28 +388,39 @@
         
         let targetUrl = "";
         
-        // INTELLIGENT ROUTING: Is it a word, a Strong's number, or a verse reference?
         const isStrongs = /^[GH]\d+$/i.test(query);
         const isReference = /\d/.test(query) && !isStrongs; 
-        
-        // OLD TESTAMENT DETECTOR
         const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
 
         if (source === 'studybible') {
-            if (isStrongs) {
-                targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
-            } else if (isReference) {
-                // Route to Hebrew (IHOT) or Greek (interlinear)
-                targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
+            if (isCommentaryMode) {
+                // COMMENTARY/DICTIONARY ROUTING
+                if (isReference) {
+                    targetUrl = `https://studybible.info/commentary/${encodeURIComponent(query)}`;
+                } else {
+                    targetUrl = `https://studybible.info/dictionary/${encodeURIComponent(query)}`;
+                }
             } else {
-                targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+                // LEXICON/INTERLINEAR ROUTING
+                if (isStrongs) {
+                    targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
+                } else if (isReference) {
+                    targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
+                } else {
+                    targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+                }
             }
+            
             iframe.src = targetUrl;
             iframe.style.display = 'block';
             fallback.style.display = 'none';
             
         } else if (source === 'blb') {
-            if (isStrongs) {
+            // BLB Fallback
+            if (isCommentaryMode && isReference) {
+                // BLB search natively handles verses and gives a commentary button
+                targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
+            } else if (isStrongs) {
                 targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
             } else {
                 targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
@@ -392,6 +430,7 @@
             fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
             
         } else if (source === 'step') {
+            // STEP Fallback
             if (isStrongs) {
                 targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
             } else if (isReference) {
@@ -505,7 +544,7 @@
     }
 
     // ---------------------------------------------------------
-    // TEXT ENGINE
+    // TEXT ENGINE (NOW WITH AUTO-INTERLINEAR!)
     // ---------------------------------------------------------
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
@@ -547,7 +586,10 @@
             sourceSelect.value = 'studybible';
             document.getElementById('lexiconSearchInput').value = reference;
             
-            // THE OT DETECTOR IN ACTION
+            // Force Lexicon Switch for Render
+            document.getElementById('resourceToggle').checked = false;
+            updateToggleState();
+            
             const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(reference);
             
             const targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(reference)}` : `https://studybible.info/interlinear/${encodeURIComponent(reference)}`;
