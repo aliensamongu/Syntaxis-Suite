@@ -367,7 +367,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE NATIVE XML PARSING ENGINE
+    // THE NATIVE XML PARSING ENGINE (Upgraded Fuzzy Scanner)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -378,7 +378,6 @@
         nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Initializing local library scan...</em></p>`;
 
         try {
-            // Ensure the file downloaded from CCEL is named exactly commentary.xml
             const response = await fetch('commentary.xml');
             if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
             
@@ -386,59 +385,63 @@
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-            // Extract the metadata title from ThML headers if available
+            // Extract the metadata title from ThML headers
             const titleNode = xmlDoc.querySelector('dc\\:title, title');
             if (titleNode) {
                 authorLabel.innerText = titleNode.textContent;
             }
 
-            // Create a fuzzy search regex based on user input (e.g. "John 1:1" -> /John\s*1:1/i)
-            const searchRegex = new RegExp(query.replace(/\s+/g, '\\s*'), 'i');
-            
-            // Fast Node Traversal: Look for CCEL structural tags or standard paragraphs
-            const allNodes = xmlDoc.querySelectorAll('p, div, div1, div2, div3');
+            // --- THE FUZZY THML SCANNER ---
+            // Break "John 1:1" into Book ("Joh") and Chapter ("1")
+            const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             let foundContent = "";
 
-            for (let i = 0; i < allNodes.length; i++) {
-                const node = allNodes[i];
-                let match = false;
-                
-                // Method 1: Check ThML <scripRef> tags inside the node
-                const scripRefs = node.querySelectorAll('scripRef');
-                scripRefs.forEach(ref => {
-                    if (searchRegex.test(ref.textContent) || searchRegex.test(ref.getAttribute('passage'))) match = true;
-                });
-                
-                // Method 2: Fallback to checking header text content
-                if (!match) {
-                    const headers = node.querySelectorAll('h1, h2, h3, h4, h5, h6');
-                    headers.forEach(h => {
-                        if (searchRegex.test(h.textContent)) match = true;
-                    });
-                }
+            if (match) {
+                // CCEL uses 3 or 4 letter abbreviations in their <scripRef> attributes (e.g. "Joh 1")
+                const bookPrefix = match[1].replace(/\s+/g, '').substring(0,3); 
+                const chapter = match[2];
+                const searchPattern = new RegExp(`${bookPrefix}\\s*${chapter}`, 'i');
 
-                if (match) {
-                    foundContent += `<div style="margin-bottom: 20px;">${node.innerHTML}</div>`;
-                    break; // Grab the first major matching section and exit loop
+                // Scan all structural div tags (where CCEL groups commentary sections)
+                const structuralNodes = xmlDoc.querySelectorAll('div1, div2, div3, div4');
+                
+                for (let i = 0; i < structuralNodes.length; i++) {
+                    const node = structuralNodes[i];
+                    let isMatch = false;
+
+                    // Test 1: Does the title of the section match? (e.g., <title>John 1</title>)
+                    const nodeTitle = node.querySelector('title');
+                    if (nodeTitle && searchPattern.test(nodeTitle.textContent)) {
+                        isMatch = true;
+                    }
+
+                    // Test 2: Do any <scripRef> tags in this section match the abbreviation?
+                    if (!isMatch) {
+                        const scripRefs = node.querySelectorAll('scripRef');
+                        for (let ref of scripRefs) {
+                            const pass = ref.getAttribute('passage');
+                            if (pass && searchPattern.test(pass)) {
+                                isMatch = true;
+                                break;
+                            }
+                        }
+                    }
+
+                    // If we found the block, extract all the paragraph text!
+                    if (isMatch) {
+                        const paragraphs = node.querySelectorAll('p');
+                        paragraphs.forEach(p => {
+                            foundContent += `<p>${p.innerHTML}</p>`;
+                        });
+                        if (foundContent) break; 
+                    }
                 }
             }
 
             if (foundContent) {
                 nativeContent.innerHTML = foundContent;
             } else {
-                // Method 3: Deep fallback, just scan all paragraph text bodies directly
-                let fallbackContent = "";
-                const paragraphs = xmlDoc.querySelectorAll('p');
-                for(let p of paragraphs) {
-                     if(searchRegex.test(p.textContent)) {
-                         fallbackContent += `<p>${p.innerHTML}</p>`;
-                     }
-                }
-                if(fallbackContent) {
-                    nativeContent.innerHTML = fallbackContent;
-                } else {
-                    nativeContent.innerHTML = `<p>No commentary notes were found for <strong>${query}</strong> in the currently loaded library volume.</p>`;
-                }
+                nativeContent.innerHTML = `<p>No commentary notes were found for <strong>${query}</strong> in the currently loaded library volume.</p>`;
             }
 
         } catch (error) {
@@ -547,7 +550,6 @@
             fallback.style.display = 'none';
             nativeReader.style.display = 'flex';
             
-            // Execute the XML Scanner
             loadNativeCommentary(query);
             return;
         } else {
