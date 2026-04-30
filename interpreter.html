@@ -72,7 +72,6 @@
             transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
         }
         
-        /* THE FIX: Now using viewport width (vw) for massive expansion */
         body.drawer-open #workspace {
             margin-right: 60vw; 
         }
@@ -185,7 +184,7 @@
         </div>
         
         <div class="floating-card" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Project Name (e.g. 1 Peter 3)" style="background: var(--oxford-cream);">
+            <input type="text" id="projectName" placeholder="Bible Ref (e.g. John 1:1-5)" style="background: var(--oxford-cream);" title="Use a standard reference to enable auto-interlinear loading.">
             <div style="display: flex; gap: 5px;">
                 <button class="std-btn" onclick="saveToAppLocal()" style="flex: 1;">Save App</button>
                 <button class="std-btn secondary" onclick="exportProjectJSON()" style="flex: 1;">⬇ JSON</button>
@@ -198,7 +197,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
             <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
-            <button class="std-btn secondary" onclick="renderText()">Render Passage</button>
+            <button class="std-btn secondary" onclick="renderText()" title="Render text and open Interlinear">Render Passage & Interlinear</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
@@ -495,7 +494,7 @@
     }
 
     // ---------------------------------------------------------
-    // TEXT ENGINE
+    // TEXT ENGINE (NOW WITH AUTO-INTERLINEAR!)
     // ---------------------------------------------------------
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
@@ -526,6 +525,33 @@
                 passageContainer.appendChild(span);
             }
         });
+
+        // --- NEW: AUTO-LOAD INTERLINEAR ---
+        const reference = document.getElementById('projectName').value.trim();
+        if (reference) {
+            const iframe = document.getElementById('lexicon-iframe');
+            const fallback = document.getElementById('lexicon-fallback');
+            const sourceSelect = document.getElementById('lexiconSource');
+            
+            // Force it to StudyBible.info since that's the database with the interlinear
+            sourceSelect.value = 'studybible';
+            
+            // Set the search bar to the reference so the user knows what happened
+            document.getElementById('lexiconSearchInput').value = reference;
+            
+            // Load the interlinear URL
+            const targetUrl = `https://studybible.info/interlinear/${encodeURIComponent(reference)}`;
+            iframe.src = targetUrl;
+            iframe.style.display = 'block';
+            fallback.style.display = 'none';
+
+            // Pop the drawer open if it isn't already
+            const drawer = document.getElementById('lexicon-drawer');
+            if (!drawer.classList.contains('open')) {
+                drawer.classList.add('open');
+                document.body.classList.add('drawer-open');
+            }
+        }
     }
 
     function handleWordClick(id) {
