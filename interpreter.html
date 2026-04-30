@@ -282,7 +282,7 @@
         </div>
         <div class="lexicon-controls">
             <div class="lexicon-controls-row">
-                <input type="text" id="lexiconSearchInput" placeholder="English Word or Strong's (G3056)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
+                <input type="text" id="lexiconSearchInput" placeholder="Word, Strong's (G3056), or Ref (John 1:1)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
             </div>
             <div class="lexicon-controls-row">
                 <select id="lexiconSource" onchange="executeLexiconSearch()">
@@ -360,10 +360,17 @@
         const popoutBtn = document.getElementById('lexicon-popout-btn');
         
         let targetUrl = "";
+        
+        // INTELLIGENT ROUTING: Is it a word, a Strong's number, or a verse reference?
+        const isStrongs = /^[GH]\d+$/i.test(query);
+        // If it contains a number but isn't a Strong's number, assume it's a verse reference (e.g., "John 1:1")
+        const isReference = /\d/.test(query) && !isStrongs; 
 
         if (source === 'studybible') {
-            if (/^[GH]\d+$/i.test(query)) {
+            if (isStrongs) {
                 targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
+            } else if (isReference) {
+                targetUrl = `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
             } else {
                 targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
             }
@@ -372,9 +379,10 @@
             fallback.style.display = 'none';
             
         } else if (source === 'blb') {
-            if (/^[GH]\d+$/i.test(query)) {
+            if (isStrongs) {
                 targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
             } else {
+                // BLB search natively handles both words and references perfectly
                 targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
             }
             iframe.style.display = 'none';
@@ -382,8 +390,10 @@
             fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
             
         } else if (source === 'step') {
-            if (/^[GH]\d+$/i.test(query)) {
+            if (isStrongs) {
                 targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
+            } else if (isReference) {
+                targetUrl = `https://www.stepbible.org/?q=reference=${encodeURIComponent(query)}`;
             } else {
                 targetUrl = `https://www.stepbible.org/?q=meanings=${encodeURIComponent(query)}`;
             }
@@ -526,20 +536,18 @@
             }
         });
 
-        // --- NEW: AUTO-LOAD INTERLINEAR ---
+        // AUTO-LOAD INTERLINEAR
         const reference = document.getElementById('projectName').value.trim();
         if (reference) {
             const iframe = document.getElementById('lexicon-iframe');
             const fallback = document.getElementById('lexicon-fallback');
             const sourceSelect = document.getElementById('lexiconSource');
             
-            // Force it to StudyBible.info since that's the database with the interlinear
             sourceSelect.value = 'studybible';
             
             // Set the search bar to the reference so the user knows what happened
             document.getElementById('lexiconSearchInput').value = reference;
             
-            // Load the interlinear URL
             const targetUrl = `https://studybible.info/interlinear/${encodeURIComponent(reference)}`;
             iframe.src = targetUrl;
             iframe.style.display = 'block';
