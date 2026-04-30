@@ -363,14 +363,17 @@
         
         // INTELLIGENT ROUTING: Is it a word, a Strong's number, or a verse reference?
         const isStrongs = /^[GH]\d+$/i.test(query);
-        // If it contains a number but isn't a Strong's number, assume it's a verse reference (e.g., "John 1:1")
         const isReference = /\d/.test(query) && !isStrongs; 
+        
+        // OLD TESTAMENT DETECTOR
+        const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
 
         if (source === 'studybible') {
             if (isStrongs) {
                 targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
             } else if (isReference) {
-                targetUrl = `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
+                // Route to Hebrew (IHOT) or Greek (interlinear)
+                targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
             } else {
                 targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
             }
@@ -382,7 +385,6 @@
             if (isStrongs) {
                 targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
             } else {
-                // BLB search natively handles both words and references perfectly
                 targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
             }
             iframe.style.display = 'none';
@@ -402,7 +404,6 @@
             fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
         }
 
-        // Wire the top right popout button to match the current search
         popoutBtn.onclick = () => window.open(targetUrl, '_blank');
     }
 
@@ -504,7 +505,7 @@
     }
 
     // ---------------------------------------------------------
-    // TEXT ENGINE (NOW WITH AUTO-INTERLINEAR!)
+    // TEXT ENGINE
     // ---------------------------------------------------------
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
@@ -544,16 +545,17 @@
             const sourceSelect = document.getElementById('lexiconSource');
             
             sourceSelect.value = 'studybible';
-            
-            // Set the search bar to the reference so the user knows what happened
             document.getElementById('lexiconSearchInput').value = reference;
             
-            const targetUrl = `https://studybible.info/interlinear/${encodeURIComponent(reference)}`;
+            // THE OT DETECTOR IN ACTION
+            const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(reference);
+            
+            const targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(reference)}` : `https://studybible.info/interlinear/${encodeURIComponent(reference)}`;
+            
             iframe.src = targetUrl;
             iframe.style.display = 'block';
             fallback.style.display = 'none';
 
-            // Pop the drawer open if it isn't already
             const drawer = document.getElementById('lexicon-drawer');
             if (!drawer.classList.contains('open')) {
                 drawer.classList.add('open');
