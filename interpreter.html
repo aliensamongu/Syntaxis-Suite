@@ -184,10 +184,10 @@
         #native-content h1, #native-content h2, #native-content h3, #native-content h4 { color: var(--oxford-navy); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 30px;}
         .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
         
-        /* CCEL ThML Specific Rendering Rules */
-        scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
-        scripref:hover { background: rgba(197, 160, 89, 0.1); }
-        note { display: block; padding: 10px; margin: 10px 0; background: var(--bg-main); border-left: 3px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
+        /* Clean Custom ThML Styling */
+        span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
+        span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
+        div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
 
     </style>
 </head>
@@ -368,7 +368,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE X-RAY DIAGNOSTIC ENGINE
+    // THE STRING SLICER NATIVE ENGINE (100% Regex, No DOM Limits)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -376,91 +376,107 @@
         const authorLabel = document.getElementById('native-author-label');
         
         nativeTitle.innerText = query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Initializing X-Ray Diagnostic Scan...</em></p>`;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Slicing XML Database...</em></p>`;
 
         try {
             const response = await fetch('commentary.xml');
             if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
             
             const xmlText = await response.text();
-            const parser = new DOMParser();
-            
-            let xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            if (xmlDoc.querySelector('parsererror')) {
-                xmlDoc = parser.parseFromString(xmlText, "text/html"); // Honey badger fallback
-            }
 
-            // Title grab
-            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i) || xmlText.match(/<title[^>]*>([^<]+)<\/title>/i);
+            // Extract the metadata title via quick Regex
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
             if (titleMatch) {
                 authorLabel.innerText = titleMatch[1];
             }
 
-            // Normal Search Attempt First
+            // Extract the core search (e.g., "John 1:1" -> "John" and "1")
             const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            let foundContent = "";
-
-            if (match) {
-                const bookPrefix = match[1].replace(/\s+/g, '').substring(0, 3).toLowerCase(); 
-                const chap = match[2]; 
-                const searchRegex = new RegExp(`\\b${bookPrefix}[a-z]*\\.?\\s*${chap}\\b`, 'i');
-
-                const refs = xmlDoc.querySelectorAll('scripref, scripRef, ref');
-                for (let i = 0; i < refs.length; i++) {
-                    const pass = refs[i].getAttribute('passage') || refs[i].textContent;
-                    if (searchRegex.test(pass)) {
-                        let parent = refs[i].parentElement;
-                        while (parent && !['div', 'div1', 'div2', 'div3', 'div4', 'p'].includes(parent.tagName.toLowerCase())) {
-                            parent = parent.parentElement;
-                            if (parent === xmlDoc.documentElement || parent === xmlDoc.body) break;
-                        }
-                        if (parent && parent !== xmlDoc.documentElement && parent !== xmlDoc.body) {
-                            foundContent += `<div style="margin-bottom:20px;">${parent.innerHTML}</div>`;
-                            break; 
-                        }
-                    }
-                }
+            if (!match) {
+                nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1').</p>";
+                return;
             }
 
-            if (foundContent) {
-                foundContent = foundContent.replace(/<title>/ig, '<h3>').replace(/<\/title>/ig, '</h3>');
-                nativeContent.innerHTML = foundContent;
-            } else {
-                
-                // --- DIAGNOSTIC MODE ACTIVATED ---
-                let diagHtml = `
-                    <p style="font-size: 16px;">Search failed to locate <strong>${query}</strong> using standard CCEL formatting rules.</p>
-                    <div style="background: #fff; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 15px; margin-top: 20px;">
-                        <h4 style="margin-top: 0; color: var(--oxford-crimson); border-bottom: 1px solid #ccc; padding-bottom: 5px;">🩻 X-Ray Diagnostic Output</h4>
-                        <p style="font-size: 13px; color: #555;">Here are the first 30 structural labels actually found inside your <code>commentary.xml</code> file. <strong>Please screenshot this box!</strong></p>
-                        <ul style="font-size: 12px; color: var(--oxford-navy); font-family: monospace; max-height: 250px; overflow-y: auto;">
-                `;
-                
-                const sampleDivs = xmlDoc.querySelectorAll('div1, div2, div3, div, scripref, scripRef');
-                let count = 0;
-                let seen = new Set();
-                
-                for(let d of sampleDivs) {
-                    let label = d.getAttribute('n') || d.getAttribute('title') || d.getAttribute('id') || d.getAttribute('passage');
-                    
-                    if(!label && !d.tagName.toLowerCase().includes('scrip')) {
-                        let t = d.querySelector('title');
-                        if(t) label = t.textContent.trim();
-                    }
-                    
-                    if(label && !seen.has(label)) {
-                        diagHtml += `<li>&lt;${d.tagName.toLowerCase()}&gt; : ${label}</li>`;
-                        seen.add(label);
-                        count++;
-                    }
-                    if(count >= 30) break;
+            const searchBook = match[1].trim(); 
+            const chap = match[2]; 
+
+            // Standardize Abbreviation for the Regex Target
+            const abbrevs = {
+                "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
+                "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
+                "1jn": "1 John", "2jn": "2 John", "3jn": "3 John", "1sa": "1 Samuel", "2sa": "2 Samuel",
+                "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles"
+            };
+            const firstWord = searchBook.split(' ')[0].toLowerCase();
+            let fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook;
+
+            // Converter for Roman Numerals (CCEL Chapters are often Roman)
+            function getRoman(val) {
+                const num = parseInt(val);
+                if(isNaN(num) || num <= 0) return val;
+                const lookup = {C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
+                let roman = '';
+                let n = num;
+                for (let i in lookup) {
+                    while (n >= lookup[i]) { roman += i; n -= lookup[i]; }
                 }
-                
-                if(count === 0) diagHtml += `<li><em>No standard ThML tags found. The file might be corrupted.</em></li>`;
-                
-                diagHtml += `</ul></div>`;
-                nativeContent.innerHTML = diagHtml;
+                return roman;
             }
+            const romanChap = getRoman(chap);
+
+            // ==========================================
+            // THE SLICER: Phase 1 (Isolate the Book)
+            // ==========================================
+            // We split the massive 20MB string exactly where CCEL defines the Book tag
+            const bookRegex = new RegExp(`<div[1-3][^>]*(?:title|n)="[^"]*\\b${fullBookName}\\b[^"]*"[^>]*>`, 'i');
+            const bookSplit = xmlText.split(bookRegex);
+
+            if (bookSplit.length < 2) {
+                nativeContent.innerHTML = `<p>Could not find the book <strong>${fullBookName}</strong> in this volume.</p>`;
+                return;
+            }
+
+            // We throw away the rest of the Bible and only keep the Book of John!
+            const isolatedBookContent = bookSplit[1];
+
+            // ==========================================
+            // THE SLICER: Phase 2 (Isolate the Chapter)
+            // ==========================================
+            // Now we split the Book exactly where the Chapter begins
+            const chapRegex = new RegExp(`<div[2-5][^>]*(?:title|n)="[^"]*(?:Chapter\\s+)?(?:${chap}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
+            const chapSplit = isolatedBookContent.split(chapRegex);
+
+            if (chapSplit.length < 2) {
+                nativeContent.innerHTML = `<p>Could not locate Chapter <strong>${chap}</strong> within ${fullBookName}.</p>`;
+                return;
+            }
+
+            // We grab the Chapter content!
+            let finalContent = chapSplit[1];
+
+            // ==========================================
+            // THE SLICER: Phase 3 (Cut off the end)
+            // ==========================================
+            // We split at the start of the NEXT chapter or book so we don't render the whole rest of the file
+            const endRegex = /<div[1-5][^>]*title=/i;
+            finalContent = finalContent.split(endRegex)[0];
+
+
+            // ==========================================
+            // THE SLICER: Phase 4 (Format for Display)
+            // ==========================================
+            // Turn ugly XML tags into beautiful HTML layout
+            finalContent = finalContent
+                .replace(/<p[^>]*>/ig, '<p>')
+                .replace(/<\/p>/ig, '</p>')
+                .replace(/<note[^>]*>/ig, '<div class="thml-note">')
+                .replace(/<\/note>/ig, '</div>')
+                .replace(/<scripref[^>]*>/ig, '<span class="scripref">')
+                .replace(/<\/scripref>/ig, '</span>')
+                .replace(/<hi[^>]*>/ig, '<i>')
+                .replace(/<\/hi>/ig, '</i>');
+
+            nativeContent.innerHTML = finalContent;
 
         } catch (error) {
             nativeContent.innerHTML = `
