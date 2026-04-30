@@ -153,36 +153,11 @@
         
         .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
         .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
-    /* UNIVERSAL APP NAV STYLING */
-        .app-nav { 
-            display: flex; 
-            gap: 5px; 
-            margin-bottom: 20px; 
-            margin-top: 10px; 
-        }
-        .app-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 8px 4px; 
-            font-size: 9px; 
-            color: #F8F5EE; /* Oxford Cream */
-            text-decoration: none; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-            background: #121A2A; /* Oxford Navy Dark */
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 4px; 
-            transition: 0.2s; 
-        }
-        .app-nav a:hover { 
-            border-color: #C5A059; /* Oxford Gold */
-        }
-        .app-nav a.active { 
-            background: #C5A059; /* Oxford Gold */
-            color: #121A2A; /* Oxford Navy Dark */
-            border-color: #C5A059; 
-        }
+        
+        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: #C5A059; }
+        .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
     </style>
 </head>
 <body>
@@ -285,7 +260,9 @@
 <div id="block-modal" style="display:none; position:absolute; top:0; left:0; right:0; bottom:0; background:rgba(27,38,59,0.95); z-index:3000; padding:25px; flex-direction:column; gap:10px;">
     <h4 style="color:var(--oxford-gold); margin:0 0 10px 0; font-size:22px; font-family:Georgia, serif;">Exegetical Block Builder</h4>
     <p style="color:var(--oxford-cream); font-size:13px; margin-top:-5px;">Paste your text below. Use your <strong>Tab</strong> key or spacebar to indent modifying phrases and clauses. Double-click the block on the canvas to edit it later.</p>
-    <textarea id="block-text-input" style="flex:1; font-family:monospace; font-size:16px; background: #fff; padding: 20px; white-space: pre;" placeholder="In the beginning,&#10;    God created&#10;        the heavens and the earth"></textarea>
+    
+    <textarea id="block-text-input" onkeydown="handleTab(event)" style="flex:1; font-family:monospace; font-size:16px; background: #fff; padding: 20px; white-space: pre;" placeholder="In the beginning,&#10;    God created&#10;        the heavens and the earth"></textarea>
+    
     <div style="display:flex; gap:10px; margin-top: 10px;">
         <button class="std-btn" onclick="closeBlockModal()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream); padding: 15px; font-size: 14px;">Cancel</button>
         <button class="std-btn" onclick="saveBlockText()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy); padding: 15px; font-size: 14px;">Add Block to Canvas</button>
@@ -356,16 +333,17 @@
     
     canvas.width = 4000; canvas.height = 4000;
 
-    // --- TAB KEY INTERCEPTOR ---
-    document.getElementById('block-text-input').addEventListener('keydown', function(e) {
+    // --- THE FOOLPROOF TAB INTERCEPTOR ---
+    function handleTab(e) {
         if (e.key === 'Tab') {
             e.preventDefault();
-            const start = this.selectionStart;
-            const end = this.selectionEnd;
-            this.value = this.value.substring(0, start) + "    " + this.value.substring(end);
-            this.selectionStart = this.selectionEnd = start + 4;
+            const start = e.target.selectionStart;
+            const end = e.target.selectionEnd;
+            // Inject 4 spaces perfectly at the cursor
+            e.target.value = e.target.value.substring(0, start) + "    " + e.target.value.substring(end);
+            e.target.selectionStart = e.target.selectionEnd = start + 4;
         }
-    });
+    }
 
     // --- BLOCK MODAL LOGIC ---
     function openBlockModal(id = null) {
