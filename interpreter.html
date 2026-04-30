@@ -179,8 +179,14 @@
             overflow-y: auto; color: var(--oxford-navy-dark);
         }
         #native-title { font-family: Georgia, serif; font-size: 32px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 15px; margin-bottom: 30px; margin-top: 0;}
-        #native-content { font-family: Georgia, serif; font-size: 18px; line-height: 1.8; color: #333; }
+        #native-content { font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
+        #native-content p { margin-bottom: 20px; }
         .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
+        
+        /* CCEL ThML Specific Rendering Rules */
+        scripRef { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
+        scripRef:hover { background: rgba(197, 160, 89, 0.1); }
+        note { display: block; padding: 10px; margin: 10px 0; background: var(--bg-main); border-left: 3px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
 
     </style>
 </head>
@@ -331,7 +337,7 @@
         </div>
 
         <div id="native-reader">
-            <span class="native-author">From the library of Matthew Henry</span>
+            <span class="native-author" id="native-author-label">Local Commentary Library</span>
             <h2 id="native-title">Loading...</h2>
             <div id="native-content">
                 </div>
@@ -358,6 +364,92 @@
         const leftPos = window.screen.width - popWidth;
         const windowFeatures = `width=${popWidth},height=${popHeight},left=${leftPos},top=0,menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`;
         window.open(url, 'SyntaxisTool', windowFeatures);
+    }
+
+    // ---------------------------------------------------------
+    // THE NATIVE XML PARSING ENGINE
+    // ---------------------------------------------------------
+    async function loadNativeCommentary(query) {
+        const nativeTitle = document.getElementById('native-title');
+        const nativeContent = document.getElementById('native-content');
+        const authorLabel = document.getElementById('native-author-label');
+        
+        nativeTitle.innerText = query;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Initializing local library scan...</em></p>`;
+
+        try {
+            // Ensure the file downloaded from CCEL is named exactly commentary.xml
+            const response = await fetch('commentary.xml');
+            if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
+            
+            const xmlText = await response.text();
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            // Extract the metadata title from ThML headers if available
+            const titleNode = xmlDoc.querySelector('dc\\:title, title');
+            if (titleNode) {
+                authorLabel.innerText = titleNode.textContent;
+            }
+
+            // Create a fuzzy search regex based on user input (e.g. "John 1:1" -> /John\s*1:1/i)
+            const searchRegex = new RegExp(query.replace(/\s+/g, '\\s*'), 'i');
+            
+            // Fast Node Traversal: Look for CCEL structural tags or standard paragraphs
+            const allNodes = xmlDoc.querySelectorAll('p, div, div1, div2, div3');
+            let foundContent = "";
+
+            for (let i = 0; i < allNodes.length; i++) {
+                const node = allNodes[i];
+                let match = false;
+                
+                // Method 1: Check ThML <scripRef> tags inside the node
+                const scripRefs = node.querySelectorAll('scripRef');
+                scripRefs.forEach(ref => {
+                    if (searchRegex.test(ref.textContent) || searchRegex.test(ref.getAttribute('passage'))) match = true;
+                });
+                
+                // Method 2: Fallback to checking header text content
+                if (!match) {
+                    const headers = node.querySelectorAll('h1, h2, h3, h4, h5, h6');
+                    headers.forEach(h => {
+                        if (searchRegex.test(h.textContent)) match = true;
+                    });
+                }
+
+                if (match) {
+                    foundContent += `<div style="margin-bottom: 20px;">${node.innerHTML}</div>`;
+                    break; // Grab the first major matching section and exit loop
+                }
+            }
+
+            if (foundContent) {
+                nativeContent.innerHTML = foundContent;
+            } else {
+                // Method 3: Deep fallback, just scan all paragraph text bodies directly
+                let fallbackContent = "";
+                const paragraphs = xmlDoc.querySelectorAll('p');
+                for(let p of paragraphs) {
+                     if(searchRegex.test(p.textContent)) {
+                         fallbackContent += `<p>${p.innerHTML}</p>`;
+                     }
+                }
+                if(fallbackContent) {
+                    nativeContent.innerHTML = fallbackContent;
+                } else {
+                    nativeContent.innerHTML = `<p>No commentary notes were found for <strong>${query}</strong> in the currently loaded library volume.</p>`;
+                }
+            }
+
+        } catch (error) {
+            nativeContent.innerHTML = `
+                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
+                <p>1. Please ensure you downloaded the XML file from CCEL.</p>
+                <p>2. Ensure the file is named exactly <code>commentary.xml</code>.</p>
+                <p>3. Ensure it is placed in the exact same folder as this application.</p>
+                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
+            `;
+        }
     }
 
     // ---------------------------------------------------------
@@ -449,29 +541,20 @@
         const isReference = /\d/.test(query) && !isStrongs; 
         const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
 
-
-        // --- NATIVE MODE MOCKUP ---
+        // --- NATIVE MODE ---
         if (source === 'native') {
             iframe.style.display = 'none';
             fallback.style.display = 'none';
             nativeReader.style.display = 'flex';
             
-            document.getElementById('native-title').innerText = query;
-            
-            // This is where we will eventually wire up the JSON fetch command!
-            // For now, it shows them how incredibly clean it looks.
-            document.getElementById('native-content').innerHTML = `
-                <p><strong>[Developer Note]</strong> This is a live mockup of the Native Engine (Option B). Once we download the XML/JSON files from CCEL to your local project folder, we will write a script that injects the actual text right here.</p>
-                <p>Observe the elegance: No browser tabs. No external website headers. No ads. Just pure theological text rendered beautifully inside your application architecture.</p>
-                <p><em>"In the beginning was the Word, and the Word was with God..."</em> The great design of this Gospel is to show that Jesus is the Son of God. He is the Word; the eternal, uncreated Wisdom of the Father. He is the light of the world, and the life of men.</p>
-            `;
-            return; // Stop here, no need to process URLs
+            // Execute the XML Scanner
+            loadNativeCommentary(query);
+            return;
         } else {
             nativeReader.style.display = 'none';
         }
 
-
-        // -- STANDARD WEB ROUTING --
+        // --- STANDARD WEB ROUTING ---
         if (isCommentaryMode) {
             targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
             
