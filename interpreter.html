@@ -72,8 +72,9 @@
             transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
         }
         
+        /* THE FIX: Now using viewport width (vw) for massive expansion */
         body.drawer-open #workspace {
-            margin-right: 480px; 
+            margin-right: 60vw; 
         }
 
         /* Containers */
@@ -113,9 +114,9 @@
         .app-nav a:hover { border-color: #C5A059; }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
-        /* NEW SMART LEXICON DRAWER (PRETTY OXFORD EDITION) */
+        /* EXPANDED SWITCHBOARD LEXICON DRAWER */
         #lexicon-drawer {
-            position: fixed; top: 0; right: -480px; width: 480px; height: 100vh;
+            position: fixed; top: 0; right: -60vw; width: 60vw; height: 100vh;
             background: var(--oxford-cream); box-shadow: -10px 0 40px rgba(0,0,0,0.5);
             transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2100; 
             display: flex; flex-direction: column;
@@ -146,19 +147,28 @@
         }
         .lexicon-btn-icon:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
 
-        .lexicon-controls {
-            display: flex; gap: 10px; width: 100%;
-        }
-        .lexicon-controls input { 
-            flex: 1; padding: 12px 15px; border-radius: var(--radius-small); 
+        .lexicon-controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .lexicon-controls-row { display: flex; gap: 10px; width: 100%; }
+        .lexicon-controls input, .lexicon-controls select { 
+            padding: 12px 15px; border-radius: var(--radius-small); 
             border: 1px solid var(--oxford-navy-dark); font-size: 13px; outline: none;
             background: var(--oxford-cream); color: var(--oxford-navy);
             box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
-        .lexicon-controls input:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+        .lexicon-controls select { flex: 1; font-weight: bold; cursor: pointer; }
+        .lexicon-controls input { flex: 2; }
+        .lexicon-controls input:focus, .lexicon-controls select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
 
         .lexicon-iframe-container { flex-grow: 1; background: #fff; position: relative; }
         #lexicon-iframe { width: 100%; height: 100%; border: none; }
+        
+        /* The Fort Knox Fallback Screen */
+        #lexicon-fallback {
+            display: none; flex-direction: column; align-items: center; justify-content: center;
+            height: 100%; width: 100%; background: var(--bg-main); text-align: center; padding: 40px; box-sizing: border-box;
+        }
+        #lexicon-fallback h3 { font-family: Georgia, serif; font-size: 20px; color: var(--oxford-navy); margin-bottom: 15px; letter-spacing: 0; text-transform: none; }
+        #lexicon-fallback p { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 25px; }
 
     </style>
 </head>
@@ -267,17 +277,33 @@
         <div class="lexicon-header-top">
             <h3 class="lexicon-title">📖 Lexicon <span>Research</span></h3>
             <div style="display: flex; gap: 5px;">
-                <button class="lexicon-btn-icon" onclick="window.open(document.getElementById('lexicon-iframe').src, '_blank')" title="Pop Out to New Tab">↗</button>
+                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to New Tab">↗</button>
                 <button class="lexicon-btn-icon" onclick="toggleLexicon()" style="font-size: 26px; line-height: 0.7;" title="Close Drawer">&times;</button>
             </div>
         </div>
         <div class="lexicon-controls">
-            <input type="text" id="lexiconSearchInput" placeholder="English Word or Strong's (e.g. G3056)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
-            <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
+            <div class="lexicon-controls-row">
+                <input type="text" id="lexiconSearchInput" placeholder="English Word or Strong's (G3056)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
+            </div>
+            <div class="lexicon-controls-row">
+                <select id="lexiconSource" onchange="executeLexiconSearch()">
+                    <option value="studybible">StudyBible.info</option>
+                    <option value="blb">Blue Letter Bible (Secure)</option>
+                    <option value="step">STEP Bible (Secure)</option>
+                </select>
+                <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
+            </div>
         </div>
     </div>
+    
     <div class="lexicon-iframe-container">
         <iframe id="lexicon-iframe" src="about:blank"></iframe>
+        
+        <div id="lexicon-fallback">
+            <h3>🔒 Secure Lexicon Required</h3>
+            <p>The database you selected has high-security settings that prevent it from being embedded inside another application.</p>
+            <button class="std-btn" id="fallback-launch-btn" style="padding: 15px 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">Launch in New Tab</button>
+        </div>
     </div>
 </div>
 
@@ -290,11 +316,11 @@
     let selectedWordId = null;
     
     // Core Engine State
-    let lexiconData = {}; // Format: { "w-0": { word, lemma, strongs, parsing, def, synth } }
-    let matrixData = [];  // Format: [ { id, ref, text, notes } ]
+    let lexiconData = {}; 
+    let matrixData = [];  
 
     // ---------------------------------------------------------
-    // SMART LEXICON ENGINE 
+    // LEXICON SWITCHBOARD ENGINE 
     // ---------------------------------------------------------
     function toggleLexicon(autoSearch = false) {
         const drawer = document.getElementById('lexicon-drawer');
@@ -303,12 +329,10 @@
         if (!isOpen) {
             let query = document.getElementById('lexiconSearchInput').value;
             
-            // If they clicked the auto-search button and a word is selected
             if (autoSearch && selectedWordId) {
                 let strongsInput = document.getElementById('lexStrongs').value.trim();
                 let wordText = document.getElementById('lex-target-word').innerText.trim();
                 
-                // Prioritize Strong's number if they entered one, otherwise use the English word
                 if (strongsInput) {
                     query = strongsInput;
                 } else if (wordText && wordText !== "No Word Selected") {
@@ -330,15 +354,47 @@
         const query = document.getElementById('lexiconSearchInput').value.trim();
         if (!query) return;
         
+        const source = document.getElementById('lexiconSource').value;
         const iframe = document.getElementById('lexicon-iframe');
+        const fallback = document.getElementById('lexicon-fallback');
+        const fallbackBtn = document.getElementById('fallback-launch-btn');
+        const popoutBtn = document.getElementById('lexicon-popout-btn');
         
-        // If the query is a Strong's Number (e.g. G3056, H7225)
-        if (/^[GH]\d+$/i.test(query)) {
-            iframe.src = `https://studybible.info/strongs/${query.toUpperCase()}`;
-        } else {
-            // Otherwise, search the English word in KJV to pull up results
-            iframe.src = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+        let targetUrl = "";
+
+        if (source === 'studybible') {
+            if (/^[GH]\d+$/i.test(query)) {
+                targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
+            } else {
+                targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+            }
+            iframe.src = targetUrl;
+            iframe.style.display = 'block';
+            fallback.style.display = 'none';
+            
+        } else if (source === 'blb') {
+            if (/^[GH]\d+$/i.test(query)) {
+                targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
+            } else {
+                targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
+            }
+            iframe.style.display = 'none';
+            fallback.style.display = 'flex';
+            fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
+            
+        } else if (source === 'step') {
+            if (/^[GH]\d+$/i.test(query)) {
+                targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
+            } else {
+                targetUrl = `https://www.stepbible.org/?q=meanings=${encodeURIComponent(query)}`;
+            }
+            iframe.style.display = 'none';
+            fallback.style.display = 'flex';
+            fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
         }
+
+        // Wire the top right popout button to match the current search
+        popoutBtn.onclick = () => window.open(targetUrl, '_blank');
     }
 
     // ---------------------------------------------------------
@@ -420,7 +476,7 @@
         lexiconData = data.lexiconData || {};
         matrixData = data.matrixData || [];
         
-        renderText(); // rebuilds the passage and highlights words
+        renderText(); 
         renderLexiconCards();
         renderMatrixTable();
         clearSelection();
@@ -442,7 +498,6 @@
     // TEXT ENGINE
     // ---------------------------------------------------------
 
-    // Deselect if clicking empty space
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
 
     function renderText() {
@@ -465,7 +520,6 @@
                 span.id = `w-${wordIndex++}`;
                 span.innerText = chunk;
                 
-                // If it exists in lexiconData, add the gold underline
                 if (lexiconData[span.id]) span.classList.add('has-data');
 
                 span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
@@ -479,14 +533,12 @@
         selectedWordId = id;
         document.getElementById(id).classList.add('selected');
         
-        // Open the Lexicon Editor
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
         
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
         
-        // Populate form if data exists, otherwise clear it
         if (lexiconData[id]) {
             document.getElementById('lexLemma').value = lexiconData[id].lemma || '';
             document.getElementById('lexStrongs').value = lexiconData[id].strongs || '';
@@ -514,7 +566,7 @@
     }
 
     // ---------------------------------------------------------
-    // LEXICON ENGINE
+    // LEXICON CARD ENGINE
     // ---------------------------------------------------------
 
     function saveLexiconData() {
@@ -527,10 +579,7 @@
         const def = document.getElementById('lexDef').value.trim();
         const synth = document.getElementById('lexSynth').value.trim();
 
-        // Save to state
         lexiconData[selectedWordId] = { word: wordText, lemma, strongs, parsing, def, synth };
-        
-        // Add visual cue to the word in the passage
         document.getElementById(selectedWordId).classList.add('has-data');
         
         renderLexiconCards();
@@ -557,7 +606,6 @@
         keys.forEach(id => {
             const d = lexiconData[id];
             
-            // Build elements safely
             const strongsHtml = d.strongs ? `<span class="lex-strongs">${d.strongs}</span>` : '';
             const lemmaHtml = d.lemma ? `<div class="lex-lemma">Root: ${d.lemma}</div>` : '';
             const parsingHtml = d.parsing ? `<div class="lex-parsing">${d.parsing}</div>` : '';
