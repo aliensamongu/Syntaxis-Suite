@@ -278,7 +278,7 @@
         <div class="lexicon-header-top">
             <h3 class="lexicon-title">📖 Lexicon <span>Research</span></h3>
             <div style="display: flex; gap: 5px;">
-                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to New Tab">↗</button>
+                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to Window">↗</button>
                 <button class="lexicon-btn-icon" onclick="toggleLexicon()" style="font-size: 26px; line-height: 0.7;" title="Close Drawer">&times;</button>
             </div>
         </div>
@@ -313,9 +313,9 @@
         <iframe id="lexicon-iframe" src="about:blank"></iframe>
         
         <div id="lexicon-fallback">
-            <h3>🔒 Secure Lexicon Required</h3>
-            <p>The database you selected has high-security settings that prevent it from being embedded inside another application.</p>
-            <button class="std-btn" id="fallback-launch-btn" style="padding: 15px 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">Launch in New Tab</button>
+            <h3 id="fallback-title">🗂️ Dual-Monitor Mode Required</h3>
+            <p id="fallback-desc">This resource cannot be embedded directly. Click below to open it in a perfectly sized floating window next to your workspace!</p>
+            <button class="std-btn" id="fallback-launch-btn" style="padding: 15px 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">Launch Floating Window</button>
         </div>
     </div>
 </div>
@@ -331,10 +331,26 @@
     let matrixData = [];  
 
     // ---------------------------------------------------------
+    // THE DUAL-MONITOR POPUP ENGINE
+    // ---------------------------------------------------------
+    function openFloatingWindow(url) {
+        // Calculate 45% of the user's screen width for the popup
+        const popWidth = Math.floor(window.screen.width * 0.45);
+        const popHeight = window.screen.height;
+        // Position it on the far right
+        const leftPos = window.screen.width - popWidth;
+        
+        // The magic features string that forces a window instead of a tab
+        const windowFeatures = `width=${popWidth},height=${popHeight},left=${leftPos},top=0,menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`;
+        
+        // Open the window (using 'SyntaxisTool' forces it to reuse the same window if clicked again)
+        window.open(url, 'SyntaxisTool', windowFeatures);
+    }
+
+    // ---------------------------------------------------------
     // LEXICON SWITCHBOARD ENGINE 
     // ---------------------------------------------------------
     
-    // Updates UI colors based on the toggle switch position
     function updateToggleState() {
         const isComm = document.getElementById('resourceToggle').checked;
         document.getElementById('lbl-lex').style.color = isComm ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
@@ -377,15 +393,20 @@
         let query = document.getElementById('lexiconSearchInput').value.trim();
         if (!query) return;
 
-        // THE LAYPERSON ABBREVIATION TRANSLATOR
+        // Clean up numbered books and weird spacing (e.g. "1 Pe" -> "1Pe", "1Pe 1" stays "1Pe 1")
+        query = query.replace(/^(\d)\s+([a-zA-Z]+)/, "$1$2");
+
+        // THE UPGRADED ABBREVIATION TRANSLATOR
         const abbrevs = {
-            "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
+            "1pe": "1 Peter", "2pe": "2 Peter", "1pet": "1 Peter", "2pet": "2 Peter", 
+            "1peter": "1 Peter", "2peter": "2 Peter",
+            "1co": "1 Corinthians", "2co": "2 Corinthians", "1cor": "1 Corinthians", "2cor": "2 Corinthians",
             "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
             "1jn": "1 John", "2jn": "2 John", "3jn": "3 John", "1sa": "1 Samuel", "2sa": "2 Samuel",
             "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles",
             "gen": "Genesis", "exo": "Exodus", "lev": "Leviticus", "num": "Numbers", "deu": "Deuteronomy",
             "jos": "Joshua", "jud": "Judges", "rut": "Ruth", "ezr": "Ezra", "neh": "Nehemiah", "est": "Esther",
-            "psa": "Psalms", "pro": "Proverbs", "ecc": "Ecclesiastes", "sng": "Song of Solomon",
+            "psa": "Psalms", "psalm": "Psalms", "pro": "Proverbs", "ecc": "Ecclesiastes", "sng": "Song of Solomon",
             "isa": "Isaiah", "jer": "Jeremiah", "lam": "Lamentations", "eze": "Ezekiel", "dan": "Daniel",
             "hos": "Hosea", "joe": "Joel", "amo": "Amos", "oba": "Obadiah", "jon": "Jonah", "mic": "Micah",
             "nah": "Nahum", "hab": "Habakkuk", "zep": "Zephaniah", "hag": "Haggai", "zec": "Zechariah", "mal": "Malachi",
@@ -404,6 +425,8 @@
         
         const iframe = document.getElementById('lexicon-iframe');
         const fallback = document.getElementById('lexicon-fallback');
+        const fallbackTitle = document.getElementById('fallback-title');
+        const fallbackDesc = document.getElementById('fallback-desc');
         const fallbackBtn = document.getElementById('fallback-launch-btn');
         const popoutBtn = document.getElementById('lexicon-popout-btn');
         
@@ -413,14 +436,21 @@
         const isReference = /\d/.test(query) && !isStrongs; 
         const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
 
-        if (source === 'studybible') {
-            if (isCommentaryMode) {
-                if (isReference) {
-                    targetUrl = `https://studybible.info/commentary/${encodeURIComponent(query)}`;
-                } else {
-                    targetUrl = `https://studybible.info/dictionary/${encodeURIComponent(query)}`;
-                }
-            } else {
+        // -- THE FIX: ROUTE ALL COMMENTARIES TO BLB IN POPUP --
+        if (isCommentaryMode) {
+            targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
+            
+            iframe.style.display = 'none';
+            fallback.style.display = 'flex';
+            fallbackTitle.innerText = "🗂️ Dual-Monitor Mode Ready";
+            fallbackDesc.innerText = "Blue Letter Bible cannot be embedded directly. Click below to open your commentary in a perfectly sized floating window right next to your workspace!";
+            fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
+        } else {
+            // Restore normal fallback text for Lexicons
+            fallbackTitle.innerText = "🔒 Secure Lexicon Required";
+            fallbackDesc.innerText = "The database you selected prevents embedding. Click below to open it in a perfectly sized floating window.";
+
+            if (source === 'studybible') {
                 if (isStrongs) {
                     targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
                 } else if (isReference) {
@@ -428,38 +458,36 @@
                 } else {
                     targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
                 }
+                
+                iframe.src = targetUrl;
+                iframe.style.display = 'block';
+                fallback.style.display = 'none';
+                
+            } else if (source === 'blb') {
+                if (isStrongs) {
+                    targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
+                } else {
+                    targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
+                }
+                iframe.style.display = 'none';
+                fallback.style.display = 'flex';
+                fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
+                
+            } else if (source === 'step') {
+                if (isStrongs) {
+                    targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
+                } else if (isReference) {
+                    targetUrl = `https://www.stepbible.org/?q=reference=${encodeURIComponent(query)}`;
+                } else {
+                    targetUrl = `https://www.stepbible.org/?q=meanings=${encodeURIComponent(query)}`;
+                }
+                iframe.style.display = 'none';
+                fallback.style.display = 'flex';
+                fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
             }
-            
-            iframe.src = targetUrl;
-            iframe.style.display = 'block';
-            fallback.style.display = 'none';
-            
-        } else if (source === 'blb') {
-            if (isCommentaryMode && isReference) {
-                targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
-            } else if (isStrongs) {
-                targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
-            } else {
-                targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
-            }
-            iframe.style.display = 'none';
-            fallback.style.display = 'flex';
-            fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
-            
-        } else if (source === 'step') {
-            if (isStrongs) {
-                targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
-            } else if (isReference) {
-                targetUrl = `https://www.stepbible.org/?q=reference=${encodeURIComponent(query)}`;
-            } else {
-                targetUrl = `https://www.stepbible.org/?q=meanings=${encodeURIComponent(query)}`;
-            }
-            iframe.style.display = 'none';
-            fallback.style.display = 'flex';
-            fallbackBtn.onclick = () => window.open(targetUrl, '_blank');
         }
 
-        popoutBtn.onclick = () => window.open(targetUrl, '_blank');
+        popoutBtn.onclick = () => openFloatingWindow(targetUrl);
     }
 
     // ---------------------------------------------------------
@@ -468,7 +496,7 @@
     
     window.addEventListener('DOMContentLoaded', () => { 
         updateProjectList(); 
-        updateToggleState(); // Synchronize CSS Labels on Initial Load
+        updateToggleState(); 
     });
 
     function getSavePayload() {
@@ -600,7 +628,7 @@
         if (reference) {
             document.getElementById('lexiconSearchInput').value = reference;
             document.getElementById('resourceToggle').checked = false;
-            updateToggleState(); // This automatically executes the search and loads the iframe
+            updateToggleState(); 
 
             const drawer = document.getElementById('lexicon-drawer');
             if (!drawer.classList.contains('open')) {
