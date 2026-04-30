@@ -708,9 +708,9 @@
         let targetEl = null, targetPoint = null;
         elements.forEach(el => {
             const f = el.flip;
-            if (el.type === 'single_line') { 
-                if (Math.hypot(el.x - mx, el.y - my) < 30) { targetEl = el; targetPoint = 'line_start'; } 
-                else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30) { targetEl = el; targetPoint = 'line_end'; } 
+            if (el.type === 'single_line' || el.type === 'clause_link') { 
+                if (Math.hypot(el.x - mx, el.y - my) < 30 / zoomLevel) { targetEl = el; targetPoint = 'line_start'; } 
+                else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30 / zoomLevel) { targetEl = el; targetPoint = 'line_end'; } 
             }
             else if (el.type === 'subject_baseline') {
                 if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'subj_left'; }
@@ -746,6 +746,18 @@
             draw(); return; 
         }
         
+        // THE FIX: SHAPES WIN OVER TEXT BOXES
+        const clickedShape = elements.find(el => { 
+            if(el.type === 'text' || el.type === 'block_text') return false; 
+            if(el.type === 'clause_link') {
+                const f = el.flip;
+                const nearVert = Math.abs(mx - el.x) < 20 && ((my >= el.y - 20 && my <= el.y + el.h + 20) || (my <= el.y + 20 && my >= el.y + el.h - 20));
+                const nearHoriz = Math.abs(my - (el.y + el.h)) < 20 && ((mx >= el.x - 20 && mx <= el.x + el.w*f + 20) || (mx <= el.x + 20 && mx >= el.x + el.w*f - 20));
+                return nearVert || nearHoriz;
+            }
+            return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; 
+        });
+        
         const clickedText = elements.find(el => {
             if(el.type === 'text' && Math.abs(el.x - mx) < 60 && Math.abs(el.y - my) < 25) return true;
             if(el.type === 'block_text') {
@@ -760,16 +772,15 @@
             }
             return false;
         });
-        const clickedShape = elements.find(el => { if(el.type === 'text' || el.type === 'block_text') return false; return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; });
-        
-        if (clickedText || clickedShape) { 
-            const clicked = clickedText || clickedShape; 
+
+        if (clickedShape || clickedText) { 
+            const clicked = clickedShape || clickedText; 
             if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
             isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
             document.getElementById('styleColor').value = clicked.color || '#333333';
             document.getElementById('styleWeight').value = clicked.thickness || 2.5;
 
-            if (clickedText && clickedText.type === 'text' && apparatusData.some(v => v.targetId === clickedText.id)) {
+            if (clicked && clicked.type === 'text' && apparatusData.some(v => v.targetId === clicked.id)) {
                 document.getElementById('apparatus-drawer').classList.add('open');
             }
         }
@@ -781,7 +792,8 @@
         const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
         if (isResizing) {
             const el = selectedElements[0], f = el.flip;
-            if (el.type === 'single_line') { 
+            // THE FIX: Independent points for single line and clause link
+            if (el.type === 'single_line' || el.type === 'clause_link') { 
                 let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my;
                 if (currentResizePoint === 'line_start') { 
                     let ex = el.x + (el.w * f), ey = el.y + el.h;
@@ -989,14 +1001,16 @@
                     ctx.strokeRect(el.x - 35, el.y - 35, 70, 70);
                     ctx.setLineDash([]);
                 }
-                else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
+                else if (el.type === 'single_line' || el.type === 'clause_link') { 
+                    ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); 
+                }
                 else if (el.type === 'subject_baseline') { ctx.beginPath(); ctx.arc(el.x - (el.dx_left*f), el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                 else if (el.type === 'modifier') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top*f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                 else if (el.type === 'prep_shelf') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top * f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                 else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { ctx.beginPath(); ctx.arc(el.type === 'pred_nom' ? el.x - (25*f) : el.x, el.y - el.h, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                 else if (el.type === 'arc') { ctx.beginPath(); ctx.arc(el.x + (el.w*f)/2, el.y - el.h, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                 else if (el.type === 'vertical_arc') { ctx.beginPath(); ctx.arc(el.x - (el.w*f), el.y + el.h/2, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x, el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
-                else if (el.type === 'clause_link') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
                 else { ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
             }
         });
