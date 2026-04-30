@@ -368,7 +368,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE NUCLEAR REGEX ENGINE (Bypasses Broken CCEL HTML)
+    // THE X-RAY DIAGNOSTIC ENGINE
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -376,89 +376,90 @@
         const authorLabel = document.getElementById('native-author-label');
         
         nativeTitle.innerText = query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Initializing Nuclear Engine scan...</em></p>`;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Initializing X-Ray Diagnostic Scan...</em></p>`;
 
         try {
             const response = await fetch('commentary.xml');
             if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
             
             const xmlText = await response.text();
+            const parser = new DOMParser();
+            
+            let xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            if (xmlDoc.querySelector('parsererror')) {
+                xmlDoc = parser.parseFromString(xmlText, "text/html"); // Honey badger fallback
+            }
 
-            // Attempt to grab title using raw string matching
+            // Title grab
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i) || xmlText.match(/<title[^>]*>([^<]+)<\/title>/i);
             if (titleMatch) {
                 authorLabel.innerText = titleMatch[1];
             }
 
-            // Extract the core search parameters (e.g. "John 1:1-18" -> "joh" and "1")
+            // Normal Search Attempt First
             const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            if (!match) {
-                nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1').</p>";
-                return;
-            }
-
-            const bookStr = match[1].replace(/\s+/g, ''); // "1Peter" or "John"
-            const bookPrefix = bookStr.substring(0, 3).toLowerCase(); // "1pe" or "joh"
-            const chap = match[2]; // "1"
-
-            // CCEL's most reliable internal marker is the scripref passage tag (e.g., passage="Joh 1:1")
-            // We use a regex to find any structural tag that contains our exact book prefix and chapter
-            const searchRegex = new RegExp(`\\b${bookPrefix}[a-z]*\\.?\\s*${chap}\\b`, 'i');
-
-            // Force parse the messy CCEL file as sloppy HTML to prevent XML crashes
-            const parser = new DOMParser();
-            let xmlDoc = parser.parseFromString(xmlText, "text/xml");
-            if (xmlDoc.querySelector('parsererror')) {
-                xmlDoc = parser.parseFromString(xmlText, "text/html");
-            }
-
             let foundContent = "";
 
-            // 1. Primary Hunt: Find the hidden CCEL <scripref> markers
-            const refs = xmlDoc.querySelectorAll('scripref, scripRef, ref');
-            for (let i = 0; i < refs.length; i++) {
-                const ref = refs[i];
-                const pass = ref.getAttribute('passage') || ref.textContent;
-                
-                if (searchRegex.test(pass)) {
-                    // We found the marker! Now traverse UP the hierarchy to find the container holding all the commentary text.
-                    let parent = ref.parentElement;
-                    while (parent && !['div', 'div1', 'div2', 'div3', 'div4', 'p'].includes(parent.tagName.toLowerCase())) {
-                        parent = parent.parentElement;
-                        if (parent === xmlDoc.documentElement || parent === xmlDoc.body) break; // Safety net
-                    }
-                    
-                    if (parent && parent !== xmlDoc.documentElement && parent !== xmlDoc.body) {
-                        foundContent += `<div style="margin-bottom:20px;">${parent.innerHTML}</div>`;
-                        break; // We grabbed the block, exit the loop!
-                    }
-                }
-            }
+            if (match) {
+                const bookPrefix = match[1].replace(/\s+/g, '').substring(0, 3).toLowerCase(); 
+                const chap = match[2]; 
+                const searchRegex = new RegExp(`\\b${bookPrefix}[a-z]*\\.?\\s*${chap}\\b`, 'i');
 
-            // 2. Secondary Hunt: If no scriprefs exist, look at Section Headers
-            if (!foundContent) {
-                const headers = xmlDoc.querySelectorAll('title, h1, h2, h3, h4');
-                for (let i = 0; i < headers.length; i++) {
-                    const h = headers[i];
-                    if (searchRegex.test(h.textContent)) {
-                        let parent = h.parentElement;
-                        if (parent) {
+                const refs = xmlDoc.querySelectorAll('scripref, scripRef, ref');
+                for (let i = 0; i < refs.length; i++) {
+                    const pass = refs[i].getAttribute('passage') || refs[i].textContent;
+                    if (searchRegex.test(pass)) {
+                        let parent = refs[i].parentElement;
+                        while (parent && !['div', 'div1', 'div2', 'div3', 'div4', 'p'].includes(parent.tagName.toLowerCase())) {
+                            parent = parent.parentElement;
+                            if (parent === xmlDoc.documentElement || parent === xmlDoc.body) break;
+                        }
+                        if (parent && parent !== xmlDoc.documentElement && parent !== xmlDoc.body) {
                             foundContent += `<div style="margin-bottom:20px;">${parent.innerHTML}</div>`;
-                            break;
+                            break; 
                         }
                     }
                 }
             }
 
             if (foundContent) {
-                // Clean up any stray CCEL Title tags and turn them into nice Oxford headers
                 foundContent = foundContent.replace(/<title>/ig, '<h3>').replace(/<\/title>/ig, '</h3>');
                 nativeContent.innerHTML = foundContent;
             } else {
-                nativeContent.innerHTML = `
-                    <p>No commentary notes were found for <strong>${query}</strong> in the currently loaded library volume.</p>
-                    <p style="font-size: 13px; color: #888;">Note: If you downloaded Matthew Henry's Concise Commentary, make sure the file actually contains the book you are searching for (e.g., Volume 5 only contains the Gospels).</p>
+                
+                // --- DIAGNOSTIC MODE ACTIVATED ---
+                let diagHtml = `
+                    <p style="font-size: 16px;">Search failed to locate <strong>${query}</strong> using standard CCEL formatting rules.</p>
+                    <div style="background: #fff; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 15px; margin-top: 20px;">
+                        <h4 style="margin-top: 0; color: var(--oxford-crimson); border-bottom: 1px solid #ccc; padding-bottom: 5px;">🩻 X-Ray Diagnostic Output</h4>
+                        <p style="font-size: 13px; color: #555;">Here are the first 30 structural labels actually found inside your <code>commentary.xml</code> file. <strong>Please screenshot this box!</strong></p>
+                        <ul style="font-size: 12px; color: var(--oxford-navy); font-family: monospace; max-height: 250px; overflow-y: auto;">
                 `;
+                
+                const sampleDivs = xmlDoc.querySelectorAll('div1, div2, div3, div, scripref, scripRef');
+                let count = 0;
+                let seen = new Set();
+                
+                for(let d of sampleDivs) {
+                    let label = d.getAttribute('n') || d.getAttribute('title') || d.getAttribute('id') || d.getAttribute('passage');
+                    
+                    if(!label && !d.tagName.toLowerCase().includes('scrip')) {
+                        let t = d.querySelector('title');
+                        if(t) label = t.textContent.trim();
+                    }
+                    
+                    if(label && !seen.has(label)) {
+                        diagHtml += `<li>&lt;${d.tagName.toLowerCase()}&gt; : ${label}</li>`;
+                        seen.add(label);
+                        count++;
+                    }
+                    if(count >= 30) break;
+                }
+                
+                if(count === 0) diagHtml += `<li><em>No standard ThML tags found. The file might be corrupted.</em></li>`;
+                
+                diagHtml += `</ul></div>`;
+                nativeContent.innerHTML = diagHtml;
             }
 
         } catch (error) {
