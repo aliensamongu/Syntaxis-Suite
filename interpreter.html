@@ -181,12 +181,12 @@
         #native-title { font-family: Georgia, serif; font-size: 32px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 15px; margin-bottom: 30px; margin-top: 0;}
         #native-content { font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
         #native-content p { margin-bottom: 20px; }
-        #native-content h1, #native-content h2, #native-content h3, #native-content h4 { color: var(--oxford-navy); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px;}
+        #native-content h1, #native-content h2, #native-content h3, #native-content h4 { color: var(--oxford-navy); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 30px;}
         .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
         
         /* CCEL ThML Specific Rendering Rules */
-        scripRef { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
-        scripRef:hover { background: rgba(197, 160, 89, 0.1); }
+        scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
+        scripref:hover { background: rgba(197, 160, 89, 0.1); }
         note { display: block; padding: 10px; margin: 10px 0; background: var(--bg-main); border-left: 3px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
 
     </style>
@@ -368,7 +368,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE NATIVE XML PARSING ENGINE (Upgraded Hierarchical Scanner)
+    // THE NATIVE HONEY BADGER ENGINE (DOMParser text/html)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -384,118 +384,51 @@
             
             const xmlText = await response.text();
             const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+            
+            // THE HONEY BADGER: Parsing as text/html ignores fatal XML errors caused by old CCEL typos!
+            const xmlDoc = parser.parseFromString(xmlText, "text/html");
 
+            // Extract the metadata title
             const titleNode = xmlDoc.querySelector('dc\\:title, title');
             if (titleNode) {
                 authorLabel.innerText = titleNode.textContent;
             }
 
-            // 1. Break query into Book and Chapter ("John 1:1-18" -> "John", "1")
-            const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            let searchBook = match ? match[1].trim() : query.replace(/[0-9:]/g, '').trim();
-            let searchChapter = match ? match[2] : "";
+            // 1. Break query down (e.g. "John 1:1" -> letters: "joh", chap: "1")
+            const cleanQuery = query.toLowerCase().replace(/[^a-z0-9:]/g, ''); 
+            const letters = cleanQuery.replace(/[0-9:]/g, '').substring(0,3); 
+            const nums = query.match(/\d+/g);
+            const chap = nums ? nums[0] : "";
 
-            // Standardize Book Name
-            const abbrevs = {
-                "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
-                "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
-                "1jn": "1 John", "2jn": "2 John", "3jn": "3 John", "1sa": "1 Samuel", "2sa": "2 Samuel",
-                "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles",
-                "gen": "Genesis", "exo": "Exodus", "lev": "Leviticus", "num": "Numbers", "deu": "Deuteronomy",
-                "jos": "Joshua", "jud": "Judges", "rut": "Ruth", "ezr": "Ezra", "neh": "Nehemiah", "est": "Esther",
-                "psa": "Psalms", "psalm": "Psalms", "pro": "Proverbs", "ecc": "Ecclesiastes", "sng": "Song of Solomon",
-                "isa": "Isaiah", "jer": "Jeremiah", "lam": "Lamentations", "eze": "Ezekiel", "dan": "Daniel",
-                "hos": "Hosea", "joe": "Joel", "amo": "Amos", "oba": "Obadiah", "jon": "Jonah", "mic": "Micah",
-                "nah": "Nahum", "hab": "Habakkuk", "zep": "Zephaniah", "hag": "Haggai", "zec": "Zechariah", "mal": "Malachi",
-                "mat": "Matthew", "mrk": "Mark", "luk": "Luke", "jhn": "John", "act": "Acts", "rom": "Romans",
-                "gal": "Galatians", "eph": "Ephesians", "php": "Philippians", "col": "Colossians", "phm": "Philemon",
-                "heb": "Hebrews", "jas": "James", "rev": "Revelation"
-            };
-            const firstWord = searchBook.split(' ')[0].toLowerCase();
-            let fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook;
-            
-            // Helper for Roman Numerals (e.g. Chapter 1 -> Chapter I)
-            function getRoman(num) {
-                const val = parseInt(num);
-                if(isNaN(val) || val <= 0) return num;
-                const lookup = {C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
-                let roman = '';
-                let n = val;
-                for (let i in lookup) {
-                    while (n >= lookup[i]) { roman += i; n -= lookup[i]; }
-                }
-                return roman;
+            if (!letters || !chap) {
+                nativeContent.innerHTML = `<p>Please include a book and chapter (e.g. John 1:1).</p>`;
+                return;
             }
-            const romanChap = getRoman(searchChapter);
 
             let foundContent = "";
+            // Find all hidden CCEL scripref tags
+            const allRefs = xmlDoc.querySelectorAll('scripref');
 
-            // STAGE 1: Find the Book Container
-            let bookDiv = null;
-            const divs = xmlDoc.querySelectorAll('div, div1, div2, div3');
-            for (let div of divs) {
-                const title = div.querySelector(':scope > title, :scope > h1, :scope > h2');
-                if (title && title.textContent.toLowerCase().includes(fullBookName.toLowerCase())) {
-                    bookDiv = div;
-                    break;
-                }
-            }
-            
-            const searchArea = bookDiv || xmlDoc;
+            for (let i = 0; i < allRefs.length; i++) {
+                const ref = allRefs[i];
+                const passageAttr = (ref.getAttribute('passage') || ref.textContent || "").toLowerCase();
+                
+                // Use a word boundary so Chapter 1 doesn't match Chapter 10
+                const chapRegex = new RegExp('\\b' + chap + '\\b');
 
-            // STAGE 2: Find the Chapter Container inside the Book
-            if (searchChapter) {
-                const chapRegexes = [
-                    new RegExp(`\\bChapter\\s+${searchChapter}\\b`, 'i'),
-                    new RegExp(`\\bChapter\\s+${romanChap}\\b`, 'i'),
-                    new RegExp(`^${searchChapter}$`, 'i'),
-                    new RegExp(`^${romanChap}\\.?$`, 'i'),
-                    new RegExp(`${fullBookName}\\s+${searchChapter}`, 'i'),
-                    new RegExp(`${fullBookName}\\s+${romanChap}\\b`, 'i')
-                ];
-
-                const innerDivs = searchArea.querySelectorAll('div, div1, div2, div3, div4');
-                for (let div of innerDivs) {
-                    const title = div.querySelector(':scope > title, :scope > h1, :scope > h2, :scope > h3');
-                    if (title) {
-                        const tText = title.textContent.trim();
-                        for (let r of chapRegexes) {
-                            if (r.test(tText)) {
-                                foundContent = div.innerHTML;
-                                break;
-                            }
-                        }
+                // If we found the exact tag CCEL uses behind the scenes
+                if (passageAttr.includes(letters) && chapRegex.test(passageAttr)) {
+                    
+                    // Traverse upwards to grab the massive parent container holding the text
+                    let parent = ref.parentElement;
+                    while (parent && !parent.tagName.match(/^DIV/i)) {
+                        parent = parent.parentElement;
+                        if (parent === xmlDoc.body) break; // Safety net
                     }
-                    if (foundContent) break;
-                }
-            }
 
-            // STAGE 3: Fallback - Hunt for <scripRef>
-            if (!foundContent && searchChapter) {
-                const bookPrefix = fullBookName.substring(0,3);
-                const refRegex = new RegExp(`${bookPrefix}[a-z]*\\.?\\s*${searchChapter}`, 'i');
-                const refs = searchArea.querySelectorAll('scripRef');
-                for (let ref of refs) {
-                    const pass = ref.getAttribute('passage') || ref.textContent;
-                    if (refRegex.test(pass)) {
-                        // Traverse up to find a good container block
-                        let parent = ref.parentElement;
-                        while (parent && !['div', 'div1', 'div2', 'div3', 'div4', 'p'].includes(parent.tagName.toLowerCase())) {
-                            parent = parent.parentElement;
-                        }
-                        if (parent) {
-                            foundContent = parent.outerHTML;
-                            // Append a few following paragraphs just in case
-                            let sibling = parent.nextElementSibling;
-                            let count = 0;
-                            while (sibling && count < 5 && sibling.tagName.toLowerCase() === 'p') {
-                                foundContent += sibling.outerHTML;
-                                sibling = sibling.nextElementSibling;
-                                count++;
-                            }
-                            break;
-                        }
+                    if (parent && parent !== xmlDoc.body) {
+                        foundContent = parent.innerHTML;
+                        break; // Target acquired. Stop searching.
                     }
                 }
             }
