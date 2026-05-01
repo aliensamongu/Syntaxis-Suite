@@ -323,7 +323,7 @@
                         <optgroup label="Lexicons & Dictionaries">
                             <option value="studybible">StudyBible.info</option>
                             <option value="eastons.xml" style="font-weight:bold; color:var(--oxford-gold);">Easton's Dict (Native)</option>
-                            <option value="vines.xml" style="font-weight:bold; color:var(--oxford-gold);">Vine's Dict (Native)</option>
+                            <option value="vines.xml" disabled style="color: #999; font-style: italic;">Vine's Dict (Native) - Pending</option>
                         </optgroup>
                     </select>
 
@@ -433,24 +433,24 @@
             const romanChap = getRoman(chapNum);
 
             const bookAliasMap = {
-                "1 peter": "(?:1|I|First)\\s*Peter",
-                "2 peter": "(?:2|II|Second)\\s*Peter",
-                "1 john": "(?:1|I|First)\\s*John",
-                "2 john": "(?:2|II|Second)\\s*John",
-                "3 john": "(?:3|III|Third)\\s*John",
-                "1 corinthians": "(?:1|I|First)\\s*Corinthians",
-                "2 corinthians": "(?:2|II|Second)\\s*Corinthians",
-                "1 thessalonians": "(?:1|I|First)\\s*Thessalonians",
-                "2 thessalonians": "(?:2|II|Second)\\s*Thessalonians",
-                "1 timothy": "(?:1|I|First)\\s*Timothy",
-                "2 timothy": "(?:2|II|Second)\\s*Timothy",
-                "1 samuel": "(?:1|I|First)\\s*Samuel",
-                "2 samuel": "(?:2|II|Second)\\s*Samuel",
-                "1 kings": "(?:1|I|First)\\s*Kings",
-                "2 kings": "(?:2|II|Second)\\s*Kings",
-                "1 chronicles": "(?:1|I|First)\\s*Chronicles",
-                "2 chronicles": "(?:2|II|Second)\\s*Chronicles",
-                "song of solomon": "(?:Song of Solomon|Canticles|Song of Songs)"
+                "1 peter": "(?:1|I|First)[^<]*?Peter",
+                "2 peter": "(?:2|II|Second)[^<]*?Peter",
+                "1 john": "(?:1|I|First)[^<]*?John",
+                "2 john": "(?:2|II|Second)[^<]*?John",
+                "3 john": "(?:3|III|Third)[^<]*?John",
+                "1 corinthians": "(?:1|I|First)[^<]*?Corinthians",
+                "2 corinthians": "(?:2|II|Second)[^<]*?Corinthians",
+                "1 thessalonians": "(?:1|I|First)[^<]*?Thessalonians",
+                "2 thessalonians": "(?:2|II|Second)[^<]*?Thessalonians",
+                "1 timothy": "(?:1|I|First)[^<]*?Timothy",
+                "2 timothy": "(?:2|II|Second)[^<]*?Timothy",
+                "1 samuel": "(?:1|I|First)[^<]*?Samuel",
+                "2 samuel": "(?:2|II|Second)[^<]*?Samuel",
+                "1 kings": "(?:1|I|First)[^<]*?Kings",
+                "2 kings": "(?:2|II|Second)[^<]*?Kings",
+                "1 chronicles": "(?:1|I|First)[^<]*?Chronicles",
+                "2 chronicles": "(?:2|II|Second)[^<]*?Chronicles",
+                "song of solomon": "(?:Song[^<]*?Solomon|Canticles|Song of Songs)"
             };
             const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
 
@@ -502,9 +502,19 @@
                 }
 
                 if (bookIndex === -1) {
-                    bookIndex = rawData.toUpperCase().indexOf(fullBookName.toUpperCase());
+                    // Removed the dangerous raw data index fallback to prevent cross-reference dumps
+                    // Fallback to slightly looser header hunt instead
+                    const looseHtmlBookRegex = new RegExp(`<(?:b|strong|u|i|em|h[4-6])[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:b|strong|u|i|em|h[4-6])>`, 'gi');
+                    while ((m = looseHtmlBookRegex.exec(rawData)) !== null) {
+                        const tagStr = m[0].toLowerCase();
+                        if (!tagStr.includes('contents') && !tagStr.includes('index')) {
+                            bookIndex = m.index;
+                            break;
+                        }
+                    }
+                    
                     if (bookIndex === -1) {
-                        nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
+                        nativeContent.innerHTML = `<p>Could not isolate the book of <strong style="text-transform: capitalize;">${fullBookName}</strong> in ${targetFile}. The engine prevented a data dump by halting the search.</p>`;
                         return;
                     }
                 }
