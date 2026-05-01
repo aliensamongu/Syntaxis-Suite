@@ -454,8 +454,12 @@
             };
             const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
 
-            // Mapping to the specific volume number and finding the correct file extension
-            const targetVol = volumeMap[fullBookName] || 5; 
+            // THE OVERRIDE: If the library is a single volume (Barnes/Luther), force Vol 1. Otherwise, use the map.
+            let targetVol = volumeMap[fullBookName] || 5; 
+            if (filePrefix === 'barnes' || filePrefix === 'luther') {
+                targetVol = 1;
+            }
+
             let targetFile = `${filePrefix}${targetVol}.xml`;
             let fileType = 'xml';
 
@@ -471,7 +475,7 @@
                     fileType = 'html';
 
                     if (!response.ok) {
-                        nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>, which maps to Volume ${targetVol}. Please ensure you have downloaded <code>${filePrefix}${targetVol}.xml</code>, <code>.txt</code>, or <code>.html</code> to your project folder.</p>`;
+                        nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>. Please ensure you have downloaded <code>${filePrefix}${targetVol}.xml</code>, <code>.txt</code>, or <code>.html</code> to your project folder.</p>`;
                         return;
                     }
                 }
@@ -485,7 +489,6 @@
             if (fileType === 'html') {
                 authorLabel.innerText = "Local Library (HTML Archive)";
                 
-                // 1. Isolate Book
                 const htmlBookRegex = new RegExp(`<(?:p|div|h[1-3])[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:p|div|h[1-3])>`, 'gi');
                 let m;
                 let bookIndex = -1;
@@ -508,7 +511,6 @@
 
                 let sliced = rawData.substring(bookIndex);
 
-                // 2. Isolate Chapter
                 const chapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
                 let chapMatch = sliced.match(chapRegex);
                 
@@ -524,7 +526,6 @@
 
                 sliced = sliced.substring(chapMatch.index);
 
-                // 3. Cut at Next Chapter
                 const nextChap = parseInt(chapNum) + 1;
                 const nextRoman = getRoman(nextChap);
                 const nextChapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
@@ -538,7 +539,6 @@
                     if (nextTxtMatch) sliced = sliced.substring(0, nextTxtMatch.index + 100);
                 }
 
-                // 4. Strip out html/body/head wrappers to keep the view clean
                 let finalContent = sliced
                     .replace(/<body[^>]*>/ig, '')
                     .replace(/<\/body>/ig, '')
