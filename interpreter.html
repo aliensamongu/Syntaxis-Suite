@@ -178,7 +178,7 @@
         
         .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
         
-        /* CCEL ThML Specific Rendering Rules */
+        /* CCEL Specific Rendering Rules */
         span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
         span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
         div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
@@ -316,7 +316,9 @@
                     
                     <select id="lexiconSource" onchange="syncToggleToDropdown(); executeLexiconSearch();" style="width: 220px; flex: none;">
                         <optgroup label="Commentaries">
-                            <option value="native" style="font-weight:bold; color:var(--oxford-gold);">M. Henry Library (Native)</option>
+                            <option value="vol" style="font-weight:bold; color:var(--oxford-gold);">M. Henry Library (Native)</option>
+                            <option value="barnes" style="font-weight:bold; color:var(--oxford-gold);">Barnes's Notes (Native)</option>
+                            <option value="luther" style="font-weight:bold; color:var(--oxford-gold);">Luther's Comm (Native)</option>
                         </optgroup>
                         <optgroup label="Lexicons & Dictionaries">
                             <option value="studybible">StudyBible.info</option>
@@ -375,15 +377,15 @@
     };
 
     // ---------------------------------------------------------
-    // THE DUAL-CORE NATIVE ENGINE (XML + TXT Fallback)
+    // THE TRI-CORE NATIVE ENGINE (XML + TXT + HTML)
     // ---------------------------------------------------------
-    async function loadNativeCommentary(query) {
+    async function loadNativeCommentary(query, filePrefix) {
         const nativeTitle = document.getElementById('native-title');
         const nativeContent = document.getElementById('native-content');
         const authorLabel = document.getElementById('native-author-label');
         
         nativeTitle.innerText = "Searching: " + query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Dual-Core String Scanner...</em></p>`;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Tri-Core String Scanner...</em></p>`;
 
         try {
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
@@ -452,26 +454,112 @@
             };
             const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
 
+            // Mapping to the specific volume number and finding the correct file extension
             const targetVol = volumeMap[fullBookName] || 5; 
-            let targetFile = `vol${targetVol}.xml`;
-            let isTextMode = false;
+            let targetFile = `${filePrefix}${targetVol}.xml`;
+            let fileType = 'xml';
 
             let response = await fetch(targetFile);
             if (!response.ok) {
-                targetFile = `vol${targetVol}.txt`;
+                targetFile = `${filePrefix}${targetVol}.txt`;
                 response = await fetch(targetFile);
-                isTextMode = true;
+                fileType = 'txt';
                 
                 if (!response.ok) {
-                    nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>, which requires Volume ${targetVol}. Please ensure you have downloaded <code>vol${targetVol}.xml</code> or <code>vol${targetVol}.txt</code> to your project folder.</p>`;
-                    return;
+                    targetFile = `${filePrefix}${targetVol}.html`;
+                    response = await fetch(targetFile);
+                    fileType = 'html';
+
+                    if (!response.ok) {
+                        nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>, which maps to Volume ${targetVol}. Please ensure you have downloaded <code>${filePrefix}${targetVol}.xml</code>, <code>.txt</code>, or <code>.html</code> to your project folder.</p>`;
+                        return;
+                    }
                 }
             }
             
             const rawData = await response.text();
 
-            if (isTextMode) {
-                authorLabel.innerText = "Matthew Henry (Plain Text Archive)";
+            // ==========================================
+            // PATH C: HTML SLICER (For .html files like Barnes)
+            // ==========================================
+            if (fileType === 'html') {
+                authorLabel.innerText = "Local Library (HTML Archive)";
+                
+                // 1. Isolate Book
+                const htmlBookRegex = new RegExp(`<(?:p|div|h[1-3])[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:p|div|h[1-3])>`, 'gi');
+                let m;
+                let bookIndex = -1;
+
+                while ((m = htmlBookRegex.exec(rawData)) !== null) {
+                    const tagStr = m[0].toLowerCase();
+                    if (!tagStr.includes('contents') && !tagStr.includes('index')) {
+                        bookIndex = m.index;
+                        break;
+                    }
+                }
+
+                if (bookIndex === -1) {
+                    bookIndex = rawData.toUpperCase().indexOf(fullBookName.toUpperCase());
+                    if (bookIndex === -1) {
+                        nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
+                        return;
+                    }
+                }
+
+                let sliced = rawData.substring(bookIndex);
+
+                // 2. Isolate Chapter
+                const chapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
+                let chapMatch = sliced.match(chapRegex);
+                
+                if (!chapMatch) {
+                    const txtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
+                    chapMatch = sliced.match(txtChapRegex);
+                }
+
+                if (!chapMatch) {
+                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the HTML file.</p>`;
+                    return;
+                }
+
+                sliced = sliced.substring(chapMatch.index);
+
+                // 3. Cut at Next Chapter
+                const nextChap = parseInt(chapNum) + 1;
+                const nextRoman = getRoman(nextChap);
+                const nextChapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
+                const nextMatch = sliced.substring(100).match(nextChapRegex);
+                
+                if (nextMatch) {
+                    sliced = sliced.substring(0, nextMatch.index + 100);
+                } else {
+                    const nextTxtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
+                    const nextTxtMatch = sliced.substring(100).match(nextTxtChapRegex);
+                    if (nextTxtMatch) sliced = sliced.substring(0, nextTxtMatch.index + 100);
+                }
+
+                // 4. Strip out html/body/head wrappers to keep the view clean
+                let finalContent = sliced
+                    .replace(/<body[^>]*>/ig, '')
+                    .replace(/<\/body>/ig, '')
+                    .replace(/<html[^>]*>/ig, '')
+                    .replace(/<\/html>/ig, '')
+                    .replace(/<head>[\s\S]*?<\/head>/ig, '');
+
+                finalContent = finalContent
+                    .replace(/<(?:p|div)[^>]*class="div[1-4]"[^>]*>(.*?)<\/(?:p|div)>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
+                    .replace(/<scripRef[^>]*>/ig, '<span class="scripref">').replace(/<\/scripRef>/ig, '</span>');
+
+                nativeContent.innerHTML = finalContent;
+                nativeTitle.innerText = query + " (HTML)";
+                return;
+            }
+
+            // ==========================================
+            // PATH B: ASCII TEXT SLICER (For .txt files)
+            // ==========================================
+            if (fileType === 'txt') {
+                authorLabel.innerText = "Local Library (Plain Text Archive)";
                 
                 const txtBookRegex = new RegExp(`\\b${bookSearchTarget}\\b`, 'i');
                 const txtMatch = rawData.match(txtBookRegex);
@@ -502,6 +590,9 @@
                 return;
             }
 
+            // ==========================================
+            // PATH A: THE XML STRING SLICER (Original)
+            // ==========================================
             const xmlText = rawData;
             
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
@@ -595,7 +686,7 @@
         } catch (error) {
             nativeContent.innerHTML = `
                 <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
-                <p>Ensure the file is named correctly (e.g., <code>vol5.xml</code> or <code>vol2.txt</code>) and is in your project folder.</p>
+                <p>Ensure the file is named correctly in your project folder.</p>
                 <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
             `;
         }
@@ -632,7 +723,6 @@
             let textToRender = "";
 
             // STRATEGY 1: The <term> List (Easton's format: giant list of <term> and <def>)
-            // We look exactly for: <term...>Paul</term>
             const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
             let match = termRegex.exec(xmlText);
 
@@ -640,7 +730,6 @@
                 let startIndex = match.index;
                 let sliced = xmlText.substring(startIndex);
                 
-                // Find the VERY NEXT <term> tag to cut it off. This ignores <glossary> entirely.
                 let nextTermIndex = sliced.substring(10).search(/<term[^>]*>/i);
                 
                 if (nextTermIndex !== -1) {
@@ -676,7 +765,6 @@
                 return;
             }
 
-            // FORMAT FOR UI
             let finalContent = textToRender
                 .replace(/<term[^>]*>(.*?)<\/term>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
                 .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
@@ -688,7 +776,6 @@
                 .replace(/<\/?def[^>]*>/ig, '')
                 .replace(/<\/?glossary[^>]*>/ig, '');
 
-            // Ensure a title exists if the XML structure was weird
             if (!finalContent.includes('<h4')) {
                 finalContent = `<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">${query}</h4>` + finalContent;
             }
@@ -714,9 +801,13 @@
         const sourceSelect = document.getElementById('lexiconSource');
         
         if (isComm) {
-            sourceSelect.value = 'native';
+            // Default to Henry if they flip to Commentary
+            if (sourceSelect.value !== 'vol' && sourceSelect.value !== 'barnes' && sourceSelect.value !== 'luther') {
+                sourceSelect.value = 'vol';
+            }
         } else {
-            if (sourceSelect.value === 'native') {
+            // Default to StudyBible if they flip to Lexicon
+            if (sourceSelect.value === 'vol' || sourceSelect.value === 'barnes' || sourceSelect.value === 'luther') {
                 sourceSelect.value = 'studybible';
             }
         }
@@ -728,7 +819,7 @@
         const source = document.getElementById('lexiconSource').value;
         const toggle = document.getElementById('resourceToggle');
         
-        toggle.checked = (source === 'native');
+        toggle.checked = (source === 'vol' || source === 'barnes' || source === 'luther');
     }
 
     function toggleLexicon(autoSearch = false) {
@@ -779,11 +870,12 @@
         let targetUrl = "";
         const isStrongs = /^[GH]\d+$/i.test(query);
 
-        if (source === 'native') {
+        if (source === 'vol' || source === 'barnes' || source === 'luther') {
             iframe.style.display = 'none';
             nativeReader.style.display = 'flex';
             popoutBtn.style.display = 'none'; 
-            loadNativeCommentary(query);
+            // Pass the source prefix (e.g., "vol" or "barnes") to the Tri-Core engine
+            loadNativeCommentary(query, source);
             return;
         } 
         
