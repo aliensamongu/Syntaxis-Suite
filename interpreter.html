@@ -402,14 +402,14 @@
 
             // Standardize Name Database
             const abbrevs = {
-                "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter",
-                "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians",
-                "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians",
-                "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy",
-                "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", 
-                "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel",
-                "1 ki": "1 kings", "2 ki": "2 kings", 
-                "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles",
+                "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+                "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+                "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+                "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+                "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+                "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+                "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+                "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
                 "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
                 "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
                 "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
@@ -421,8 +421,8 @@
                 "heb": "hebrews", "jas": "james", "rev": "revelation"
             };
 
-            const fullBookName = abbrevs[searchBook] ? abbrevs[searchBook] : searchBook;
-            const bookPrefix = fullBookName.substring(0,3).toLowerCase();
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            const bookPrefix = fullBookName.replace(/\s+/g, '').substring(0,3).toLowerCase();
 
             function getRoman(val) {
                 const num = parseInt(val);
@@ -434,7 +434,30 @@
             }
             const romanChap = getRoman(chapNum);
 
-            // 3. Map to Correct Volume
+            // 3. Translation Matrix for CCEL's eccentric naming conventions (e.g. "First Peter")
+            const bookAliasMap = {
+                "1 peter": "(?:1|I|First)\\s*Peter",
+                "2 peter": "(?:2|II|Second)\\s*Peter",
+                "1 john": "(?:1|I|First)\\s*John",
+                "2 john": "(?:2|II|Second)\\s*John",
+                "3 john": "(?:3|III|Third)\\s*John",
+                "1 corinthians": "(?:1|I|First)\\s*Corinthians",
+                "2 corinthians": "(?:2|II|Second)\\s*Corinthians",
+                "1 thessalonians": "(?:1|I|First)\\s*Thessalonians",
+                "2 thessalonians": "(?:2|II|Second)\\s*Thessalonians",
+                "1 timothy": "(?:1|I|First)\\s*Timothy",
+                "2 timothy": "(?:2|II|Second)\\s*Timothy",
+                "1 samuel": "(?:1|I|First)\\s*Samuel",
+                "2 samuel": "(?:2|II|Second)\\s*Samuel",
+                "1 kings": "(?:1|I|First)\\s*Kings",
+                "2 kings": "(?:2|II|Second)\\s*Kings",
+                "1 chronicles": "(?:1|I|First)\\s*Chronicles",
+                "2 chronicles": "(?:2|II|Second)\\s*Chronicles",
+                "song of solomon": "(?:Song of Solomon|Canticles|Song of Songs)"
+            };
+            const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
+
+            // 4. Map to Correct Volume
             const targetVol = volumeMap[fullBookName] || 5; 
             let targetFile = `vol${targetVol}.xml`;
             let isTextMode = false;
@@ -461,7 +484,10 @@
                 authorLabel.innerText = "Matthew Henry (Plain Text Archive)";
                 
                 // STAGE 1: Isolate Book
-                const bookIdx = rawData.toUpperCase().indexOf(fullBookName.toUpperCase());
+                const txtBookRegex = new RegExp(`\\b${bookSearchTarget}\\b`, 'i');
+                const txtMatch = rawData.match(txtBookRegex);
+                const bookIdx = txtMatch ? txtMatch.index : -1;
+                
                 if(bookIdx === -1) {
                     nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
                     return;
@@ -499,7 +525,7 @@
             if (titleMatch) authorLabel.innerText = titleMatch[1];
 
             // STAGE 1: ISOLATE THE BOOK
-            const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${fullBookName}\\b[^"]*)"[^>]*>`, 'gi');
+            const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${bookSearchTarget}\\b[^"]*)"[^>]*>`, 'gi');
             let m;
             let bookIndex = -1;
 
