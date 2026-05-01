@@ -629,54 +629,49 @@
                 return;
             }
 
-            let startIndex = -1;
             let textToRender = "";
 
-            // STRATEGY 1: The <glossary> Block (Standard Easton's format)
+            // STRATEGY 1: The <term> List (Easton's format: giant list of <term> and <def>)
+            // We look exactly for: <term...>Paul</term>
             const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
             let match = termRegex.exec(xmlText);
 
             if (match) {
-                const textBefore = xmlText.substring(0, match.index);
-                startIndex = textBefore.lastIndexOf('<glossary');
-                if (startIndex === -1) startIndex = match.index; 
-
-                textToRender = xmlText.substring(startIndex);
+                let startIndex = match.index;
+                let sliced = xmlText.substring(startIndex);
                 
-                let endIndex = -1;
-                if (textToRender.startsWith('<glossary')) {
-                    const endGlossaryMatch = textToRender.indexOf('</glossary>');
-                    if (endGlossaryMatch !== -1) endIndex = endGlossaryMatch + 11; 
-                } 
+                // Find the VERY NEXT <term> tag to cut it off. This ignores <glossary> entirely.
+                let nextTermIndex = sliced.substring(10).search(/<term[^>]*>/i);
                 
-                if (endIndex === -1) {
-                    const nextTermMatch = /<term[^>]*>/i.exec(textToRender.substring(10));
-                    if (nextTermMatch) endIndex = nextTermMatch.index + 10;
+                if (nextTermIndex !== -1) {
+                    textToRender = sliced.substring(0, nextTermIndex + 10);
+                } else {
+                    textToRender = sliced; 
                 }
-
-                if (endIndex !== -1) textToRender = textToRender.substring(0, endIndex);
             } 
             else {
-                // STRATEGY 2: The <div1-6> Block (For massive encyclopedia entries like "Paul" that CCEL upgraded)
+                // STRATEGY 2: The <div> Block (Vine's / Encyclopedias)
                 const divRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n|name)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
                 match = divRegex.exec(xmlText);
                 
                 if (match) {
-                    startIndex = match.index;
+                    let startIndex = match.index;
                     const currentLevel = parseInt(match[1]);
-                    textToRender = xmlText.substring(startIndex);
+                    let sliced = xmlText.substring(startIndex);
                     
-                    const skipLength = textToRender.indexOf('>') + 1;
+                    const skipLength = sliced.indexOf('>') + 1;
                     const nextDivRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
-                    const nextDivMatch = nextDivRegex.exec(textToRender.substring(skipLength));
+                    const nextDivMatch = nextDivRegex.exec(sliced.substring(skipLength));
                     
                     if (nextDivMatch) {
-                        textToRender = textToRender.substring(0, skipLength + nextDivMatch.index);
+                        textToRender = sliced.substring(0, skipLength + nextDivMatch.index);
+                    } else {
+                        textToRender = sliced;
                     }
                 }
             }
 
-            if (startIndex === -1) {
+            if (!textToRender) {
                 nativeContent.innerHTML = `<p>No entry found for <strong>${query}</strong> in ${fileName}.</p>`;
                 return;
             }
