@@ -358,9 +358,6 @@
     let lexiconData = {}; 
     let matrixData = [];  
 
-    // ---------------------------------------------------------
-    // THE DUAL-MONITOR POPUP ENGINE
-    // ---------------------------------------------------------
     function openFloatingWindow(url) {
         const popWidth = Math.floor(window.screen.width * 0.45);
         const popHeight = window.screen.height;
@@ -370,7 +367,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE SMART DOM TRACKER & VERSE ISOLATOR
+    // THE PURE RAW STRING ENGINE (Zero DOM Limits)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -378,26 +375,20 @@
         const authorLabel = document.getElementById('native-author-label');
         
         nativeTitle.innerText = "Searching: " + query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Scanning library volume...</em></p>`;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running high-speed string scanner...</em></p>`;
 
         try {
             const response = await fetch('commentary.xml');
             if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
             
+            // WE ONLY USE RAW TEXT TO BYPASS BROWSER LIMITS
             const xmlText = await response.text();
-            
-            // We use DOMParser with "text/html" so it gracefully handles missing XML entity tags
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/html");
 
-            // Extract the metadata title
-            const titleNode = xmlDoc.querySelector('dc\\:title, title');
-            if (titleNode) {
-                authorLabel.innerText = titleNode.textContent;
-            }
+            // 0. Extract Title
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
+            if (titleMatch) authorLabel.innerText = titleMatch[1];
 
-            // Parse User Query (e.g. "John 1:1-5" -> "John", "1", "1-5")
-            // The Regex now captures an optional verse block at the end
+            // 1. Parse Query: "John 1:1-5" -> book="John", chap="1", verse="1-5"
             const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?::\s*([0-9-]+))?/);
             if (!match) {
                 nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1').</p>";
@@ -406,9 +397,9 @@
 
             const searchBook = match[1].trim(); 
             const chapNum = match[2]; 
-            const verseNum = match[3]; // Optional verse (e.g., "1-5")
+            const verseNum = match[3] || ""; 
 
-            // Standardize Abbreviation
+            // Standardize Name
             const abbrevs = {
                 "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
                 "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
@@ -416,110 +407,113 @@
                 "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles"
             };
             const firstWord = searchBook.split(' ')[0].toLowerCase();
-            const bookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook.toLowerCase();
+            const fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook;
+            const bookPrefix = fullBookName.substring(0,3).toLowerCase();
 
             function getRoman(val) {
                 const num = parseInt(val);
                 if(isNaN(num) || num <= 0) return val;
                 const lookup = {C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
-                let roman = '';
-                let n = num;
-                for (let i in lookup) {
-                    while (n >= lookup[i]) { roman += i; n -= lookup[i]; }
-                }
-                return roman.toLowerCase();
+                let roman = ''; let n = num;
+                for (let i in lookup) { while (n >= lookup[i]) { roman += i; n -= lookup[i]; } }
+                return roman;
             }
             const romanChap = getRoman(chapNum);
 
             // ==========================================
-            // STAGE 1: Lock onto the Book
+            // STAGE 1: ISOLATE THE BOOK
             // ==========================================
-            let bookNode = null;
-            const allDiv1s = xmlDoc.querySelectorAll('div1, div2, div, div3');
-            
-            for (let d of allDiv1s) {
-                let label = (d.getAttribute('title') || d.getAttribute('n') || d.getAttribute('id') || '').toLowerCase();
-                let innerT = d.querySelector('title, h1, h2');
-                if (innerT) label += " " + innerT.textContent.toLowerCase();
+            // Search all div headers. Filter out "matthew to john" and TOCs.
+            const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${fullBookName}\\b[^"]*)"[^>]*>`, 'gi');
+            let m;
+            let bookIndex = -1;
 
-                // Skip volume wrappers and intro material
-                if (label.includes('matthew to john') || label.includes('whole bible') || label.includes('contents') || label.includes('preface') || label.includes('introduction')) {
-                    continue;
-                }
-
-                if (label.includes(bookName)) {
-                    bookNode = d;
+            while ((m = bookRegexGlobal.exec(xmlText)) !== null) {
+                const tagStr = m[1].toLowerCase();
+                if (!tagStr.includes('matthew to') && !tagStr.includes('whole bible') && !tagStr.includes('contents') && !tagStr.includes('preface') && !tagStr.includes('introduction')) {
+                    bookIndex = m.index;
                     break;
                 }
             }
 
-            if (!bookNode) {
-                fallbackHoneyBadger(bookName, chapNum, nativeContent, query, xmlDoc);
+            if (bookIndex === -1) {
+                nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in this volume.</p>`;
                 return;
             }
 
-            // ==========================================
-            // STAGE 2: Lock onto the Chapter inside Book
-            // ==========================================
-            let chapNode = null;
-            const allChapters = bookNode.querySelectorAll('div1, div2, div3, div4, div5, div');
-            
-            const strictChapRegex = new RegExp(`\\b(?:chapter|chap\\.|ch\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
+            // Slice out the rest of the Bible!
+            let textFromBook = xmlText.substring(bookIndex);
 
-            for (let c of allChapters) {
-                let nAttr = c.getAttribute('n');
-                let tAttr = (c.getAttribute('title') || '').toLowerCase();
-                
-                let cTitle = c.querySelector(':scope > title, :scope > h1, :scope > h2, :scope > h3');
-                let tText = cTitle ? cTitle.textContent.toLowerCase() : '';
-                
-                let combined = tAttr + " " + tText;
+            // ==========================================
+            // STAGE 2: ISOLATE THE CHAPTER
+            // ==========================================
+            const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="([^"]*\\b(?:${chapNum}|${romanChap})\\b[^"]*)"[^>]*>`, 'gi');
+            let chapIndex = -1;
+            let currentLevel = 2; // Usually div2 or div3
 
-                // We strictly require n="1" OR the text to say "Chapter 1" / "Chapter I"
-                if (nAttr == chapNum || strictChapRegex.test(combined)) {
-                    chapNode = c;
+            while ((m = chapRegex.exec(textFromBook)) !== null) {
+                const tagStr = m[2].toLowerCase();
+                // Ensure it's not grabbing "Verses 1-5" when we want Chapter 1.
+                if (tagStr.includes('chapter') || m[0].includes(`n="${chapNum}"`) || m[0].includes(`n="${romanChap}"`)) {
+                    chapIndex = m.index;
+                    currentLevel = parseInt(m[1]);
                     break;
                 }
             }
 
-            if (!chapNode) {
-                fallbackHoneyBadger(bookName, chapNum, nativeContent, query, bookNode);
+            if (chapIndex === -1) {
+                nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum}.</p>`;
                 return;
             }
 
-            // ==========================================
-            // STAGE 3: Lock onto the Verse (If requested)
-            // ==========================================
-            let finalNode = chapNode; // Default to whole chapter
+            let textToRender = textFromBook.substring(chapIndex);
 
+            // ==========================================
+            // STAGE 3: ISOLATE THE VERSE (IF REQUESTED)
+            // ==========================================
             if (verseNum) {
-                let verseNode = null;
                 const startVerse = verseNum.split('-')[0];
-                const verseRegex = new RegExp(`\\b(?:verse|verses|v\\.|vv\\.)\\s*([0-9-]+)`, 'i');
+                const verseRegex = new RegExp(`<div([1-6])[^>]*(?:id|title|n)="([^"]*\\b(?:${startVerse})\\b[^"]*)"[^>]*>`, 'gi');
                 
-                const verseDivs = chapNode.querySelectorAll('div3, div4, div5, div');
-                for (let v of verseDivs) {
-                    let vAttr = (v.getAttribute('n') || v.getAttribute('title') || '').toLowerCase();
-                    let vTitle = v.querySelector(':scope > title, :scope > h4');
-                    let vText = vTitle ? vTitle.textContent.toLowerCase() : '';
-                    let combined = vAttr + " " + vText;
-                    
-                    if (v.getAttribute('n') == startVerse || combined.includes(startVerse)) {
-                        // Ensure it's actually a verse block and not a random paragraph mentioning the number
-                        if (verseRegex.test(combined) || vAttr.includes(startVerse)) {
-                            verseNode = v;
-                            break;
-                        }
+                let verseIndex = -1;
+                while ((m = verseRegex.exec(textToRender)) !== null) {
+                    const tagStr = m[2].toLowerCase();
+                    if (tagStr.includes('verse') || m[0].includes(`n="${startVerse}"`) || m[0].includes(`n="${verseNum}"`)) {
+                        verseIndex = m.index;
+                        currentLevel = parseInt(m[1]);
+                        break;
                     }
                 }
                 
-                if (verseNode) {
-                    finalNode = verseNode;
+                if (verseIndex !== -1) {
+                    textToRender = textToRender.substring(verseIndex);
                 }
             }
 
-            // Render!
-            renderCleanContent(finalNode, nativeContent, query);
+            // ==========================================
+            // STAGE 4: CUT OFF AT THE END
+            // ==========================================
+            // We want to read until we hit the NEXT div of the same or higher level (e.g. if we are in div3, stop at next div1, div2, or div3)
+            const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
+            
+            // Skip the first opening tag so we don't instantly stop
+            const skipLength = textToRender.indexOf('>') + 1;
+            const endMatch = endRegex.exec(textToRender.substring(skipLength));
+
+            let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
+
+            // ==========================================
+            // STAGE 5: FORMAT FOR UI
+            // ==========================================
+            finalContent = finalContent
+                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
+                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
+                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
+                .replace(/<\/?div[0-9]*[^>]*>/ig, ''); // Clean out all structure tags for standard HTML render
+
+            nativeContent.innerHTML = finalContent;
+            nativeTitle.innerText = query;
 
         } catch (error) {
             nativeContent.innerHTML = `
@@ -532,44 +526,6 @@
         }
     }
 
-    // ==========================================
-    // THE HONEY BADGER (If DOM tracking fails)
-    // ==========================================
-    function fallbackHoneyBadger(bookName, chapNum, nativeContent, query, searchNode) {
-        const bookPrefix = bookName.substring(0,3).toLowerCase();
-        const searchRegex = new RegExp(`\\b${bookPrefix}[a-z]*\\.?\\s*${chapNum}\\b`, 'i');
-        const refs = searchNode.querySelectorAll('scripref, scripRef, ref');
-        
-        for (let i = 0; i < refs.length; i++) {
-            const pass = refs[i].getAttribute('passage') || refs[i].textContent;
-            if (searchRegex.test(pass)) {
-                let parent = refs[i].parentElement;
-                while (parent && !['div', 'div1', 'div2', 'div3', 'div4'].includes(parent.tagName.toLowerCase())) {
-                    parent = parent.parentElement;
-                    if (parent === searchNode.ownerDocument.documentElement || parent === searchNode.ownerDocument.body) break;
-                }
-                if (parent && parent !== searchNode.ownerDocument.documentElement && parent !== searchNode.ownerDocument.body) {
-                    renderCleanContent(parent, nativeContent, query);
-                    return;
-                }
-            }
-        }
-        nativeContent.innerHTML = `<p>Could not isolate <strong>${query}</strong> in this volume. Are you sure this volume contains that specific book?</p>`;
-    }
-
-    // ==========================================
-    // RENDER FORMATTER
-    // ==========================================
-    function renderCleanContent(node, container, query) {
-        let content = node.innerHTML;
-        content = content.replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
-                         .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
-                         .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
-                         .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
-                         .replace(/<\/?div[0-9]*[^>]*>/ig, ''); // Nuke all remaining wrappers
-        container.innerHTML = content;
-        document.getElementById('native-title').innerText = query;
-    }
 
     // ---------------------------------------------------------
     // LEXICON SWITCHBOARD ENGINE 
