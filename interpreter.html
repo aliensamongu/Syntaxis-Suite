@@ -558,7 +558,8 @@
 
                 finalContent = finalContent
                     .replace(/<(?:p|div)[^>]*class="div[1-4]"[^>]*>(.*?)<\/(?:p|div)>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
-                    .replace(/<scripRef[^>]*>/ig, '<span class="scripref">').replace(/<\/scripRef>/ig, '</span>');
+                    .replace(/<scripRef[^>]*>/ig, '<span class="scripref">').replace(/<\/scripRef>/ig, '</span>')
+                    .replace(/<scripCom[^>]*>/ig, '');
 
                 nativeContent.innerHTML = finalContent;
                 nativeTitle.innerText = query + " (HTML)";
@@ -595,7 +596,10 @@
                 const nextMatch = sliced.substring(100).match(nextChapRegex);
                 if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
                 
-                nativeContent.innerHTML = `<div class="plaintext-block">${sliced}</div>`;
+                // Add the CCEL sweeper here just in case they have weird artifacts in the text file
+                let finalContent = sliced.replace(/<scripCom[^>]*>/ig, '');
+                
+                nativeContent.innerHTML = `<div class="plaintext-block">${finalContent}</div>`;
                 nativeTitle.innerText = query + " (ASCII Text)";
                 return;
             }
@@ -687,6 +691,7 @@
                 .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
                 .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<scripCom[^>]*>/ig, '')
                 .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
                 .replace(/<\/?div[0-9]*[^>]*>/ig, ''); 
 
@@ -780,6 +785,7 @@
                 .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
                 .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<scripCom[^>]*>/ig, '')
                 .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
                 .replace(/<p[^>]*>/ig, '<p>').replace(/<\/p>/ig, '</p>')
                 .replace(/<\/?div[0-9]*[^>]*>/ig, '')
