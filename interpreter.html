@@ -38,7 +38,7 @@
         .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
-        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
+        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
         input[type="text"], textarea, select {
             width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
@@ -55,7 +55,7 @@
             cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
             transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy);
         }
-        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
         .std-btn.danger { background: var(--oxford-crimson); color: white; }
 
@@ -65,8 +65,15 @@
         .proj-card:hover { border-color: var(--oxford-gold); }
 
         /* Workspace Area */
-        #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 30px; align-items: center; }
+        #workspace { 
+            flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; 
+            background: var(--bg-main); padding: 40px; box-sizing: border-box; 
+            gap: 30px; align-items: center; 
+            transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
+        }
         
+        body.drawer-open #workspace { margin-right: 60vw; }
+
         /* Containers */
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -97,36 +104,88 @@
         .matrix-ref { font-weight: bold; color: var(--rustic-orange); white-space: nowrap; }
         .matrix-text { font-family: Georgia, serif; font-style: italic; }
         .matrix-notes { line-height: 1.4; }
-    /* UNIVERSAL APP NAV STYLING */
-        .app-nav { 
-            display: flex; 
-            gap: 5px; 
-            margin-bottom: 20px; 
-            margin-top: 10px; 
+
+        /* UNIVERSAL APP NAV STYLING */
+        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: #C5A059; }
+        .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
+
+        /* EXPANDED SWITCHBOARD LEXICON DRAWER */
+        #lexicon-drawer {
+            position: fixed; top: 0; right: -60vw; width: 60vw; height: 100vh;
+            background: var(--oxford-cream); box-shadow: -10px 0 40px rgba(0,0,0,0.5);
+            transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2100; 
+            display: flex; flex-direction: column;
+            border-left: 2px solid var(--oxford-gold);
         }
-        .app-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 8px 4px; 
-            font-size: 9px; 
-            color: #F8F5EE; /* Oxford Cream */
-            text-decoration: none; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-            background: #121A2A; /* Oxford Navy Dark */
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 4px; 
-            transition: 0.2s; 
+        #lexicon-drawer.open { right: 0; }
+        
+        .lexicon-header { 
+            padding: 20px 25px; background: var(--oxford-navy); 
+            display: flex; flex-direction: column; gap: 15px; 
+            border-bottom: 4px solid var(--oxford-navy-dark);
+            flex-shrink: 0;
         }
-        .app-nav a:hover { 
-            border-color: #C5A059; /* Oxford Gold */
+        
+        .lexicon-header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
+        
+        .lexicon-title { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-cream); margin: 0; display: flex; align-items: center; gap: 10px; }
+        .lexicon-title span { color: var(--oxford-gold); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-family: -apple-system, sans-serif; opacity: 0.8;}
+        
+        .lexicon-btn-icon { background: transparent; border: none; color: rgba(248, 245, 238, 0.5); cursor: pointer; font-size: 20px; padding: 6px; transition: 0.2s; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
+        .lexicon-btn-icon:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
+
+        .lexicon-controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
+        .lexicon-controls-row { display: flex; gap: 10px; width: 100%; align-items: center; }
+        .lexicon-controls input, .lexicon-controls select { 
+            padding: 12px 15px; border-radius: var(--radius-small); 
+            border: 1px solid var(--oxford-navy-dark); font-size: 13px; outline: none;
+            background: var(--oxford-cream); color: var(--oxford-navy);
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
         }
-        .app-nav a.active { 
-            background: #C5A059; /* Oxford Gold */
-            color: #121A2A; /* Oxford Navy Dark */
-            border-color: #C5A059; 
+        .lexicon-controls select { flex: 1; font-weight: bold; cursor: pointer; }
+        .lexicon-controls input { flex: 2; }
+        .lexicon-controls input:focus, .lexicon-controls select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+
+        /* THE HARDWARE TOGGLE SWITCH */
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
+        .toggle-label { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; transition: 0.3s; }
+        #lbl-lex { color: var(--oxford-gold); }
+        #lbl-com { color: rgba(248, 245, 238, 0.4); }
+        
+        .switch { position: relative; display: inline-block; width: 40px; height: 20px; margin: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--oxford-navy-dark); transition: .4s; border-radius: 20px; border: 1px solid var(--oxford-gold); }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: var(--oxford-gold); transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--oxford-navy-dark); border-color: var(--oxford-cream); }
+        input:checked + .slider:before { transform: translateX(20px); background-color: var(--oxford-cream); }
+
+        .lexicon-iframe-container { flex-grow: 1; background: #fff; position: relative; display: flex; flex-direction: column; overflow: hidden; }
+        #lexicon-iframe { width: 100%; height: 100%; border: none; flex-grow: 1; }
+        
+        /* THE CHIC NATIVE READER MODE */
+        #native-reader {
+            display: none; flex-direction: column; height: 100%; width: 100%; 
+            background: #FAF9F5; padding: 50px 60px; box-sizing: border-box; 
+            overflow-y: auto; color: var(--oxford-navy-dark);
         }
+        #native-title { font-family: Georgia, serif; font-size: 32px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 15px; margin-bottom: 30px; margin-top: 0;}
+        #native-content { font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
+        #native-content p { margin-bottom: 20px; }
+        
+        #native-content h4 { color: var(--oxford-gold); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 35px; font-size: 20px;}
+        
+        .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
+        
+        /* CCEL Specific Rendering Rules */
+        span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
+        span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
+        div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
+        
+        /* Plain Text Format Rules */
+        .plaintext-block { white-space: pre-wrap; font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
+
     </style>
 </head>
 <body id="app-body">
@@ -142,7 +201,7 @@
         </div>
         
         <div class="floating-card" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Project Name (e.g. 1 Peter 3)" style="background: var(--oxford-cream);">
+            <input type="text" id="projectName" placeholder="Bible Ref (e.g. John 1:1-5)" style="background: var(--oxford-cream);" title="Use a standard reference to enable auto-interlinear loading.">
             <div style="display: flex; gap: 5px;">
                 <button class="std-btn" onclick="saveToAppLocal()" style="flex: 1;">Save App</button>
                 <button class="std-btn secondary" onclick="exportProjectJSON()" style="flex: 1;">⬇ JSON</button>
@@ -153,13 +212,17 @@
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <h3>1. Base Passage</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
             <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
-            <button class="std-btn secondary" onclick="renderText()">Render Passage</button>
+            <button class="std-btn secondary" onclick="renderText()" title="Render text and open Interlinear">Render Passage & Interlinear</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>2. Lexicon & Morphology</h3>
+            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
+                <h3 style="border: none; padding: 0;">2. Lexicon & Morphology</h3>
+                <button onclick="toggleLexicon()" style="background:var(--oxford-gold); color:var(--oxford-navy); border:none; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; padding:4px 8px; transition:0.2s;">📖 Drawer</button>
+            </div>
+            
             <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to edit its data.</div>
             
             <div id="lexicon-editor" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;">
@@ -170,17 +233,19 @@
                     <input type="text" id="lexStrongs" placeholder="Strong's (e.g. G32)" style="flex: 1;">
                 </div>
                 
+                <button class="std-btn secondary" onclick="toggleLexicon(true)" style="background: rgba(255,255,255,0.05); color: var(--oxford-gold); border: 1px dashed var(--oxford-gold);">📖 Research Selected Word</button>
+
                 <input type="text" id="lexParsing" placeholder="Parsing (e.g. Noun - Nom - Masc - Sing)">
                 
                 <textarea id="lexDef" placeholder="Lexicon Definition (BDAG, etc.)" style="height: 60px;"></textarea>
                 <textarea id="lexSynth" placeholder="Your Synthesized Meaning..." style="height: 60px; border-left: 3px solid var(--oxford-gold);"></textarea>
                 
-                <button class="std-btn" onclick="saveLexiconData()">Save Word Data</button>
+                <button class="std-btn" onclick="saveLexiconData()" style="margin-top: 10px;">Save Word Data</button>
             </div>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: auto;">
-            <h3>3. Intertextual Matrix</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Intertextual Matrix</h3>
             <input type="text" id="matRef" placeholder="Reference (e.g. Psalm 34:12)">
             <textarea id="matText" placeholder="Quoted or Echoed Text..." style="height: 50px;"></textarea>
             <textarea id="matNotes" placeholder="Theological Connection / Notes..." style="height: 50px;"></textarea>
@@ -188,8 +253,8 @@
         </div>
         
         <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>Saved Local Projects</h3>
-            <div id="project-list"></div>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Saved Local Projects</h3>
+            <div id="project-list" style="margin-top: 10px;"></div>
         </div>
     </div>
 </div>
@@ -223,6 +288,63 @@
     </div>
 </div>
 
+<div id="lexicon-drawer">
+    <div class="lexicon-header">
+        <div class="lexicon-header-top">
+            <h3 class="lexicon-title">📖 Lexicon <span>Research</span></h3>
+            <div style="display: flex; gap: 5px;">
+                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to Window" style="display:none;">↗</button>
+                <button class="lexicon-btn-icon" onclick="toggleLexicon()" style="font-size: 26px; line-height: 0.7;" title="Close Drawer">&times;</button>
+            </div>
+        </div>
+        <div class="lexicon-controls">
+            <div class="lexicon-controls-row">
+                <input type="text" id="lexiconSearchInput" placeholder="Word, Strong's (G3056), or Ref (John 1:1)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
+            </div>
+            <div class="lexicon-controls-row" style="justify-content: space-between;">
+                
+                <div class="toggle-wrapper">
+                    <span class="toggle-label" id="lbl-lex">Lexicon</span>
+                    <label class="switch">
+                        <input type="checkbox" id="resourceToggle" onchange="updateToggleState()">
+                        <span class="slider"></span>
+                    </label>
+                    <span class="toggle-label" id="lbl-com">Commentary</span>
+                </div>
+
+                <div style="display: flex; gap: 10px; flex: 1; justify-content: flex-end;">
+                    
+                    <select id="lexiconSource" onchange="syncToggleToDropdown(); executeLexiconSearch();" style="width: 220px; flex: none;">
+                        <optgroup label="Commentaries">
+                            <option value="vol" style="font-weight:bold; color:var(--oxford-gold);">M. Henry Library (Native)</option>
+                            <option value="barnes" style="font-weight:bold; color:var(--oxford-gold);">Barnes's Notes (Native)</option>
+                            <option value="luther" style="font-weight:bold; color:var(--oxford-gold);">Luther's Comm (Native)</option>
+                        </optgroup>
+                        <optgroup label="Lexicons & Dictionaries">
+                            <option value="studybible">StudyBible.info</option>
+                            <option value="eastons.xml" style="font-weight:bold; color:var(--oxford-gold);">Easton's Dict (Native)</option>
+                            <option value="vines.xml" disabled style="color: #999; font-style: italic;">Vine's Dict (Native) - Pending</option>
+                        </optgroup>
+                    </select>
+
+                    <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="lexicon-iframe-container">
+        <iframe id="lexicon-iframe" src="about:blank"></iframe>
+
+        <div id="native-reader">
+            <span class="native-author" id="native-author-label">Local Library Database</span>
+            <h2 id="native-title">Loading...</h2>
+            <div id="native-content">
+                </div>
+        </div>
+    </div>
+</div>
+
 <script>
     const passageContainer = document.getElementById('passage-container');
     const lexiconGrid = document.getElementById('lexicon-grid');
@@ -230,16 +352,587 @@
     const lexEditor = document.getElementById('lexicon-editor');
     
     let selectedWordId = null;
+    let lexiconData = {}; 
+    let matrixData = [];  
+
+    function openFloatingWindow(url) {
+        if (!url || url === 'about:blank') return;
+        const popWidth = Math.floor(window.screen.width * 0.45);
+        const popHeight = window.screen.height;
+        const leftPos = window.screen.width - popWidth;
+        const windowFeatures = `width=${popWidth},height=${popHeight},left=${leftPos},top=0,menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`;
+        window.open(url, 'SyntaxisTool', windowFeatures);
+    }
+
+    // ---------------------------------------------------------
+    // THE ROUTING MAP (Maps Book Names to Volume Files)
+    // ---------------------------------------------------------
+    const volumeMap = {
+        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1,
+        "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2,
+        "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3,
+        "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
+        "matthew": 5, "mark": 5, "luke": 5, "john": 5,
+        "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
+    };
+
+    // ---------------------------------------------------------
+    // THE TRI-CORE NATIVE ENGINE (XML + TXT + HTML)
+    // ---------------------------------------------------------
+    async function loadNativeCommentary(query, filePrefix) {
+        const nativeTitle = document.getElementById('native-title');
+        const nativeContent = document.getElementById('native-content');
+        const authorLabel = document.getElementById('native-author-label');
+        
+        nativeTitle.innerText = "Searching: " + query;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Tri-Core String Scanner...</em></p>`;
+
+        try {
+            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?::\s*([0-9-]+))?/);
+            if (!match) {
+                nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1' or '1 Peter 1').</p>";
+                return;
+            }
+
+            const searchBook = match[1].trim().toLowerCase(); 
+            const chapNum = match[2]; 
+            const verseNum = match[3] || ""; 
+
+            const abbrevs = {
+                "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+                "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+                "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+                "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+                "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+                "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+                "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+                "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+                "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+                "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+                "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+                "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+                "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+                "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+                "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+                "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+                "heb": "hebrews", "jas": "james", "rev": "revelation"
+            };
+
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            const bookPrefix = fullBookName.replace(/\s+/g, '').substring(0,3).toLowerCase();
+
+            function getRoman(val) {
+                const num = parseInt(val);
+                if(isNaN(num) || num <= 0) return val;
+                const lookup = {C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
+                let roman = ''; let n = num;
+                for (let i in lookup) { while (n >= lookup[i]) { roman += i; n -= lookup[i]; } }
+                return roman;
+            }
+            const romanChap = getRoman(chapNum);
+
+            const bookAliasMap = {
+                "1 peter": "(?:1|I|First)[^<]*?Peter",
+                "2 peter": "(?:2|II|Second)[^<]*?Peter",
+                "1 john": "(?:1|I|First)[^<]*?John",
+                "2 john": "(?:2|II|Second)[^<]*?John",
+                "3 john": "(?:3|III|Third)[^<]*?John",
+                "1 corinthians": "(?:1|I|First)[^<]*?Corinthians",
+                "2 corinthians": "(?:2|II|Second)[^<]*?Corinthians",
+                "1 thessalonians": "(?:1|I|First)[^<]*?Thessalonians",
+                "2 thessalonians": "(?:2|II|Second)[^<]*?Thessalonians",
+                "1 timothy": "(?:1|I|First)[^<]*?Timothy",
+                "2 timothy": "(?:2|II|Second)[^<]*?Timothy",
+                "1 samuel": "(?:1|I|First)[^<]*?Samuel",
+                "2 samuel": "(?:2|II|Second)[^<]*?Samuel",
+                "1 kings": "(?:1|I|First)[^<]*?Kings",
+                "2 kings": "(?:2|II|Second)[^<]*?Kings",
+                "1 chronicles": "(?:1|I|First)[^<]*?Chronicles",
+                "2 chronicles": "(?:2|II|Second)[^<]*?Chronicles",
+                "song of solomon": "(?:Song[^<]*?Solomon|Canticles|Song of Songs)"
+            };
+            const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
+
+            // THE OVERRIDE: If the library is a single volume (Barnes/Luther), force Vol 1. Otherwise, use the map.
+            let targetVol = volumeMap[fullBookName] || 5; 
+            if (filePrefix === 'barnes' || filePrefix === 'luther') {
+                targetVol = 1;
+            }
+
+            let targetFile = `${filePrefix}${targetVol}.xml`;
+            let fileType = 'xml';
+
+            let response = await fetch(targetFile);
+            if (!response.ok) {
+                targetFile = `${filePrefix}${targetVol}.txt`;
+                response = await fetch(targetFile);
+                fileType = 'txt';
+                
+                if (!response.ok) {
+                    targetFile = `${filePrefix}${targetVol}.html`;
+                    response = await fetch(targetFile);
+                    fileType = 'html';
+
+                    if (!response.ok) {
+                        nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>. Please ensure you have downloaded <code>${filePrefix}${targetVol}.xml</code>, <code>.txt</code>, or <code>.html</code> to your project folder.</p>`;
+                        return;
+                    }
+                }
+            }
+            
+            const rawData = await response.text();
+
+            // ==========================================
+            // PATH C: HTML SLICER (For .html files like Barnes)
+            // ==========================================
+            if (fileType === 'html') {
+                authorLabel.innerText = "Local Library (HTML Archive)";
+                
+                // 1. STRICT BOOK HUNT: Only look in headers (h1-h3) or classed paragraphs to prevent cross-reference traps.
+                const htmlBookRegex = new RegExp(`<(?:h[1-3]|p[^>]*class="div[1-3]"[^>]*)[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:h[1-3]|p)>`, 'gi');
+                let m;
+                let bookIndex = -1;
+
+                while ((m = htmlBookRegex.exec(rawData)) !== null) {
+                    const tagStr = m[0].toLowerCase();
+                    if (!tagStr.includes('contents') && !tagStr.includes('index')) {
+                        bookIndex = m.index;
+                        break;
+                    }
+                }
+
+                if (bookIndex === -1) {
+                    // 2. LOOSE FALLBACK: Look in any tag, but ONLY if text is short and contains NO colons (Filters out "1 Peter 5:13")
+                    const looseHtmlBookRegex = new RegExp(`<(?:p|div|h[4-6]|b|strong|u|i|em)[^>]*>[^<:]{0,80}\\b${bookSearchTarget}\\b[^<:]{0,80}<\\/(?:p|div|h[4-6]|b|strong|u|i|em)>`, 'gi');
+                    while ((m = looseHtmlBookRegex.exec(rawData)) !== null) {
+                        const tagStr = m[0].toLowerCase();
+                        if (!tagStr.includes('contents') && !tagStr.includes('index')) {
+                            bookIndex = m.index;
+                            break;
+                        }
+                    }
+                    
+                    if (bookIndex === -1) {
+                        nativeContent.innerHTML = `<p>Could not isolate the book of <strong style="text-transform: capitalize;">${fullBookName}</strong> in ${targetFile}. The engine prevented a data dump by halting the search.</p>`;
+                        return;
+                    }
+                }
+
+                let sliced = rawData.substring(bookIndex);
+
+                const chapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
+                let chapMatch = sliced.match(chapRegex);
+                
+                if (!chapMatch) {
+                    const txtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
+                    chapMatch = sliced.match(txtChapRegex);
+                }
+
+                if (!chapMatch) {
+                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the HTML file.</p>`;
+                    return;
+                }
+
+                sliced = sliced.substring(chapMatch.index);
+
+                const nextChap = parseInt(chapNum) + 1;
+                const nextRoman = getRoman(nextChap);
+                const nextChapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
+                const nextMatch = sliced.substring(100).match(nextChapRegex);
+                
+                if (nextMatch) {
+                    sliced = sliced.substring(0, nextMatch.index + 100);
+                } else {
+                    const nextTxtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
+                    const nextTxtMatch = sliced.substring(100).match(nextTxtChapRegex);
+                    if (nextTxtMatch) sliced = sliced.substring(0, nextTxtMatch.index + 100);
+                }
+
+                let finalContent = sliced
+                    .replace(/<body[^>]*>/ig, '')
+                    .replace(/<\/body>/ig, '')
+                    .replace(/<html[^>]*>/ig, '')
+                    .replace(/<\/html>/ig, '')
+                    .replace(/<head>[\s\S]*?<\/head>/ig, '');
+
+                finalContent = finalContent
+                    .replace(/<(?:p|div)[^>]*class="div[1-4]"[^>]*>(.*?)<\/(?:p|div)>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
+                    .replace(/<scripRef[^>]*>/ig, '<span class="scripref">').replace(/<\/scripRef>/ig, '</span>')
+                    .replace(/<scripCom[^>]*>/ig, '');
+
+                nativeContent.innerHTML = finalContent;
+                nativeTitle.innerText = query + " (HTML)";
+                return;
+            }
+
+            // ==========================================
+            // PATH B: ASCII TEXT SLICER (For .txt files)
+            // ==========================================
+            if (fileType === 'txt') {
+                authorLabel.innerText = "Local Library (Plain Text Archive)";
+                
+                const txtBookRegex = new RegExp(`\\b${bookSearchTarget}\\b`, 'i');
+                const txtMatch = rawData.match(txtBookRegex);
+                const bookIdx = txtMatch ? txtMatch.index : -1;
+                
+                if(bookIdx === -1) {
+                    nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
+                    return;
+                }
+                let sliced = rawData.substring(bookIdx);
+                
+                const chapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
+                const chapMatch = sliced.match(chapRegex);
+                if(!chapMatch) {
+                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the text file.</p>`;
+                    return;
+                }
+                sliced = sliced.substring(chapMatch.index);
+                
+                const nextChap = parseInt(chapNum) + 1;
+                const nextRoman = getRoman(nextChap);
+                const nextChapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
+                const nextMatch = sliced.substring(100).match(nextChapRegex);
+                if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
+                
+                // Add the CCEL sweeper here just in case they have weird artifacts in the text file
+                let finalContent = sliced.replace(/<scripCom[^>]*>/ig, '');
+                
+                nativeContent.innerHTML = `<div class="plaintext-block">${finalContent}</div>`;
+                nativeTitle.innerText = query + " (ASCII Text)";
+                return;
+            }
+
+            // ==========================================
+            // PATH A: THE XML STRING SLICER (Original)
+            // ==========================================
+            const xmlText = rawData;
+            
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
+            if (titleMatch) authorLabel.innerText = titleMatch[1];
+
+            const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${bookSearchTarget}\\b[^"]*)"[^>]*>`, 'gi');
+            let m;
+            let bookIndex = -1;
+
+            while ((m = bookRegexGlobal.exec(xmlText)) !== null) {
+                const tagStr = m[1].toLowerCase();
+                if (!tagStr.includes('matthew to') && !tagStr.includes('whole bible') && !tagStr.includes('contents') && !tagStr.includes('preface') && !tagStr.includes('introduction')) {
+                    bookIndex = m.index;
+                    break;
+                }
+            }
+
+            if (bookIndex === -1) {
+                nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
+                return;
+            }
+
+            let textFromBook = xmlText.substring(bookIndex);
+
+            const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="[^"]*(?:Chapter|Chap\\.|Ch\\.)?\\s*(?:${chapNum}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
+            let chapMatch = textFromBook.match(chapRegex);
+            
+            let chapIndex = -1;
+            let currentLevel = 2; 
+
+            if (chapMatch) {
+                const tagStr = chapMatch[0].toLowerCase();
+                if (tagStr.includes('chapter') || tagStr.includes(`n="${chapNum}"`) || tagStr.includes(`n="${romanChap}"`)) {
+                    chapIndex = chapMatch.index;
+                    currentLevel = parseInt(chapMatch[1]);
+                }
+            }
+            
+            if (chapIndex === -1) {
+                const refRegex = new RegExp(`passage="\\s*${bookPrefix}[a-z]*\\.?\\s*${chapNum}\\b`, 'i');
+                const refMatch = textFromBook.match(refRegex);
+                if (refMatch) {
+                    const textBeforeRef = textFromBook.substring(0, refMatch.index);
+                    chapIndex = textBeforeRef.lastIndexOf('<div');
+                    if (chapIndex === -1) chapIndex = refMatch.index - 500;
+                }
+            }
+
+            if (chapIndex === -1) {
+                nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum}.</p>`;
+                return;
+            }
+
+            let textToRender = textFromBook.substring(chapIndex);
+
+            if (verseNum) {
+                const startVerse = verseNum.split('-')[0];
+                const verseRegex = new RegExp(`<div([1-6])[^>]*(?:id|title|n)="([^"]*\\b(?:${startVerse})\\b[^"]*)"[^>]*>`, 'gi');
+                
+                let verseIndex = -1;
+                while ((m = verseRegex.exec(textToRender)) !== null) {
+                    const tagStr = m[2].toLowerCase();
+                    if (tagStr.includes('verse') || m[0].includes(`n="${startVerse}"`) || m[0].includes(`n="${verseNum}"`)) {
+                        verseIndex = m.index;
+                        currentLevel = parseInt(m[1]);
+                        break;
+                    }
+                }
+                
+                if (verseIndex !== -1) {
+                    textToRender = textToRender.substring(verseIndex);
+                }
+            }
+
+            const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
+            const skipLength = textToRender.indexOf('>') + 1;
+            const endMatch = endRegex.exec(textToRender.substring(skipLength));
+
+            let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
+
+            finalContent = finalContent
+                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
+                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
+                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<scripCom[^>]*>/ig, '')
+                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
+                .replace(/<\/?div[0-9]*[^>]*>/ig, ''); 
+
+            nativeContent.innerHTML = finalContent;
+            nativeTitle.innerText = query;
+
+        } catch (error) {
+            nativeContent.innerHTML = `
+                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
+                <p>Ensure the file is named correctly in your project folder.</p>
+                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
+            `;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // THE NATIVE DICTIONARY SLICER
+    // ---------------------------------------------------------
+    async function loadNativeDictionary(query, fileName) {
+        const nativeTitle = document.getElementById('native-title');
+        const nativeContent = document.getElementById('native-content');
+        const authorLabel = document.getElementById('native-author-label');
+        
+        nativeTitle.innerText = "Researching: " + query;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Scanning local dictionary...</em></p>`;
+
+        try {
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`Could not find ${fileName} in your project directory.`);
+            
+            const xmlText = await response.text();
+
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
+            if (titleMatch) authorLabel.innerText = titleMatch[1];
+
+            const searchWord = query.replace(/[^a-z0-9\s-]/gi, '').trim();
+            
+            if (!searchWord) {
+                nativeContent.innerHTML = "<p>Please select or type a word to search the dictionary.</p>";
+                return;
+            }
+
+            let textToRender = "";
+
+            // STRATEGY 1: The <term> List (Easton's format: giant list of <term> and <def>)
+            const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
+            let match = termRegex.exec(xmlText);
+
+            if (match) {
+                let startIndex = match.index;
+                let sliced = xmlText.substring(startIndex);
+                
+                let nextTermIndex = sliced.substring(10).search(/<term[^>]*>/i);
+                
+                if (nextTermIndex !== -1) {
+                    textToRender = sliced.substring(0, nextTermIndex + 10);
+                } else {
+                    textToRender = sliced; 
+                }
+            } 
+            else {
+                // STRATEGY 2: The <div> Block (Vine's / Encyclopedias)
+                const divRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n|name)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
+                match = divRegex.exec(xmlText);
+                
+                if (match) {
+                    let startIndex = match.index;
+                    const currentLevel = parseInt(match[1]);
+                    let sliced = xmlText.substring(startIndex);
+                    
+                    const skipLength = sliced.indexOf('>') + 1;
+                    const nextDivRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
+                    const nextDivMatch = nextDivRegex.exec(sliced.substring(skipLength));
+                    
+                    if (nextDivMatch) {
+                        textToRender = sliced.substring(0, skipLength + nextDivMatch.index);
+                    } else {
+                        textToRender = sliced;
+                    }
+                }
+            }
+
+            if (!textToRender) {
+                nativeContent.innerHTML = `<p>No entry found for <strong>${query}</strong> in ${fileName}.</p>`;
+                return;
+            }
+
+            let finalContent = textToRender
+                .replace(/<term[^>]*>(.*?)<\/term>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
+                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
+                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
+                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<scripCom[^>]*>/ig, '')
+                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
+                .replace(/<p[^>]*>/ig, '<p>').replace(/<\/p>/ig, '</p>')
+                .replace(/<\/?div[0-9]*[^>]*>/ig, '')
+                .replace(/<\/?def[^>]*>/ig, '')
+                .replace(/<\/?glossary[^>]*>/ig, '');
+
+            if (!finalContent.includes('<h4')) {
+                finalContent = `<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">${query}</h4>` + finalContent;
+            }
+
+            nativeContent.innerHTML = finalContent;
+
+        } catch (error) {
+            nativeContent.innerHTML = `
+                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
+                <p>Please ensure you have downloaded <code>${fileName}</code> to your project folder.</p>
+                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
+            `;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // LEXICON SWITCHBOARD ENGINE (Unified Menu UI)
+    // ---------------------------------------------------------
     
-    // Core Engine State
-    let lexiconData = {}; // Format: { "w-0": { word, lemma, strongs, parsing, def, synth } }
-    let matrixData = [];  // Format: [ { id, ref, text, notes } ]
+    function updateToggleState() {
+        const isComm = document.getElementById('resourceToggle').checked;
+        const sourceSelect = document.getElementById('lexiconSource');
+        
+        if (isComm) {
+            // Default to Henry if they flip to Commentary
+            if (sourceSelect.value !== 'vol' && sourceSelect.value !== 'barnes' && sourceSelect.value !== 'luther') {
+                sourceSelect.value = 'vol';
+            }
+        } else {
+            // Default to StudyBible if they flip to Lexicon
+            if (sourceSelect.value === 'vol' || sourceSelect.value === 'barnes' || sourceSelect.value === 'luther') {
+                sourceSelect.value = 'studybible';
+            }
+        }
+        
+        executeLexiconSearch(); 
+    }
+    
+    function syncToggleToDropdown() {
+        const source = document.getElementById('lexiconSource').value;
+        const toggle = document.getElementById('resourceToggle');
+        
+        toggle.checked = (source === 'vol' || source === 'barnes' || source === 'luther');
+    }
+
+    function toggleLexicon(autoSearch = false) {
+        const drawer = document.getElementById('lexicon-drawer');
+        const isOpen = drawer.classList.contains('open');
+        
+        if (!isOpen) {
+            let query = document.getElementById('lexiconSearchInput').value;
+            
+            if (autoSearch && selectedWordId) {
+                let strongsInput = document.getElementById('lexStrongs').value.trim();
+                let wordText = document.getElementById('lex-target-word').innerText.trim();
+                
+                if (strongsInput) {
+                    query = strongsInput;
+                } else if (wordText && wordText !== "No Word Selected") {
+                    query = wordText;
+                }
+                
+                document.getElementById('resourceToggle').checked = false;
+                updateToggleState();
+            }
+            
+            if (query) {
+                document.getElementById('lexiconSearchInput').value = query;
+                executeLexiconSearch();
+            }
+        }
+        
+        drawer.classList.toggle('open');
+        document.body.classList.toggle('drawer-open');
+    }
+
+    function executeLexiconSearch() {
+        let query = document.getElementById('lexiconSearchInput').value.trim();
+        if (!query) return;
+
+        const source = document.getElementById('lexiconSource').value;
+        const toggle = document.getElementById('resourceToggle');
+        
+        document.getElementById('lbl-lex').style.color = toggle.checked ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
+        document.getElementById('lbl-com').style.color = toggle.checked ? "var(--oxford-cream)" : "rgba(248, 245, 238, 0.4)";
+        
+        const iframe = document.getElementById('lexicon-iframe');
+        const nativeReader = document.getElementById('native-reader');
+        const popoutBtn = document.getElementById('lexicon-popout-btn');
+        
+        let targetUrl = "";
+        const isStrongs = /^[GH]\d+$/i.test(query);
+
+        if (source === 'vol' || source === 'barnes' || source === 'luther') {
+            iframe.style.display = 'none';
+            nativeReader.style.display = 'flex';
+            popoutBtn.style.display = 'none'; 
+            // Pass the source prefix (e.g., "vol" or "barnes") to the Tri-Core engine
+            loadNativeCommentary(query, source);
+            return;
+        } 
+        
+        if (source === 'eastons.xml' || source === 'vines.xml') {
+            iframe.style.display = 'none';
+            nativeReader.style.display = 'flex';
+            popoutBtn.style.display = 'none'; 
+            loadNativeDictionary(query, source);
+            return;
+        }
+
+        nativeReader.style.display = 'none';
+        popoutBtn.style.display = 'flex'; 
+
+        if (source === 'studybible') {
+            const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Obadiah|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
+            const isReference = /\d/.test(query) && !isStrongs; 
+            
+            if (isStrongs) {
+                targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
+            } else if (isReference) {
+                targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
+            } else {
+                targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+            }
+            
+            iframe.src = targetUrl;
+            iframe.style.display = 'block';
+        }
+
+        document.getElementById('lexicon-popout-btn').onclick = () => openFloatingWindow(targetUrl);
+    }
 
     // ---------------------------------------------------------
     // THE SAVE, LOAD & EXPORT ENGINE 
     // ---------------------------------------------------------
     
-    window.addEventListener('DOMContentLoaded', () => { updateProjectList(); });
+    window.addEventListener('DOMContentLoaded', () => { 
+        updateProjectList(); 
+        executeLexiconSearch(); 
+    });
 
     function getSavePayload() {
         return {
@@ -314,7 +1007,7 @@
         lexiconData = data.lexiconData || {};
         matrixData = data.matrixData || [];
         
-        renderText(); // rebuilds the passage and highlights words
+        renderText(); 
         renderLexiconCards();
         renderMatrixTable();
         clearSelection();
@@ -336,7 +1029,6 @@
     // TEXT ENGINE
     // ---------------------------------------------------------
 
-    // Deselect if clicking empty space
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
 
     function renderText() {
@@ -359,13 +1051,26 @@
                 span.id = `w-${wordIndex++}`;
                 span.innerText = chunk;
                 
-                // If it exists in lexiconData, add the gold underline
                 if (lexiconData[span.id]) span.classList.add('has-data');
 
                 span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
                 passageContainer.appendChild(span);
             }
         });
+
+        const reference = document.getElementById('projectName').value.trim();
+        if (reference) {
+            document.getElementById('lexiconSearchInput').value = reference;
+            // Uncheck the toggle to jump to Lexicons for default rendering
+            document.getElementById('resourceToggle').checked = false;
+            updateToggleState(); 
+
+            const drawer = document.getElementById('lexicon-drawer');
+            if (!drawer.classList.contains('open')) {
+                drawer.classList.add('open');
+                document.body.classList.add('drawer-open');
+            }
+        }
     }
 
     function handleWordClick(id) {
@@ -373,14 +1078,12 @@
         selectedWordId = id;
         document.getElementById(id).classList.add('selected');
         
-        // Open the Lexicon Editor
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
         
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
         
-        // Populate form if data exists, otherwise clear it
         if (lexiconData[id]) {
             document.getElementById('lexLemma').value = lexiconData[id].lemma || '';
             document.getElementById('lexStrongs').value = lexiconData[id].strongs || '';
@@ -408,7 +1111,7 @@
     }
 
     // ---------------------------------------------------------
-    // LEXICON ENGINE
+    // LEXICON CARD ENGINE
     // ---------------------------------------------------------
 
     function saveLexiconData() {
@@ -421,10 +1124,7 @@
         const def = document.getElementById('lexDef').value.trim();
         const synth = document.getElementById('lexSynth').value.trim();
 
-        // Save to state
         lexiconData[selectedWordId] = { word: wordText, lemma, strongs, parsing, def, synth };
-        
-        // Add visual cue to the word in the passage
         document.getElementById(selectedWordId).classList.add('has-data');
         
         renderLexiconCards();
@@ -451,7 +1151,6 @@
         keys.forEach(id => {
             const d = lexiconData[id];
             
-            // Build elements safely
             const strongsHtml = d.strongs ? `<span class="lex-strongs">${d.strongs}</span>` : '';
             const lemmaHtml = d.lemma ? `<div class="lex-lemma">Root: ${d.lemma}</div>` : '';
             const parsingHtml = d.parsing ? `<div class="lex-parsing">${d.parsing}</div>` : '';
