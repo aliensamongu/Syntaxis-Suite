@@ -164,14 +164,6 @@
         .lexicon-iframe-container { flex-grow: 1; background: #fff; position: relative; display: flex; flex-direction: column; overflow: hidden; }
         #lexicon-iframe { width: 100%; height: 100%; border: none; flex-grow: 1; }
         
-        /* The Fort Knox Fallback Screen */
-        #lexicon-fallback {
-            display: none; flex-direction: column; align-items: center; justify-content: center;
-            height: 100%; width: 100%; background: var(--bg-main); text-align: center; padding: 40px; box-sizing: border-box;
-        }
-        #lexicon-fallback h3 { font-family: Georgia, serif; font-size: 20px; color: var(--oxford-navy); margin-bottom: 15px; letter-spacing: 0; text-transform: none; }
-        #lexicon-fallback p { font-size: 14px; color: #555; line-height: 1.5; margin-bottom: 25px; }
-
         /* THE CHIC NATIVE READER MODE */
         #native-reader {
             display: none; flex-direction: column; height: 100%; width: 100%; 
@@ -190,6 +182,9 @@
         span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
         span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
         div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
+        
+        /* Plain Text Format Rules */
+        .plaintext-block { white-space: pre-wrap; font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
 
     </style>
 </head>
@@ -298,7 +293,7 @@
         <div class="lexicon-header-top">
             <h3 class="lexicon-title">📖 Lexicon <span>Research</span></h3>
             <div style="display: flex; gap: 5px;">
-                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to Window">↗</button>
+                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to Window" style="display:none;">↗</button>
                 <button class="lexicon-btn-icon" onclick="toggleLexicon()" style="font-size: 26px; line-height: 0.7;" title="Close Drawer">&times;</button>
             </div>
         </div>
@@ -318,12 +313,21 @@
                 </div>
 
                 <div style="display: flex; gap: 10px; flex: 1; justify-content: flex-end;">
-                    <select id="lexiconSource" onchange="executeLexiconSearch()" style="width: 190px; flex: none;">
-                        <option value="studybible">StudyBible.info</option>
-                        <option value="blb">Blue Letter Bible (Secure)</option>
-                        <option value="step">STEP Bible (Secure)</option>
-                        <option value="native" style="font-weight:bold; color:var(--oxford-gold);">Local Library (Native)</option>
-                    </select>
+                    
+                    <div id="lexicon-settings" style="display: flex; gap: 10px; width: 100%;">
+                        <select id="lexSource" onchange="executeLexiconSearch()" style="flex: 1;">
+                            <option value="studybible">StudyBible.info</option>
+                            <option value="eastons.xml" style="font-weight:bold; color:var(--oxford-gold);">Easton's Dict (Native)</option>
+                            <option value="vines.xml" style="font-weight:bold; color:var(--oxford-gold);">Vine's Dict (Native)</option>
+                        </select>
+                    </div>
+
+                    <div id="comm-settings" style="display: none; gap: 10px; width: 100%;">
+                        <select id="commSource" onchange="executeLexiconSearch()" style="flex: 1;">
+                            <option value="native" style="font-weight:bold; color:var(--oxford-gold);">M. Henry Library (Native)</option>
+                        </select>
+                    </div>
+
                     <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
                 </div>
             </div>
@@ -332,15 +336,9 @@
     
     <div class="lexicon-iframe-container">
         <iframe id="lexicon-iframe" src="about:blank"></iframe>
-        
-        <div id="lexicon-fallback">
-            <h3 id="fallback-title">🗂️ Dual-Monitor Mode Required</h3>
-            <p id="fallback-desc">This resource cannot be embedded directly. Click below to open it in a perfectly sized floating window next to your workspace!</p>
-            <button class="std-btn" id="fallback-launch-btn" style="padding: 15px 30px; font-size: 14px; box-shadow: 0 4px 10px rgba(0,0,0,0.2);">Launch Floating Window</button>
-        </div>
 
         <div id="native-reader">
-            <span class="native-author" id="native-author-label">Local Commentary Library</span>
+            <span class="native-author" id="native-author-label">Local Library Database</span>
             <h2 id="native-title">Loading...</h2>
             <div id="native-content">
                 </div>
@@ -359,6 +357,7 @@
     let matrixData = [];  
 
     function openFloatingWindow(url) {
+        if (!url || url === 'about:blank') return;
         const popWidth = Math.floor(window.screen.width * 0.45);
         const popHeight = window.screen.height;
         const leftPos = window.screen.width - popWidth;
@@ -367,7 +366,19 @@
     }
 
     // ---------------------------------------------------------
-    // THE PURE RAW STRING ENGINE (Zero DOM Limits)
+    // THE ROUTING MAP (Maps Book Names to Volume Files)
+    // ---------------------------------------------------------
+    const volumeMap = {
+        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1,
+        "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2,
+        "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3,
+        "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
+        "matthew": 5, "mark": 5, "luke": 5, "john": 5,
+        "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
+    };
+
+    // ---------------------------------------------------------
+    // THE DUAL-CORE NATIVE ENGINE (XML + TXT Fallback)
     // ---------------------------------------------------------
     async function loadNativeCommentary(query) {
         const nativeTitle = document.getElementById('native-title');
@@ -375,19 +386,9 @@
         const authorLabel = document.getElementById('native-author-label');
         
         nativeTitle.innerText = "Searching: " + query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running high-speed string scanner...</em></p>`;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Dual-Core String Scanner...</em></p>`;
 
         try {
-            const response = await fetch('commentary.xml');
-            if (!response.ok) throw new Error("Local commentary.xml file not found in project directory.");
-            
-            // WE ONLY USE RAW TEXT TO BYPASS BROWSER LIMITS
-            const xmlText = await response.text();
-
-            // 0. Extract Title
-            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
-            if (titleMatch) authorLabel.innerText = titleMatch[1];
-
             // 1. Parse Query: "John 1:1-5" -> book="John", chap="1", verse="1-5"
             const match = query.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?::\s*([0-9-]+))?/);
             if (!match) {
@@ -404,10 +405,19 @@
                 "1pe": "1 Peter", "2pe": "2 Peter", "1co": "1 Corinthians", "2co": "2 Corinthians",
                 "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
                 "1jn": "1 John", "2jn": "2 John", "3jn": "3 John", "1sa": "1 Samuel", "2sa": "2 Samuel",
-                "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles"
+                "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles",
+                "gen": "Genesis", "exo": "Exodus", "lev": "Leviticus", "num": "Numbers", "deu": "Deuteronomy",
+                "jos": "Joshua", "jud": "Judges", "rut": "Ruth", "ezr": "Ezra", "neh": "Nehemiah", "est": "Esther",
+                "psa": "Psalms", "psalm": "Psalms", "pro": "Proverbs", "ecc": "Ecclesiastes", "sng": "Song of Solomon",
+                "isa": "Isaiah", "jer": "Jeremiah", "lam": "Lamentations", "eze": "Ezekiel", "dan": "Daniel",
+                "hos": "Hosea", "joe": "Joel", "amo": "Amos", "oba": "Obadiah", "jon": "Jonah", "mic": "Micah",
+                "nah": "Nahum", "hab": "Habakkuk", "zep": "Zephaniah", "hag": "Haggai", "zec": "Zechariah", "mal": "Malachi",
+                "mat": "Matthew", "mrk": "Mark", "luk": "Luke", "jhn": "John", "act": "Acts", "rom": "Romans",
+                "gal": "Galatians", "eph": "Ephesians", "php": "Philippians", "col": "Colossians", "phm": "Philemon",
+                "heb": "Hebrews", "jas": "James", "rev": "Revelation"
             };
             const firstWord = searchBook.split(' ')[0].toLowerCase();
-            const fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook;
+            const fullBookName = abbrevs[firstWord] ? searchBook.toLowerCase().replace(firstWord, abbrevs[firstWord]) : searchBook.toLowerCase();
             const bookPrefix = fullBookName.substring(0,3).toLowerCase();
 
             function getRoman(val) {
@@ -420,10 +430,71 @@
             }
             const romanChap = getRoman(chapNum);
 
+            // 2. Map to Correct Volume
+            const targetVol = volumeMap[fullBookName] || 5; 
+            let targetFile = `vol${targetVol}.xml`;
+            let isTextMode = false;
+
+            // Fetch Logic: Try XML first, if it fails, try TXT
+            let response = await fetch(targetFile);
+            if (!response.ok) {
+                targetFile = `vol${targetVol}.txt`;
+                response = await fetch(targetFile);
+                isTextMode = true;
+                
+                if (!response.ok) {
+                    nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in ${fullBookName.charAt(0).toUpperCase() + fullBookName.slice(1)}, which requires Volume ${targetVol}. Please ensure you have downloaded <code>vol${targetVol}.xml</code> or <code>vol${targetVol}.txt</code> to your project folder.</p>`;
+                    return;
+                }
+            }
+            
+            const rawData = await response.text();
+
             // ==========================================
+            // PATH B: ASCII TEXT SLICER (For .txt files)
+            // ==========================================
+            if (isTextMode) {
+                authorLabel.innerText = "Matthew Henry (Plain Text Archive)";
+                
+                // STAGE 1: Isolate Book
+                const bookIdx = rawData.toUpperCase().indexOf(fullBookName.toUpperCase());
+                if(bookIdx === -1) {
+                    nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
+                    return;
+                }
+                let sliced = rawData.substring(bookIdx);
+                
+                // STAGE 2: Isolate Chapter
+                const chapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
+                const chapMatch = sliced.match(chapRegex);
+                if(!chapMatch) {
+                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the text file.</p>`;
+                    return;
+                }
+                sliced = sliced.substring(chapMatch.index);
+                
+                // STAGE 3: Cut at Next Chapter
+                const nextChap = parseInt(chapNum) + 1;
+                const nextRoman = getRoman(nextChap);
+                const nextChapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
+                const nextMatch = sliced.substring(100).match(nextChapRegex);
+                if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
+                
+                // Format for UI (Basic block text)
+                nativeContent.innerHTML = `<div class="plaintext-block">${sliced}</div>`;
+                nativeTitle.innerText = query + " (ASCII Text)";
+                return;
+            }
+
+            // ==========================================
+            // PATH A: THE XML STRING SLICER (Original)
+            // ==========================================
+            const xmlText = rawData;
+            
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
+            if (titleMatch) authorLabel.innerText = titleMatch[1];
+
             // STAGE 1: ISOLATE THE BOOK
-            // ==========================================
-            // Search all div headers. Filter out "matthew to john" and TOCs.
             const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${fullBookName}\\b[^"]*)"[^>]*>`, 'gi');
             let m;
             let bookIndex = -1;
@@ -437,27 +508,34 @@
             }
 
             if (bookIndex === -1) {
-                nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in this volume.</p>`;
+                nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
                 return;
             }
 
-            // Slice out the rest of the Bible!
             let textFromBook = xmlText.substring(bookIndex);
 
-            // ==========================================
             // STAGE 2: ISOLATE THE CHAPTER
-            // ==========================================
-            const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="([^"]*\\b(?:${chapNum}|${romanChap})\\b[^"]*)"[^>]*>`, 'gi');
+            const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="[^"]*(?:Chapter|Chap\\.|Ch\\.)?\\s*(?:${chapNum}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
+            let chapMatch = textFromBook.match(chapRegex);
+            
             let chapIndex = -1;
-            let currentLevel = 2; // Usually div2 or div3
+            let currentLevel = 2; 
 
-            while ((m = chapRegex.exec(textFromBook)) !== null) {
-                const tagStr = m[2].toLowerCase();
-                // Ensure it's not grabbing "Verses 1-5" when we want Chapter 1.
-                if (tagStr.includes('chapter') || m[0].includes(`n="${chapNum}"`) || m[0].includes(`n="${romanChap}"`)) {
-                    chapIndex = m.index;
-                    currentLevel = parseInt(m[1]);
-                    break;
+            if (chapMatch) {
+                const tagStr = chapMatch[0].toLowerCase();
+                if (tagStr.includes('chapter') || tagStr.includes(`n="${chapNum}"`) || tagStr.includes(`n="${romanChap}"`)) {
+                    chapIndex = chapMatch.index;
+                    currentLevel = parseInt(chapMatch[1]);
+                }
+            }
+            
+            if (chapIndex === -1) {
+                const refRegex = new RegExp(`passage="\\s*${bookPrefix}[a-z]*\\.?\\s*${chapNum}\\b`, 'i');
+                const refMatch = textFromBook.match(refRegex);
+                if (refMatch) {
+                    const textBeforeRef = textFromBook.substring(0, refMatch.index);
+                    chapIndex = textBeforeRef.lastIndexOf('<div');
+                    if (chapIndex === -1) chapIndex = refMatch.index - 500;
                 }
             }
 
@@ -468,9 +546,7 @@
 
             let textToRender = textFromBook.substring(chapIndex);
 
-            // ==========================================
-            // STAGE 3: ISOLATE THE VERSE (IF REQUESTED)
-            // ==========================================
+            // STAGE 3: ISOLATE THE VERSE
             if (verseNum) {
                 const startVerse = verseNum.split('-')[0];
                 const verseRegex = new RegExp(`<div([1-6])[^>]*(?:id|title|n)="([^"]*\\b(?:${startVerse})\\b[^"]*)"[^>]*>`, 'gi');
@@ -490,27 +566,20 @@
                 }
             }
 
-            // ==========================================
             // STAGE 4: CUT OFF AT THE END
-            // ==========================================
-            // We want to read until we hit the NEXT div of the same or higher level (e.g. if we are in div3, stop at next div1, div2, or div3)
             const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
-            
-            // Skip the first opening tag so we don't instantly stop
             const skipLength = textToRender.indexOf('>') + 1;
             const endMatch = endRegex.exec(textToRender.substring(skipLength));
 
             let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
 
-            // ==========================================
             // STAGE 5: FORMAT FOR UI
-            // ==========================================
             finalContent = finalContent
                 .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
                 .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
                 .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
-                .replace(/<\/?div[0-9]*[^>]*>/ig, ''); // Clean out all structure tags for standard HTML render
+                .replace(/<\/?div[0-9]*[^>]*>/ig, ''); 
 
             nativeContent.innerHTML = finalContent;
             nativeTitle.innerText = query;
@@ -518,9 +587,7 @@
         } catch (error) {
             nativeContent.innerHTML = `
                 <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
-                <p>1. Please ensure you downloaded the XML file from CCEL.</p>
-                <p>2. Ensure the file is named exactly <code>commentary.xml</code>.</p>
-                <p>3. Ensure it is placed in the exact same folder as this application.</p>
+                <p>Ensure the file is named correctly (e.g., <code>vol5.xml</code> or <code>vol2.txt</code>) and is in your project folder.</p>
                 <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
             `;
         }
@@ -528,13 +595,82 @@
 
 
     // ---------------------------------------------------------
-    // LEXICON SWITCHBOARD ENGINE 
+    // THE NATIVE DICTIONARY SLICER
+    // ---------------------------------------------------------
+    async function loadNativeDictionary(query, fileName) {
+        const nativeTitle = document.getElementById('native-title');
+        const nativeContent = document.getElementById('native-content');
+        const authorLabel = document.getElementById('native-author-label');
+        
+        nativeTitle.innerText = "Researching: " + query;
+        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Scanning local dictionary...</em></p>`;
+
+        try {
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`Could not find ${fileName} in your project directory.`);
+            
+            const xmlText = await response.text();
+
+            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
+            if (titleMatch) authorLabel.innerText = titleMatch[1];
+
+            const searchWord = query.replace(/[^a-z0-9\s]/gi, '').trim().toLowerCase();
+            
+            if (!searchWord) {
+                nativeContent.innerHTML = "<p>Please select or type a word to search the dictionary.</p>";
+                return;
+            }
+
+            const entryRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
+            const match = entryRegex.exec(xmlText);
+
+            if (!match) {
+                nativeContent.innerHTML = `<p>No entry found for <strong>${query}</strong> in ${fileName}.</p>`;
+                return;
+            }
+
+            const currentLevel = parseInt(match[1]);
+            let textToRender = xmlText.substring(match.index);
+
+            const skipLength = textToRender.indexOf('>') + 1;
+            const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
+            const endMatch = endRegex.exec(textToRender.substring(skipLength));
+
+            let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
+
+            finalContent = finalContent
+                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px;">$1</h4>')
+                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
+                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
+                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
+                .replace(/<p[^>]*>/ig, '<p>').replace(/<\/p>/ig, '</p>')
+                .replace(/<\/?div[0-9]*[^>]*>/ig, '');
+
+            nativeContent.innerHTML = finalContent;
+
+        } catch (error) {
+            nativeContent.innerHTML = `
+                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
+                <p>Please ensure you have downloaded <code>${fileName}</code> to your project folder.</p>
+                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
+            `;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // LEXICON SWITCHBOARD ENGINE (Dynamic Menu UI)
     // ---------------------------------------------------------
     
     function updateToggleState() {
         const isComm = document.getElementById('resourceToggle').checked;
         document.getElementById('lbl-lex').style.color = isComm ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
         document.getElementById('lbl-com').style.color = isComm ? "var(--oxford-cream)" : "rgba(248, 245, 238, 0.4)";
+        
+        // Dynamic UI Switch
+        document.getElementById('lexicon-settings').style.display = isComm ? 'none' : 'flex';
+        document.getElementById('comm-settings').style.display = isComm ? 'flex' : 'none';
+
         executeLexiconSearch(); 
     }
 
@@ -573,110 +709,58 @@
         let query = document.getElementById('lexiconSearchInput').value.trim();
         if (!query) return;
 
-        query = query.replace(/^(\d)\s+([a-zA-Z]+)/, "$1$2");
-
-        const abbrevs = {
-            "1pe": "1 Peter", "2pe": "2 Peter", "1pet": "1 Peter", "2pet": "2 Peter", 
-            "1peter": "1 Peter", "2peter": "2 Peter",
-            "1co": "1 Corinthians", "2co": "2 Corinthians", "1cor": "1 Corinthians", "2cor": "2 Corinthians",
-            "1th": "1 Thessalonians", "2th": "2 Thessalonians", "1ti": "1 Timothy", "2ti": "2 Timothy",
-            "1jn": "1 John", "2jn": "2 John", "3jn": "3 John", "1sa": "1 Samuel", "2sa": "2 Samuel",
-            "1ki": "1 Kings", "2ki": "2 Kings", "1ch": "1 Chronicles", "2ch": "2 Chronicles",
-            "gen": "Genesis", "exo": "Exodus", "lev": "Leviticus", "num": "Numbers", "deu": "Deuteronomy",
-            "jos": "Joshua", "jud": "Judges", "rut": "Ruth", "ezr": "Ezra", "neh": "Nehemiah", "est": "Esther",
-            "psa": "Psalms", "psalm": "Psalms", "pro": "Proverbs", "ecc": "Ecclesiastes", "sng": "Song of Solomon",
-            "isa": "Isaiah", "jer": "Jeremiah", "lam": "Lamentations", "eze": "Ezekiel", "dan": "Daniel",
-            "hos": "Hosea", "joe": "Joel", "amo": "Amos", "oba": "Obadiah", "jon": "Jonah", "mic": "Micah",
-            "nah": "Nahum", "hab": "Habakkuk", "zep": "Zephaniah", "hag": "Haggai", "zec": "Zechariah", "mal": "Malachi",
-            "mat": "Matthew", "mrk": "Mark", "luk": "Luke", "jhn": "John", "act": "Acts", "rom": "Romans",
-            "gal": "Galatians", "eph": "Ephesians", "php": "Philippians", "col": "Colossians", "phm": "Philemon",
-            "heb": "Hebrews", "jas": "James", "rev": "Revelation"
-        };
-        
-        const firstWord = query.split(' ')[0].toLowerCase();
-        if(abbrevs[firstWord]) {
-            query = query.replace(new RegExp(`^${firstWord}`, 'i'), abbrevs[firstWord]);
-        }
-        
-        const source = document.getElementById('lexiconSource').value;
         const isCommentaryMode = document.getElementById('resourceToggle').checked;
         
-        const iframe = document.getElementById('lexicon-iframe');
-        const fallback = document.getElementById('lexicon-fallback');
-        const nativeReader = document.getElementById('native-reader');
+        // Grab the correct source based on which dropdown is currently visible
+        const source = isCommentaryMode ? document.getElementById('commSource').value : document.getElementById('lexSource').value;
         
-        const fallbackTitle = document.getElementById('fallback-title');
-        const fallbackDesc = document.getElementById('fallback-desc');
-        const fallbackBtn = document.getElementById('fallback-launch-btn');
+        const iframe = document.getElementById('lexicon-iframe');
+        const nativeReader = document.getElementById('native-reader');
         const popoutBtn = document.getElementById('lexicon-popout-btn');
         
         let targetUrl = "";
-        
         const isStrongs = /^[GH]\d+$/i.test(query);
-        const isReference = /\d/.test(query) && !isStrongs; 
-        const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
 
+        // ROUTE: NATIVE COMMENTARY
         if (source === 'native') {
             iframe.style.display = 'none';
-            fallback.style.display = 'none';
             nativeReader.style.display = 'flex';
-            
+            popoutBtn.style.display = 'none'; // No popout for native files
             loadNativeCommentary(query);
             return;
-        } else {
-            nativeReader.style.display = 'none';
-        }
-
-        if (isCommentaryMode) {
-            targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
-            
+        } 
+        
+        // ROUTE: NATIVE DICTIONARIES
+        if (source === 'eastons.xml' || source === 'vines.xml') {
             iframe.style.display = 'none';
-            fallback.style.display = 'flex';
-            fallbackTitle.innerText = "🗂️ Dual-Monitor Mode Ready";
-            fallbackDesc.innerText = "Blue Letter Bible cannot be embedded directly. Click below to open your commentary in a perfectly sized floating window right next to your workspace!";
-            fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
-        } else {
-            fallbackTitle.innerText = "🔒 Secure Lexicon Required";
-            fallbackDesc.innerText = "The database you selected prevents embedding. Click below to open it in a perfectly sized floating window.";
-
-            if (source === 'studybible') {
-                if (isStrongs) {
-                    targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
-                } else if (isReference) {
-                    targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
-                } else {
-                    targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
-                }
-                
-                iframe.src = targetUrl;
-                iframe.style.display = 'block';
-                fallback.style.display = 'none';
-                
-            } else if (source === 'blb') {
-                if (isStrongs) {
-                    targetUrl = `https://www.blueletterbible.org/lexicon/${query.toLowerCase()}/kjv/tr/1/`;
-                } else {
-                    targetUrl = `https://www.blueletterbible.org/search/search.cfm?Criteria=${encodeURIComponent(query)}&t=KJV`;
-                }
-                iframe.style.display = 'none';
-                fallback.style.display = 'flex';
-                fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
-                
-            } else if (source === 'step') {
-                if (isStrongs) {
-                    targetUrl = `https://www.stepbible.org/?q=strong=${query.toUpperCase()}`;
-                } else if (isReference) {
-                    targetUrl = `https://www.stepbible.org/?q=reference=${encodeURIComponent(query)}`;
-                } else {
-                    targetUrl = `https://www.stepbible.org/?q=meanings=${encodeURIComponent(query)}`;
-                }
-                iframe.style.display = 'none';
-                fallback.style.display = 'flex';
-                fallbackBtn.onclick = () => openFloatingWindow(targetUrl);
-            }
+            nativeReader.style.display = 'flex';
+            popoutBtn.style.display = 'none'; // No popout for native files
+            loadNativeDictionary(query, source);
+            return;
         }
 
-        popoutBtn.onclick = () => openFloatingWindow(targetUrl);
+        // Hide Native Reader for Web Routes
+        nativeReader.style.display = 'none';
+        popoutBtn.style.display = 'flex'; // Restore popout for web tools
+
+        // ROUTE: WEB LEXICONS (StudyBible.info Only)
+        if (source === 'studybible') {
+            const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Oba|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
+            const isReference = /\d/.test(query) && !isStrongs; 
+            
+            if (isStrongs) {
+                targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
+            } else if (isReference) {
+                targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
+            } else {
+                targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
+            }
+            
+            iframe.src = targetUrl;
+            iframe.style.display = 'block';
+        }
+
+        document.getElementById('lexicon-popout-btn').onclick = () => openFloatingWindow(targetUrl);
     }
 
     // ---------------------------------------------------------
