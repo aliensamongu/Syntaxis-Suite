@@ -489,7 +489,8 @@
             if (fileType === 'html') {
                 authorLabel.innerText = "Local Library (HTML Archive)";
                 
-                const htmlBookRegex = new RegExp(`<(?:p|div|h[1-3])[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:p|div|h[1-3])>`, 'gi');
+                // 1. STRICT BOOK HUNT: Only look in headers (h1-h3) or classed paragraphs to prevent cross-reference traps.
+                const htmlBookRegex = new RegExp(`<(?:h[1-3]|p[^>]*class="div[1-3]"[^>]*)[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:h[1-3]|p)>`, 'gi');
                 let m;
                 let bookIndex = -1;
 
@@ -502,9 +503,8 @@
                 }
 
                 if (bookIndex === -1) {
-                    // Removed the dangerous raw data index fallback to prevent cross-reference dumps
-                    // Fallback to slightly looser header hunt instead
-                    const looseHtmlBookRegex = new RegExp(`<(?:b|strong|u|i|em|h[4-6])[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:b|strong|u|i|em|h[4-6])>`, 'gi');
+                    // 2. LOOSE FALLBACK: Look in any tag, but ONLY if text is short and contains NO colons (Filters out "1 Peter 5:13")
+                    const looseHtmlBookRegex = new RegExp(`<(?:p|div|h[4-6]|b|strong|u|i|em)[^>]*>[^<:]{0,80}\\b${bookSearchTarget}\\b[^<:]{0,80}<\\/(?:p|div|h[4-6]|b|strong|u|i|em)>`, 'gi');
                     while ((m = looseHtmlBookRegex.exec(rawData)) !== null) {
                         const tagStr = m[0].toLowerCase();
                         if (!tagStr.includes('contents') && !tagStr.includes('index')) {
