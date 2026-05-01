@@ -386,10 +386,7 @@
         nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Dual-Core String Scanner...</em></p>`;
 
         try {
-            // 1. Force a space between leading numbers and book names (e.g. "1peter" -> "1 peter")
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            
-            // 2. Parse Query: "1 peter 1:1-5" -> book="1 peter", chap="1", verse="1-5"
             const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?::\s*([0-9-]+))?/);
             if (!match) {
                 nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1' or '1 Peter 1').</p>";
@@ -400,7 +397,6 @@
             const chapNum = match[2]; 
             const verseNum = match[3] || ""; 
 
-            // Standardize Name Database
             const abbrevs = {
                 "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
                 "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
@@ -434,7 +430,6 @@
             }
             const romanChap = getRoman(chapNum);
 
-            // 3. Translation Matrix for CCEL's eccentric naming conventions (e.g. "First Peter")
             const bookAliasMap = {
                 "1 peter": "(?:1|I|First)\\s*Peter",
                 "2 peter": "(?:2|II|Second)\\s*Peter",
@@ -457,12 +452,10 @@
             };
             const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
 
-            // 4. Map to Correct Volume
             const targetVol = volumeMap[fullBookName] || 5; 
             let targetFile = `vol${targetVol}.xml`;
             let isTextMode = false;
 
-            // Fetch Logic: Try XML first, if it fails, try TXT
             let response = await fetch(targetFile);
             if (!response.ok) {
                 targetFile = `vol${targetVol}.txt`;
@@ -477,13 +470,9 @@
             
             const rawData = await response.text();
 
-            // ==========================================
-            // PATH B: ASCII TEXT SLICER (For .txt files)
-            // ==========================================
             if (isTextMode) {
                 authorLabel.innerText = "Matthew Henry (Plain Text Archive)";
                 
-                // STAGE 1: Isolate Book
                 const txtBookRegex = new RegExp(`\\b${bookSearchTarget}\\b`, 'i');
                 const txtMatch = rawData.match(txtBookRegex);
                 const bookIdx = txtMatch ? txtMatch.index : -1;
@@ -494,7 +483,6 @@
                 }
                 let sliced = rawData.substring(bookIdx);
                 
-                // STAGE 2: Isolate Chapter
                 const chapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
                 const chapMatch = sliced.match(chapRegex);
                 if(!chapMatch) {
@@ -503,28 +491,22 @@
                 }
                 sliced = sliced.substring(chapMatch.index);
                 
-                // STAGE 3: Cut at Next Chapter
                 const nextChap = parseInt(chapNum) + 1;
                 const nextRoman = getRoman(nextChap);
                 const nextChapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
                 const nextMatch = sliced.substring(100).match(nextChapRegex);
                 if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
                 
-                // Format for UI (Basic block text)
                 nativeContent.innerHTML = `<div class="plaintext-block">${sliced}</div>`;
                 nativeTitle.innerText = query + " (ASCII Text)";
                 return;
             }
 
-            // ==========================================
-            // PATH A: THE XML STRING SLICER (Original)
-            // ==========================================
             const xmlText = rawData;
             
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
             if (titleMatch) authorLabel.innerText = titleMatch[1];
 
-            // STAGE 1: ISOLATE THE BOOK
             const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${bookSearchTarget}\\b[^"]*)"[^>]*>`, 'gi');
             let m;
             let bookIndex = -1;
@@ -544,7 +526,6 @@
 
             let textFromBook = xmlText.substring(bookIndex);
 
-            // STAGE 2: ISOLATE THE CHAPTER
             const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="[^"]*(?:Chapter|Chap\\.|Ch\\.)?\\s*(?:${chapNum}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
             let chapMatch = textFromBook.match(chapRegex);
             
@@ -576,7 +557,6 @@
 
             let textToRender = textFromBook.substring(chapIndex);
 
-            // STAGE 3: ISOLATE THE VERSE
             if (verseNum) {
                 const startVerse = verseNum.split('-')[0];
                 const verseRegex = new RegExp(`<div([1-6])[^>]*(?:id|title|n)="([^"]*\\b(?:${startVerse})\\b[^"]*)"[^>]*>`, 'gi');
@@ -596,14 +576,12 @@
                 }
             }
 
-            // STAGE 4: CUT OFF AT THE END
             const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
             const skipLength = textToRender.indexOf('>') + 1;
             const endMatch = endRegex.exec(textToRender.substring(skipLength));
 
             let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
 
-            // STAGE 5: FORMAT FOR UI
             finalContent = finalContent
                 .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
@@ -625,7 +603,7 @@
 
 
     // ---------------------------------------------------------
-    // THE NATIVE DICTIONARY SLICER
+    // THE DICTIONARY SLICER (CCEL Glossary/Term Parser)
     // ---------------------------------------------------------
     async function loadNativeDictionary(query, fileName) {
         const nativeTitle = document.getElementById('native-title');
@@ -644,37 +622,57 @@
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
             if (titleMatch) authorLabel.innerText = titleMatch[1];
 
-            const searchWord = query.replace(/[^a-z0-9\s]/gi, '').trim().toLowerCase();
+            // Strip weird punctuation
+            const searchWord = query.replace(/[^a-z0-9\s-]/gi, '').trim();
             
             if (!searchWord) {
                 nativeContent.innerHTML = "<p>Please select or type a word to search the dictionary.</p>";
                 return;
             }
 
-            const entryRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
-            const match = entryRegex.exec(xmlText);
+            // 1. Look for the EXACT <term> tag containing the word
+            const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
+            const termMatch = termRegex.exec(xmlText);
 
-            if (!match) {
+            if (!termMatch) {
                 nativeContent.innerHTML = `<p>No entry found for <strong>${query}</strong> in ${fileName}.</p>`;
                 return;
             }
 
-            const currentLevel = parseInt(match[1]);
-            let textToRender = xmlText.substring(match.index);
+            // 2. Backtrack to find the <glossary> wrapper that contains the term and definition
+            const textBefore = xmlText.substring(0, termMatch.index);
+            let startIndex = textBefore.lastIndexOf('<glossary');
 
-            const skipLength = textToRender.indexOf('>') + 1;
-            const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
-            const endMatch = endRegex.exec(textToRender.substring(skipLength));
+            // Fallback just in case they don't use <glossary> wrapping for this specific entry
+            if (startIndex === -1) startIndex = termMatch.index;
 
-            let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
+            let textToRender = xmlText.substring(startIndex);
 
+            // 3. Cut off at the closing </glossary> tag, or the very next <term> tag
+            let endIndex = -1;
+            if (textToRender.startsWith('<glossary')) {
+                const endGlossaryMatch = textToRender.indexOf('</glossary>');
+                if (endGlossaryMatch !== -1) endIndex = endGlossaryMatch + 11;
+            } 
+            
+            if (endIndex === -1) {
+                // Honey Badger Fallback: cut at the very next dictionary term
+                const nextTermMatch = /<term[^>]*>/i.exec(textToRender.substring(10));
+                if (nextTermMatch) endIndex = nextTermMatch.index + 10;
+            }
+
+            let finalContent = endIndex !== -1 ? textToRender.substring(0, endIndex) : textToRender;
+
+            // FORMAT FOR UI
             finalContent = finalContent
-                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px;">$1</h4>')
+                .replace(/<term[^>]*>(.*?)<\/term>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
                 .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
                 .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
                 .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
                 .replace(/<p[^>]*>/ig, '<p>').replace(/<\/p>/ig, '</p>')
-                .replace(/<\/?div[0-9]*[^>]*>/ig, '');
+                .replace(/<\/?div[0-9]*[^>]*>/ig, '')
+                .replace(/<\/?def[^>]*>/ig, '')
+                .replace(/<\/?glossary[^>]*>/ig, '');
 
             nativeContent.innerHTML = finalContent;
 
@@ -696,7 +694,6 @@
         const isComm = document.getElementById('resourceToggle').checked;
         const sourceSelect = document.getElementById('lexiconSource');
         
-        // Sync Dropdown to Match Toggle Switch
         if (isComm) {
             sourceSelect.value = 'native';
         } else {
@@ -712,7 +709,6 @@
         const source = document.getElementById('lexiconSource').value;
         const toggle = document.getElementById('resourceToggle');
         
-        // If they pick Commentary, flip the switch right. Otherwise, flip it left.
         toggle.checked = (source === 'native');
     }
 
@@ -733,7 +729,6 @@
                     query = wordText;
                 }
                 
-                // Auto-searching a word flips the switch to Lexicon mode
                 document.getElementById('resourceToggle').checked = false;
                 updateToggleState();
             }
@@ -755,7 +750,6 @@
         const source = document.getElementById('lexiconSource').value;
         const toggle = document.getElementById('resourceToggle');
         
-        // Ensure switch visuals stay synced with dropdown logic
         document.getElementById('lbl-lex').style.color = toggle.checked ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
         document.getElementById('lbl-com').style.color = toggle.checked ? "var(--oxford-cream)" : "rgba(248, 245, 238, 0.4)";
         
@@ -766,7 +760,6 @@
         let targetUrl = "";
         const isStrongs = /^[GH]\d+$/i.test(query);
 
-        // ROUTE: NATIVE COMMENTARY
         if (source === 'native') {
             iframe.style.display = 'none';
             nativeReader.style.display = 'flex';
@@ -775,7 +768,6 @@
             return;
         } 
         
-        // ROUTE: NATIVE DICTIONARIES
         if (source === 'eastons.xml' || source === 'vines.xml') {
             iframe.style.display = 'none';
             nativeReader.style.display = 'flex';
@@ -784,11 +776,9 @@
             return;
         }
 
-        // Hide Native Reader for Web Routes
         nativeReader.style.display = 'none';
         popoutBtn.style.display = 'flex'; 
 
-        // ROUTE: WEB LEXICONS (StudyBible.info Only)
         if (source === 'studybible') {
             const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Obadiah|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
             const isReference = /\d/.test(query) && !isStrongs; 
