@@ -213,8 +213,16 @@
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
+            
+            <div style="display: flex; gap: 5px;">
+                <input type="text" id="bibleRefInput" placeholder="Load Greek (e.g. Matt 1)" style="flex: 2;">
+                <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, 'tischendorf.xml')" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load XML</button>
+            </div>
+            
+            <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
+            
             <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
-            <button class="std-btn secondary" onclick="renderText()" title="Render text and open Interlinear">Render Passage & Interlinear</button>
+            <button class="std-btn secondary" onclick="renderText()" title="Render text and open Interlinear">Render Pasted Text</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
@@ -261,9 +269,9 @@
 
 <div id="workspace">
     <div class="workspace-panel">
-        <h3 class="panel-title">Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Observation</span></h3>
+        <h3 class="panel-title">Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></h3>
         <div id="passage-container">
-            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Paste text in the sidebar and click "Render Passage" to begin...</span>
+            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Type a reference or paste text in the sidebar to begin...</span>
         </div>
     </div>
 
@@ -365,8 +373,34 @@
     }
 
     // ---------------------------------------------------------
-    // THE ROUTING MAP (Maps Book Names to Volume Files)
+    // MASTER BIBLE INDEXES (Used by all Native Engines)
     // ---------------------------------------------------------
+    
+    const abbrevs = {
+        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+        "heb": "hebrews", "jas": "james", "rev": "revelation"
+    };
+
+    const bnumberMap = {
+        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
+        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
+    };
+
     const volumeMap = {
         "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1,
         "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2,
@@ -377,7 +411,112 @@
     };
 
     // ---------------------------------------------------------
-    // THE TRI-CORE NATIVE ENGINE (XML + TXT + HTML)
+    // THE NATIVE BIBLE ENGINE (Zefania Strong's + RMAC)
+    // ---------------------------------------------------------
+    async function loadNativeBible(query, fileName) {
+        if (!query.trim()) return;
+        
+        passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module ${fileName}...</span>`;
+        lexEditor.style.opacity = '0.5';
+        lexEditor.style.pointerEvents = 'none';
+
+        try {
+            // 1. Format the search string
+            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            if (!match) {
+                passageContainer.innerHTML = "<span style='color:var(--oxford-crimson);'>Please enter a valid Book and Chapter (e.g., Matthew 1).</span>";
+                return;
+            }
+
+            const searchBook = match[1].trim().toLowerCase();
+            const chapNum = match[2];
+            
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            const bNum = bnumberMap[fullBookName];
+
+            if (!bNum) {
+                passageContainer.innerHTML = `<span style='color:var(--oxford-crimson);'>Book '${fullBookName}' not recognized by the engine.</span>`;
+                return;
+            }
+
+            // 2. Fetch the XML module
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
+            const xmlText = await response.text();
+
+            // 3. Parse XML using native browser DOMParser
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            // 4. Find the requested coordinates
+            const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+            if (!bookNode) throw new Error(`Could not find ${fullBookName} inside this module.`);
+
+            const chapNode = bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`);
+            if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} in ${fullBookName}.`);
+
+            // 5. Build the UI!
+            passageContainer.innerHTML = ''; 
+            lexiconData = {}; // Clear existing data to load the fresh chapter
+            selectedWordId = null;
+            let wordIndex = 0;
+
+            const verses = chapNode.querySelectorAll('VERS');
+            verses.forEach(vers => {
+                const vNum = vers.getAttribute('vnumber');
+                
+                // Render the superscript verse number
+                const vSpan = document.createElement('sup');
+                vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                vSpan.innerText = vNum;
+                passageContainer.appendChild(vSpan);
+
+                // Render the grammar-tagged Greek words
+                const grNodes = vers.querySelectorAll('gr');
+                grNodes.forEach(gr => {
+                    const str = gr.getAttribute('str') || '';
+                    const rmac = gr.getAttribute('rmac') || '';
+                    const text = gr.textContent.trim();
+
+                    const span = document.createElement('span');
+                    span.className = 'word';
+                    span.id = `w-${wordIndex++}`;
+                    span.innerText = text + " "; 
+
+                    // Inject the Strong's and RMAC into the Lexicon Data Array automatically
+                    lexiconData[span.id] = {
+                        word: text.replace(/[.,;!?]/g, ''), 
+                        lemma: "", 
+                        strongs: str ? "G" + str : "", // Append the G for Greek
+                        parsing: rmac, 
+                        def: "",
+                        synth: ""
+                    };
+                    
+                    // Mark it so it gets the gold underline
+                    span.classList.add('has-data');
+
+                    span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                    passageContainer.appendChild(span);
+                });
+                
+                // Add a trailing space after each verse
+                passageContainer.appendChild(document.createTextNode(" "));
+            });
+
+            // Update the visual references
+            document.getElementById('projectName').value = query;
+            renderLexiconCards();
+
+        } catch (error) {
+            passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Engine Error:</strong> ${error.message}</p>`;
+        }
+    }
+
+
+    // ---------------------------------------------------------
+    // THE TRI-CORE COMMENTARY ENGINE
     // ---------------------------------------------------------
     async function loadNativeCommentary(query, filePrefix) {
         const nativeTitle = document.getElementById('native-title');
@@ -398,26 +537,6 @@
             const searchBook = match[1].trim().toLowerCase(); 
             const chapNum = match[2]; 
             const verseNum = match[3] || ""; 
-
-            const abbrevs = {
-                "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
-                "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
-                "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
-                "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
-                "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
-                "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
-                "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
-                "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
-                "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
-                "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
-                "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
-                "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
-                "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
-                "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
-                "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
-                "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
-                "heb": "hebrews", "jas": "james", "rev": "revelation"
-            };
 
             const fullBookName = abbrevs[searchBook] || searchBook;
             const bookPrefix = fullBookName.replace(/\s+/g, '').substring(0,3).toLowerCase();
@@ -454,7 +573,6 @@
             };
             const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
 
-            // THE OVERRIDE: If the library is a single volume (Barnes/Luther), force Vol 1. Otherwise, use the map.
             let targetVol = volumeMap[fullBookName] || 5; 
             if (filePrefix === 'barnes' || filePrefix === 'luther') {
                 targetVol = 1;
@@ -483,13 +601,9 @@
             
             const rawData = await response.text();
 
-            // ==========================================
-            // PATH C: HTML SLICER (For .html files like Barnes)
-            // ==========================================
             if (fileType === 'html') {
                 authorLabel.innerText = "Local Library (HTML Archive)";
                 
-                // 1. STRICT BOOK HUNT: Only look in headers (h1-h3) or classed paragraphs to prevent cross-reference traps.
                 const htmlBookRegex = new RegExp(`<(?:h[1-3]|p[^>]*class="div[1-3]"[^>]*)[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:h[1-3]|p)>`, 'gi');
                 let m;
                 let bookIndex = -1;
@@ -503,7 +617,6 @@
                 }
 
                 if (bookIndex === -1) {
-                    // 2. LOOSE FALLBACK: Look in any tag, but ONLY if text is short and contains NO colons (Filters out "1 Peter 5:13")
                     const looseHtmlBookRegex = new RegExp(`<(?:p|div|h[4-6]|b|strong|u|i|em)[^>]*>[^<:]{0,80}\\b${bookSearchTarget}\\b[^<:]{0,80}<\\/(?:p|div|h[4-6]|b|strong|u|i|em)>`, 'gi');
                     while ((m = looseHtmlBookRegex.exec(rawData)) !== null) {
                         const tagStr = m[0].toLowerCase();
@@ -566,9 +679,6 @@
                 return;
             }
 
-            // ==========================================
-            // PATH B: ASCII TEXT SLICER (For .txt files)
-            // ==========================================
             if (fileType === 'txt') {
                 authorLabel.innerText = "Local Library (Plain Text Archive)";
                 
@@ -596,7 +706,6 @@
                 const nextMatch = sliced.substring(100).match(nextChapRegex);
                 if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
                 
-                // Add the CCEL sweeper here just in case they have weird artifacts in the text file
                 let finalContent = sliced.replace(/<scripCom[^>]*>/ig, '');
                 
                 nativeContent.innerHTML = `<div class="plaintext-block">${finalContent}</div>`;
@@ -604,9 +713,6 @@
                 return;
             }
 
-            // ==========================================
-            // PATH A: THE XML STRING SLICER (Original)
-            // ==========================================
             const xmlText = rawData;
             
             const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
@@ -737,7 +843,6 @@
 
             let textToRender = "";
 
-            // STRATEGY 1: The <term> List (Easton's format: giant list of <term> and <def>)
             const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
             let match = termRegex.exec(xmlText);
 
@@ -754,7 +859,6 @@
                 }
             } 
             else {
-                // STRATEGY 2: The <div> Block (Vine's / Encyclopedias)
                 const divRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n|name)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
                 match = divRegex.exec(xmlText);
                 
@@ -817,12 +921,10 @@
         const sourceSelect = document.getElementById('lexiconSource');
         
         if (isComm) {
-            // Default to Henry if they flip to Commentary
             if (sourceSelect.value !== 'vol' && sourceSelect.value !== 'barnes' && sourceSelect.value !== 'luther') {
                 sourceSelect.value = 'vol';
             }
         } else {
-            // Default to StudyBible if they flip to Lexicon
             if (sourceSelect.value === 'vol' || sourceSelect.value === 'barnes' || sourceSelect.value === 'luther') {
                 sourceSelect.value = 'studybible';
             }
@@ -890,7 +992,6 @@
             iframe.style.display = 'none';
             nativeReader.style.display = 'flex';
             popoutBtn.style.display = 'none'; 
-            // Pass the source prefix (e.g., "vol" or "barnes") to the Tri-Core engine
             loadNativeCommentary(query, source);
             return;
         } 
@@ -1061,7 +1162,6 @@
         const reference = document.getElementById('projectName').value.trim();
         if (reference) {
             document.getElementById('lexiconSearchInput').value = reference;
-            // Uncheck the toggle to jump to Lexicons for default rendering
             document.getElementById('resourceToggle').checked = false;
             updateToggleState(); 
 
@@ -1140,7 +1240,13 @@
 
     function renderLexiconCards() {
         const keys = Object.keys(lexiconData);
-        if (keys.length === 0) {
+        
+        const hasVisibleCards = keys.some(id => {
+            const d = lexiconData[id];
+            return d.lemma || d.strongs || d.parsing || d.def || d.synth;
+        });
+
+        if (!hasVisibleCards) {
             document.getElementById('lexicon-panel').style.display = 'none';
             return;
         }
@@ -1150,6 +1256,7 @@
         
         keys.forEach(id => {
             const d = lexiconData[id];
+            if (!d.lemma && !d.strongs && !d.parsing && !d.def && !d.synth) return;
             
             const strongsHtml = d.strongs ? `<span class="lex-strongs">${d.strongs}</span>` : '';
             const lemmaHtml = d.lemma ? `<div class="lex-lemma">Root: ${d.lemma}</div>` : '';
