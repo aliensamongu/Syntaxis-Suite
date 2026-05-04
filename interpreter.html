@@ -264,17 +264,56 @@
     // DICTIONARY & RMAC DECODING ENGINES
     // ---------------------------------------------------------
 
-    function getStrongsDef(key) {
+    let hebrewLexiconDoc = null; 
+
+    async function getStrongsDef(key) {
         if (!key) return "";
-        let entry = null;
         
-        if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
-        else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
-        
-        if (!entry) return "Definition not found in dictionary module.";
-        
-        if (typeof entry === 'string') return entry;
-        return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
+        // 1. CHECK GREEK
+        if (key.startsWith('G')) {
+            let entry = null;
+            if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
+            else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
+            
+            if (entry) {
+                if (typeof entry === 'string') return entry;
+                return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
+            }
+        }
+
+        // 2. CHECK HEBREW
+        if (key.startsWith('H')) {
+            if (!hebrewLexiconDoc) {
+                try {
+                    const res = await fetch('strongs_hebrew.xml');
+                    if (!res.ok) throw new Error();
+                    const xmlText = await res.text();
+                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+                } catch (e) {
+                    return "Error: Could not load strongs_hebrew.xml file.";
+                }
+            }
+
+            const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
+            if (entryNode) {
+                const lemmaNode = entryNode.querySelector('w');
+                const lemma = lemmaNode ? lemmaNode.textContent : "";
+                const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
+                
+                const meaningNode = entryNode.querySelector('meaning');
+                const meaning = meaningNode ? meaningNode.textContent : "";
+                
+                const bdbNode = entryNode.querySelector('bdb');
+                const bdb = bdbNode ? bdbNode.textContent : "";
+
+                let result = `[${lemma}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
+                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`;
+                
+                return result;
+            }
+        }
+
+        return "Definition not found in dictionary module.";
     }
 
     function parseRMAC(rmac) {
@@ -429,11 +468,9 @@
                 
                 let engChapNode;
                 if (isHebrew) {
-                    // ESV format
                     const engBookNode = engDoc.querySelector(`book[number="${bNum}"]`);
                     engChapNode = engBookNode ? engBookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
                 } else {
-                    // EMT OSIS format
                     engChapNode = engDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
                 }
 
@@ -651,7 +688,7 @@
     // ---------------------------------------------------------
     // CLICK HANDLER
     // ---------------------------------------------------------
-    function handleWordClick(id) {
+    async function handleWordClick(id) {
         clearSelection();
         selectedWordId = id;
         document.getElementById(id).classList.add('selected');
@@ -659,7 +696,7 @@
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
         
-        const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
+        const rawWord = document.getElementById(id).innerText.replace(/[.,;!?׃]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
         
         const d = lexiconData[id];
@@ -669,7 +706,8 @@
             lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
             
             if (d.strongs && !d.def) {
-                d.def = getStrongsDef(d.strongs);
+                document.getElementById('lexDef').value = "Loading lexicon data...";
+                d.def = await getStrongsDef(d.strongs);
             }
 
             document.getElementById('lexLemma').value = d.lemma || '';
