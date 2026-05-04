@@ -4,6 +4,9 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
+    <script src="strongs-greek-dictionary.js"></script>
+
     <style>
         :root {
             --sidebar-width: 360px;
@@ -49,6 +52,7 @@
         }
         textarea { height: 80px; resize: vertical; line-height: 1.4; overflow-y: auto; }
         input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+        select { cursor: pointer; font-weight: bold; }
 
         .std-btn {
             border: none; padding: 10px; border-radius: var(--radius-small);
@@ -57,12 +61,6 @@
         }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
-        .std-btn.danger { background: var(--oxford-crimson); color: white; }
-
-        /* Save Menu Modals */
-        .floating-card { background: var(--oxford-navy-dark); padding: 12px; border-radius: var(--radius-small); border: 1px solid rgba(255,255,255,0.1); margin-bottom: 10px; }
-        .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
-        .proj-card:hover { border-color: var(--oxford-gold); }
 
         /* Workspace Area */
         #workspace { 
@@ -74,117 +72,33 @@
         
         body.drawer-open #workspace { margin-right: 60vw; }
 
-        /* Containers */
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* Passage Rendering */
-        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; }
-        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, border 0.2s; position: relative; }
+        /* Dynamic Font Sizer */
+        .font-sizer { display: flex; align-items: center; gap: 8px; }
+        .font-sizer span { font-family: -apple-system, sans-serif; font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px;}
+        .font-sizer input[type=range] { width: 100px; cursor: pointer; }
+
+        /* Passage Rendering - Underlines Removed! */
+        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; transition: font-size 0.2s; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, outline 0.2s; position: relative; }
         .word:hover { background-color: rgba(0,0,0,0.05); }
-        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
-        .word.has-data { border-bottom: 3px solid var(--oxford-gold); font-weight: bold; color: var(--oxford-navy); }
-
-        /* Lexicon Grid */
-        #lexicon-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 15px; }
-        .lex-card { border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 15px; background: #faf9f5; position: relative; }
-        .lex-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 10px; }
-        .lex-word { font-family: Georgia, serif; font-size: 18px; font-weight: bold; color: var(--oxford-navy); }
-        .lex-strongs { font-size: 11px; font-weight: bold; color: var(--oxford-gold); background: var(--oxford-navy-dark); padding: 3px 6px; border-radius: 4px; letter-spacing: 0.5px;}
-        .lex-lemma { font-family: Georgia, serif; font-style: italic; color: var(--rustic-orange); margin-bottom: 8px; font-size: 15px; }
-        .lex-parsing { font-size: 11px; text-transform: uppercase; color: var(--oxford-navy); font-weight: bold; letter-spacing: 0.5px; border-bottom: 1px dotted #ccc; padding-bottom: 5px; margin-bottom: 10px; }
-        .lex-def { font-size: 13px; line-height: 1.4; color: #444; margin-bottom: 10px; }
-        .lex-synth { background: white; padding: 10px; border-left: 3px solid var(--oxford-gold); font-size: 13px; font-family: Georgia, serif; font-style: italic; color: var(--oxford-navy-dark); }
-        .card-del-btn { background: none; border: none; color: var(--oxford-crimson); font-size: 16px; cursor: pointer; padding: 0; }
-
-        /* Matrix Table */
-        .matrix-table { width: 100%; border-collapse: collapse; }
-        .matrix-table th { text-align: left; padding: 12px; background: var(--oxford-navy-dark); color: var(--oxford-cream); font-size: 11px; text-transform: uppercase; letter-spacing: 1px; }
-        .matrix-table td { padding: 15px 12px; border-bottom: 1px solid #eee; vertical-align: top; font-size: 13px; color: var(--oxford-navy-dark); }
-        .matrix-ref { font-weight: bold; color: var(--rustic-orange); white-space: nowrap; }
-        .matrix-text { font-family: Georgia, serif; font-style: italic; }
-        .matrix-notes { line-height: 1.4; }
+        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; color: var(--oxford-navy); }
 
         /* UNIVERSAL APP NAV STYLING */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: #C5A059; }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
-
-        /* EXPANDED SWITCHBOARD LEXICON DRAWER */
-        #lexicon-drawer {
-            position: fixed; top: 0; right: -60vw; width: 60vw; height: 100vh;
-            background: var(--oxford-cream); box-shadow: -10px 0 40px rgba(0,0,0,0.5);
-            transition: right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); z-index: 2100; 
-            display: flex; flex-direction: column;
-            border-left: 2px solid var(--oxford-gold);
+        
+        /* The Sidebar Dynamic Info Card */
+        #lexicon-editor {
+            opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;
+            background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small);
+            border-left: 4px solid #7f8c8d; /* Default Slate Gray */
+            transition: 0.3s;
         }
-        #lexicon-drawer.open { right: 0; }
-        
-        .lexicon-header { 
-            padding: 20px 25px; background: var(--oxford-navy); 
-            display: flex; flex-direction: column; gap: 15px; 
-            border-bottom: 4px solid var(--oxford-navy-dark);
-            flex-shrink: 0;
-        }
-        
-        .lexicon-header-top { display: flex; justify-content: space-between; align-items: center; width: 100%; }
-        
-        .lexicon-title { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-cream); margin: 0; display: flex; align-items: center; gap: 10px; }
-        .lexicon-title span { color: var(--oxford-gold); font-size: 11px; text-transform: uppercase; letter-spacing: 2px; font-family: -apple-system, sans-serif; opacity: 0.8;}
-        
-        .lexicon-btn-icon { background: transparent; border: none; color: rgba(248, 245, 238, 0.5); cursor: pointer; font-size: 20px; padding: 6px; transition: 0.2s; border-radius: 4px; display: flex; align-items: center; justify-content: center; }
-        .lexicon-btn-icon:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
-
-        .lexicon-controls { display: flex; flex-direction: column; gap: 10px; width: 100%; }
-        .lexicon-controls-row { display: flex; gap: 10px; width: 100%; align-items: center; }
-        .lexicon-controls input, .lexicon-controls select { 
-            padding: 12px 15px; border-radius: var(--radius-small); 
-            border: 1px solid var(--oxford-navy-dark); font-size: 13px; outline: none;
-            background: var(--oxford-cream); color: var(--oxford-navy);
-            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
-        }
-        .lexicon-controls select { flex: 1; font-weight: bold; cursor: pointer; }
-        .lexicon-controls input { flex: 2; }
-        .lexicon-controls input:focus, .lexicon-controls select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
-
-        /* THE HARDWARE TOGGLE SWITCH */
-        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.2); padding: 5px 15px; border-radius: 20px; border: 1px solid rgba(255,255,255,0.05); }
-        .toggle-label { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; transition: 0.3s; }
-        #lbl-lex { color: var(--oxford-gold); }
-        #lbl-com { color: rgba(248, 245, 238, 0.4); }
-        
-        .switch { position: relative; display: inline-block; width: 40px; height: 20px; margin: 0; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: var(--oxford-navy-dark); transition: .4s; border-radius: 20px; border: 1px solid var(--oxford-gold); }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: var(--oxford-gold); transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--oxford-navy-dark); border-color: var(--oxford-cream); }
-        input:checked + .slider:before { transform: translateX(20px); background-color: var(--oxford-cream); }
-
-        .lexicon-iframe-container { flex-grow: 1; background: #fff; position: relative; display: flex; flex-direction: column; overflow: hidden; }
-        #lexicon-iframe { width: 100%; height: 100%; border: none; flex-grow: 1; }
-        
-        /* THE CHIC NATIVE READER MODE */
-        #native-reader {
-            display: none; flex-direction: column; height: 100%; width: 100%; 
-            background: #FAF9F5; padding: 50px 60px; box-sizing: border-box; 
-            overflow-y: auto; color: var(--oxford-navy-dark);
-        }
-        #native-title { font-family: Georgia, serif; font-size: 32px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 15px; margin-bottom: 30px; margin-top: 0;}
-        #native-content { font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
-        #native-content p { margin-bottom: 20px; }
-        
-        #native-content h4 { color: var(--oxford-gold); font-family: Georgia, serif; border-bottom: 1px solid rgba(0,0,0,0.1); padding-bottom: 5px; margin-top: 35px; font-size: 20px;}
-        
-        .native-author { font-size: 12px; text-transform: uppercase; color: var(--rustic-orange); font-weight: bold; letter-spacing: 2px; margin-bottom: 10px; display: block; font-family: -apple-system, sans-serif; }
-        
-        /* CCEL Specific Rendering Rules */
-        span.scripref { font-weight: bold; color: var(--oxford-gold); cursor: pointer; border-bottom: 1px dotted var(--oxford-gold); }
-        span.scripref:hover { background: rgba(197, 160, 89, 0.1); }
-        div.thml-note { display: block; padding: 15px; margin: 15px 0; background: var(--bg-main); border-left: 4px solid var(--oxford-navy); font-size: 14px; font-style: italic; }
-        
-        /* Plain Text Format Rules */
-        .plaintext-block { white-space: pre-wrap; font-family: Georgia, serif; font-size: 16px; line-height: 1.8; color: #333; }
 
     </style>
 </head>
@@ -200,23 +114,18 @@
             <a href="outliner.html">Outline</a>
         </div>
         
-        <div class="floating-card" style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Bible Ref (e.g. John 1:1-5)" style="background: var(--oxford-cream);" title="Use a standard reference to enable auto-interlinear loading.">
-            <div style="display: flex; gap: 5px;">
-                <button class="std-btn" onclick="saveToAppLocal()" style="flex: 1;">Save App</button>
-                <button class="std-btn secondary" onclick="exportProjectJSON()" style="flex: 1;">⬇ JSON</button>
-                <button class="std-btn secondary" onclick="triggerLoadJSON()" style="flex: 1;">⬆ Load</button>
-                <input type="file" id="fileInput" style="display:none;" onchange="loadProjectJSON(event)">
-            </div>
-            <button class="std-btn" onclick="exportSnapshot()" style="background: #27ae60; color: white;">📸 Snapshot (PNG)</button>
-        </div>
-
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
             
-            <div style="display: flex; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Load Greek (e.g. Matt 1)" style="flex: 2;">
-                <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, 'tischendorf.xml')" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load XML</button>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)">
+                <div style="display: flex; gap: 5px;">
+                    <select id="bibleModuleSelect" style="flex: 2;">
+                        <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                        <option value="english_majority.xml">English Majority Text</option>
+                    </select>
+                    <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load Text</button>
+                </div>
             </div>
             
             <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
@@ -226,156 +135,54 @@
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; margin-bottom: 5px;">
-                <h3 style="border: none; padding: 0;">2. Lexicon & Morphology</h3>
-                <button onclick="toggleLexicon()" style="background:var(--oxford-gold); color:var(--oxford-navy); border:none; border-radius:4px; font-size:10px; font-weight:bold; cursor:pointer; padding:4px 8px; transition:0.2s;">📖 Drawer</button>
-            </div>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">2. Lexicon & Morphology</h3>
             
-            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to edit its data.</div>
+            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to view data.</div>
             
-            <div id="lexicon-editor" style="opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;">
+            <div id="lexicon-editor">
                 <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;" id="lex-target-word">No Word Selected</div>
                 
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="lexLemma" placeholder="Root Lemma (e.g. ἄγγελος)" style="flex: 2;">
-                    <input type="text" id="lexStrongs" placeholder="Strong's (e.g. G32)" style="flex: 1;">
+                    <input type="text" id="lexLemma" placeholder="Root Lemma" style="flex: 2;" readonly>
+                    <input type="text" id="lexStrongs" placeholder="Strong's" style="flex: 1;" readonly>
                 </div>
                 
-                <button class="std-btn secondary" onclick="toggleLexicon(true)" style="background: rgba(255,255,255,0.05); color: var(--oxford-gold); border: 1px dashed var(--oxford-gold);">📖 Research Selected Word</button>
-
-                <input type="text" id="lexParsing" placeholder="Parsing (e.g. Noun - Nom - Masc - Sing)">
+                <input type="text" id="lexParsing" placeholder="Morphology / Parsing" style="color: var(--rustic-orange); font-weight: bold;" readonly>
                 
-                <textarea id="lexDef" placeholder="Lexicon Definition (BDAG, etc.)" style="height: 60px;"></textarea>
-                <textarea id="lexSynth" placeholder="Your Synthesized Meaning..." style="height: 60px; border-left: 3px solid var(--oxford-gold);"></textarea>
-                
-                <button class="std-btn" onclick="saveLexiconData()" style="margin-top: 10px;">Save Word Data</button>
+                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;"></textarea>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px; margin-top: auto;">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Intertextual Matrix</h3>
-            <input type="text" id="matRef" placeholder="Reference (e.g. Psalm 34:12)">
-            <textarea id="matText" placeholder="Quoted or Echoed Text..." style="height: 50px;"></textarea>
-            <textarea id="matNotes" placeholder="Theological Connection / Notes..." style="height: 50px;"></textarea>
-            <button class="std-btn" onclick="saveMatrixData()" style="background: var(--rustic-orange); color: white;">Add to Matrix</button>
-        </div>
-        
-        <div style="margin-top: 15px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">Saved Local Projects</h3>
-            <div id="project-list" style="margin-top: 10px;"></div>
-        </div>
     </div>
 </div>
 
 <div id="workspace">
     <div class="workspace-panel">
-        <h3 class="panel-title">Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></h3>
+        <div class="panel-title">
+            <span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
+            
+            <div class="font-sizer">
+                <span>Text Size</span>
+                <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
+            </div>
+        </div>
+        
         <div id="passage-container">
-            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Type a reference or paste text in the sidebar to begin...</span>
-        </div>
-    </div>
-
-    <div class="workspace-panel" id="lexicon-panel" style="display: none;">
-        <h3 class="panel-title">Lexical Analysis <span style="font-size: 11px; color: #888; text-transform: uppercase;">Word Study</span></h3>
-        <div id="lexicon-grid"></div>
-    </div>
-
-    <div class="workspace-panel" id="matrix-panel" style="display: none;">
-        <h3 class="panel-title">Intertextual Matrix <span style="font-size: 11px; color: #888; text-transform: uppercase;">Cross References</span></h3>
-        <table class="matrix-table">
-            <thead>
-                <tr>
-                    <th style="width: 15%;">Reference</th>
-                    <th style="width: 40%;">Text</th>
-                    <th style="width: 40%;">Theological Connection</th>
-                    <th style="width: 5%;"></th>
-                </tr>
-            </thead>
-            <tbody id="matrix-tbody"></tbody>
-        </table>
-    </div>
-</div>
-
-<div id="lexicon-drawer">
-    <div class="lexicon-header">
-        <div class="lexicon-header-top">
-            <h3 class="lexicon-title">📖 Lexicon <span>Research</span></h3>
-            <div style="display: flex; gap: 5px;">
-                <button class="lexicon-btn-icon" id="lexicon-popout-btn" title="Pop Out to Window" style="display:none;">↗</button>
-                <button class="lexicon-btn-icon" onclick="toggleLexicon()" style="font-size: 26px; line-height: 0.7;" title="Close Drawer">&times;</button>
-            </div>
-        </div>
-        <div class="lexicon-controls">
-            <div class="lexicon-controls-row">
-                <input type="text" id="lexiconSearchInput" placeholder="Word, Strong's (G3056), or Ref (John 1:1)..." onkeydown="if(event.key==='Enter') executeLexiconSearch()">
-            </div>
-            <div class="lexicon-controls-row" style="justify-content: space-between;">
-                
-                <div class="toggle-wrapper">
-                    <span class="toggle-label" id="lbl-lex">Lexicon</span>
-                    <label class="switch">
-                        <input type="checkbox" id="resourceToggle" onchange="updateToggleState()">
-                        <span class="slider"></span>
-                    </label>
-                    <span class="toggle-label" id="lbl-com">Commentary</span>
-                </div>
-
-                <div style="display: flex; gap: 10px; flex: 1; justify-content: flex-end;">
-                    
-                    <select id="lexiconSource" onchange="syncToggleToDropdown(); executeLexiconSearch();" style="width: 220px; flex: none;">
-                        <optgroup label="Commentaries">
-                            <option value="vol" style="font-weight:bold; color:var(--oxford-gold);">M. Henry Library (Native)</option>
-                            <option value="barnes" style="font-weight:bold; color:var(--oxford-gold);">Barnes's Notes (Native)</option>
-                            <option value="luther" style="font-weight:bold; color:var(--oxford-gold);">Luther's Comm (Native)</option>
-                        </optgroup>
-                        <optgroup label="Lexicons & Dictionaries">
-                            <option value="studybible">StudyBible.info</option>
-                            <option value="eastons.xml" style="font-weight:bold; color:var(--oxford-gold);">Easton's Dict (Native)</option>
-                            <option value="vines.xml" disabled style="color: #999; font-style: italic;">Vine's Dict (Native) - Pending</option>
-                        </optgroup>
-                    </select>
-
-                    <button class="std-btn" onclick="executeLexiconSearch()" style="padding: 10px 20px; margin: 0; box-shadow: 0 2px 5px rgba(0,0,0,0.2);">Search</button>
-                </div>
-            </div>
-        </div>
-    </div>
-    
-    <div class="lexicon-iframe-container">
-        <iframe id="lexicon-iframe" src="about:blank"></iframe>
-
-        <div id="native-reader">
-            <span class="native-author" id="native-author-label">Local Library Database</span>
-            <h2 id="native-title">Loading...</h2>
-            <div id="native-content">
-                </div>
+            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a module and type a reference in the sidebar to begin...</span>
         </div>
     </div>
 </div>
 
 <script>
     const passageContainer = document.getElementById('passage-container');
-    const lexiconGrid = document.getElementById('lexicon-grid');
-    const matrixTbody = document.getElementById('matrix-tbody');
     const lexEditor = document.getElementById('lexicon-editor');
     
     let selectedWordId = null;
     let lexiconData = {}; 
-    let matrixData = [];  
-
-    function openFloatingWindow(url) {
-        if (!url || url === 'about:blank') return;
-        const popWidth = Math.floor(window.screen.width * 0.45);
-        const popHeight = window.screen.height;
-        const leftPos = window.screen.width - popWidth;
-        const windowFeatures = `width=${popWidth},height=${popHeight},left=${leftPos},top=0,menubar=no,toolbar=no,location=yes,status=no,resizable=yes,scrollbars=yes`;
-        window.open(url, 'SyntaxisTool', windowFeatures);
-    }
 
     // ---------------------------------------------------------
-    // MASTER BIBLE INDEXES (Used by all Native Engines)
+    // MASTER BIBLE INDEXES
     // ---------------------------------------------------------
-    
     const abbrevs = {
         "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
         "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
@@ -401,14 +208,66 @@
         "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
     };
 
-    const volumeMap = {
-        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1,
-        "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2,
-        "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3,
-        "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
-        "matthew": 5, "mark": 5, "luke": 5, "john": 5,
-        "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
-    };
+    // ---------------------------------------------------------
+    // DICTIONARY & RMAC PARSING ENGINES
+    // ---------------------------------------------------------
+
+    // This fetches the definition from your strongs-greek-dictionary.js file
+    function getStrongsDef(key) {
+        if (!key) return "";
+        let entry = null;
+        
+        // Handles standard JS object naming conventions
+        if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
+        else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
+        
+        if (!entry) return "Definition not found in dictionary module.";
+        
+        // If it's a string, return it. If it's an object, format it beautifully.
+        if (typeof entry === 'string') return entry;
+        return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
+    }
+
+    // Translates the raw morph code into an English description and Color Code
+    function parseRMAC(rmac) {
+        if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; // Default Slate Gray
+        
+        const parts = rmac.toLowerCase().split('-');
+        const pos = parts[0];
+        let color = "#7f8c8d";
+        let text = "";
+
+        switch(pos) {
+            case 'n': text = "Noun"; color = "#2980b9"; break; // Blue
+            case 'a': text = "Adjective"; color = "#27ae60"; break; // Green
+            case 'adv': case 'd': text = "Adverb"; color = "#fa8072"; break; // Salmon
+            case 'prep': text = "Preposition"; color = "#8b4513"; break; // Brown
+            case 'conj': text = "Conjunction"; color = "#f1c40f"; break; // Gold
+            case 'v':
+                text = "Verb";
+                if (parts.length > 1) {
+                    const tvm = parts[1]; // e.g. aai
+                    if (tvm.length >= 3) {
+                        const mood = tvm[2];
+                        if (mood === 'i') color = "#c0392b"; // Red (Indicative)
+                        else if (mood === 'p') color = "#8e44ad"; // Purple (Participle)
+                        else if (mood === 'n') color = "#800000"; // Maroon (Infinitive)
+                    }
+                }
+                break;
+            case 't': text = "Article"; color = "#7f8c8d"; break;
+            case 'p': text = "Pronoun"; color = "#7f8c8d"; break;
+            default: text = pos.toUpperCase(); color = "#7f8c8d"; break;
+        }
+
+        // Append the rest of the parsing codes if they exist
+        if (parts.length > 1) {
+            text += " (" + parts.slice(1).join('-').toUpperCase() + ")";
+        }
+
+        return { text, color };
+    }
+
 
     // ---------------------------------------------------------
     // THE NATIVE BIBLE ENGINE (Zefania Strong's + RMAC)
@@ -417,11 +276,9 @@
         if (!query.trim()) return;
         
         passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module ${fileName}...</span>`;
-        lexEditor.style.opacity = '0.5';
-        lexEditor.style.pointerEvents = 'none';
+        clearSelection();
 
         try {
-            // 1. Format the search string
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
             const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             if (!match) {
@@ -440,25 +297,22 @@
                 return;
             }
 
-            // 2. Fetch the XML module
             const response = await fetch(fileName);
             if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
             const xmlText = await response.text();
 
-            // 3. Parse XML using native browser DOMParser
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-            // 4. Find the requested coordinates
             const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
             if (!bookNode) throw new Error(`Could not find ${fullBookName} inside this module.`);
 
             const chapNode = bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`);
             if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} in ${fullBookName}.`);
 
-            // 5. Build the UI!
+            // Build the UI
             passageContainer.innerHTML = ''; 
-            lexiconData = {}; // Clear existing data to load the fresh chapter
+            lexiconData = {}; 
             selectedWordId = null;
             let wordIndex = 0;
 
@@ -466,48 +320,57 @@
             verses.forEach(vers => {
                 const vNum = vers.getAttribute('vnumber');
                 
-                // Render the superscript verse number
                 const vSpan = document.createElement('sup');
                 vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
                 vSpan.innerText = vNum;
                 passageContainer.appendChild(vSpan);
 
-                // Render the grammar-tagged Greek words
                 const grNodes = vers.querySelectorAll('gr');
-                grNodes.forEach(gr => {
-                    const str = gr.getAttribute('str') || '';
-                    const rmac = gr.getAttribute('rmac') || '';
-                    const text = gr.textContent.trim();
-
-                    const span = document.createElement('span');
-                    span.className = 'word';
-                    span.id = `w-${wordIndex++}`;
-                    span.innerText = text + " "; 
-
-                    // Inject the Strong's and RMAC into the Lexicon Data Array automatically
-                    lexiconData[span.id] = {
-                        word: text.replace(/[.,;!?]/g, ''), 
-                        lemma: "", 
-                        strongs: str ? "G" + str : "", // Append the G for Greek
-                        parsing: rmac, 
-                        def: "",
-                        synth: ""
-                    };
-                    
-                    // Mark it so it gets the gold underline
-                    span.classList.add('has-data');
-
-                    span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                    passageContainer.appendChild(span);
-                });
                 
-                // Add a trailing space after each verse
+                // If the module has <gr> tags (like Tischendorf), use them.
+                if (grNodes.length > 0) {
+                    grNodes.forEach(gr => {
+                        const str = gr.getAttribute('str') || '';
+                        const rmac = gr.getAttribute('rmac') || '';
+                        const text = gr.textContent.trim();
+
+                        const span = document.createElement('span');
+                        span.className = 'word has-data';
+                        span.id = `w-${wordIndex++}`;
+                        span.innerText = text + " "; 
+
+                        lexiconData[span.id] = {
+                            word: text.replace(/[.,;!?]/g, ''), 
+                            lemma: "", 
+                            strongs: str ? "G" + str : "", 
+                            parsing: rmac, 
+                            def: ""
+                        };
+
+                        span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                        passageContainer.appendChild(span);
+                    });
+                } else {
+                    // Fallback for modules without <gr> tags (like English Majority Text)
+                    const words = vers.textContent.split(/(\s+)/);
+                    words.forEach(chunk => {
+                        if (chunk.trim() !== '') {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = chunk;
+                            
+                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                            passageContainer.appendChild(span);
+                        } else {
+                            passageContainer.appendChild(document.createTextNode(chunk));
+                        }
+                    });
+                }
+                
                 passageContainer.appendChild(document.createTextNode(" "));
             });
-
-            // Update the visual references
-            document.getElementById('projectName').value = query;
-            renderLexiconCards();
 
         } catch (error) {
             passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Engine Error:</strong> ${error.message}</p>`;
@@ -516,630 +379,15 @@
 
 
     // ---------------------------------------------------------
-    // THE TRI-CORE COMMENTARY ENGINE
+    // PLAIN TEXT RENDERING (If User Pastes Text)
     // ---------------------------------------------------------
-    async function loadNativeCommentary(query, filePrefix) {
-        const nativeTitle = document.getElementById('native-title');
-        const nativeContent = document.getElementById('native-content');
-        const authorLabel = document.getElementById('native-author-label');
-        
-        nativeTitle.innerText = "Searching: " + query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Running Tri-Core String Scanner...</em></p>`;
-
-        try {
-            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?::\s*([0-9-]+))?/);
-            if (!match) {
-                nativeContent.innerHTML = "<p>Please ensure you enter a book and chapter (e.g., 'John 1' or '1 Peter 1').</p>";
-                return;
-            }
-
-            const searchBook = match[1].trim().toLowerCase(); 
-            const chapNum = match[2]; 
-            const verseNum = match[3] || ""; 
-
-            const fullBookName = abbrevs[searchBook] || searchBook;
-            const bookPrefix = fullBookName.replace(/\s+/g, '').substring(0,3).toLowerCase();
-
-            function getRoman(val) {
-                const num = parseInt(val);
-                if(isNaN(num) || num <= 0) return val;
-                const lookup = {C:100, XC:90, L:50, XL:40, X:10, IX:9, V:5, IV:4, I:1};
-                let roman = ''; let n = num;
-                for (let i in lookup) { while (n >= lookup[i]) { roman += i; n -= lookup[i]; } }
-                return roman;
-            }
-            const romanChap = getRoman(chapNum);
-
-            const bookAliasMap = {
-                "1 peter": "(?:1|I|First)[^<]*?Peter",
-                "2 peter": "(?:2|II|Second)[^<]*?Peter",
-                "1 john": "(?:1|I|First)[^<]*?John",
-                "2 john": "(?:2|II|Second)[^<]*?John",
-                "3 john": "(?:3|III|Third)[^<]*?John",
-                "1 corinthians": "(?:1|I|First)[^<]*?Corinthians",
-                "2 corinthians": "(?:2|II|Second)[^<]*?Corinthians",
-                "1 thessalonians": "(?:1|I|First)[^<]*?Thessalonians",
-                "2 thessalonians": "(?:2|II|Second)[^<]*?Thessalonians",
-                "1 timothy": "(?:1|I|First)[^<]*?Timothy",
-                "2 timothy": "(?:2|II|Second)[^<]*?Timothy",
-                "1 samuel": "(?:1|I|First)[^<]*?Samuel",
-                "2 samuel": "(?:2|II|Second)[^<]*?Samuel",
-                "1 kings": "(?:1|I|First)[^<]*?Kings",
-                "2 kings": "(?:2|II|Second)[^<]*?Kings",
-                "1 chronicles": "(?:1|I|First)[^<]*?Chronicles",
-                "2 chronicles": "(?:2|II|Second)[^<]*?Chronicles",
-                "song of solomon": "(?:Song[^<]*?Solomon|Canticles|Song of Songs)"
-            };
-            const bookSearchTarget = bookAliasMap[fullBookName] || fullBookName;
-
-            let targetVol = volumeMap[fullBookName] || 5; 
-            if (filePrefix === 'barnes' || filePrefix === 'luther') {
-                targetVol = 1;
-            }
-
-            let targetFile = `${filePrefix}${targetVol}.xml`;
-            let fileType = 'xml';
-
-            let response = await fetch(targetFile);
-            if (!response.ok) {
-                targetFile = `${filePrefix}${targetVol}.txt`;
-                response = await fetch(targetFile);
-                fileType = 'txt';
-                
-                if (!response.ok) {
-                    targetFile = `${filePrefix}${targetVol}.html`;
-                    response = await fetch(targetFile);
-                    fileType = 'html';
-
-                    if (!response.ok) {
-                        nativeContent.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Missing File:</strong> You requested a passage in <span style="text-transform: capitalize;">${fullBookName}</span>. Please ensure you have downloaded <code>${filePrefix}${targetVol}.xml</code>, <code>.txt</code>, or <code>.html</code> to your project folder.</p>`;
-                        return;
-                    }
-                }
-            }
-            
-            const rawData = await response.text();
-
-            if (fileType === 'html') {
-                authorLabel.innerText = "Local Library (HTML Archive)";
-                
-                const htmlBookRegex = new RegExp(`<(?:h[1-3]|p[^>]*class="div[1-3]"[^>]*)[^>]*>[^<]*\\b${bookSearchTarget}\\b[^<]*<\\/(?:h[1-3]|p)>`, 'gi');
-                let m;
-                let bookIndex = -1;
-
-                while ((m = htmlBookRegex.exec(rawData)) !== null) {
-                    const tagStr = m[0].toLowerCase();
-                    if (!tagStr.includes('contents') && !tagStr.includes('index')) {
-                        bookIndex = m.index;
-                        break;
-                    }
-                }
-
-                if (bookIndex === -1) {
-                    const looseHtmlBookRegex = new RegExp(`<(?:p|div|h[4-6]|b|strong|u|i|em)[^>]*>[^<:]{0,80}\\b${bookSearchTarget}\\b[^<:]{0,80}<\\/(?:p|div|h[4-6]|b|strong|u|i|em)>`, 'gi');
-                    while ((m = looseHtmlBookRegex.exec(rawData)) !== null) {
-                        const tagStr = m[0].toLowerCase();
-                        if (!tagStr.includes('contents') && !tagStr.includes('index')) {
-                            bookIndex = m.index;
-                            break;
-                        }
-                    }
-                    
-                    if (bookIndex === -1) {
-                        nativeContent.innerHTML = `<p>Could not isolate the book of <strong style="text-transform: capitalize;">${fullBookName}</strong> in ${targetFile}. The engine prevented a data dump by halting the search.</p>`;
-                        return;
-                    }
-                }
-
-                let sliced = rawData.substring(bookIndex);
-
-                const chapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
-                let chapMatch = sliced.match(chapRegex);
-                
-                if (!chapMatch) {
-                    const txtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
-                    chapMatch = sliced.match(txtChapRegex);
-                }
-
-                if (!chapMatch) {
-                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the HTML file.</p>`;
-                    return;
-                }
-
-                sliced = sliced.substring(chapMatch.index);
-
-                const nextChap = parseInt(chapNum) + 1;
-                const nextRoman = getRoman(nextChap);
-                const nextChapRegex = new RegExp(`<(?:p|div|h[1-4])[^>]*>[^<]*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b[^<]*<\\/(?:p|div|h[1-4])>`, 'i');
-                const nextMatch = sliced.substring(100).match(nextChapRegex);
-                
-                if (nextMatch) {
-                    sliced = sliced.substring(0, nextMatch.index + 100);
-                } else {
-                    const nextTxtChapRegex = new RegExp(`\\b(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
-                    const nextTxtMatch = sliced.substring(100).match(nextTxtChapRegex);
-                    if (nextTxtMatch) sliced = sliced.substring(0, nextTxtMatch.index + 100);
-                }
-
-                let finalContent = sliced
-                    .replace(/<body[^>]*>/ig, '')
-                    .replace(/<\/body>/ig, '')
-                    .replace(/<html[^>]*>/ig, '')
-                    .replace(/<\/html>/ig, '')
-                    .replace(/<head>[\s\S]*?<\/head>/ig, '');
-
-                finalContent = finalContent
-                    .replace(/<(?:p|div)[^>]*class="div[1-4]"[^>]*>(.*?)<\/(?:p|div)>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
-                    .replace(/<scripRef[^>]*>/ig, '<span class="scripref">').replace(/<\/scripRef>/ig, '</span>')
-                    .replace(/<scripCom[^>]*>/ig, '');
-
-                nativeContent.innerHTML = finalContent;
-                nativeTitle.innerText = query + " (HTML)";
-                return;
-            }
-
-            if (fileType === 'txt') {
-                authorLabel.innerText = "Local Library (Plain Text Archive)";
-                
-                const txtBookRegex = new RegExp(`\\b${bookSearchTarget}\\b`, 'i');
-                const txtMatch = rawData.match(txtBookRegex);
-                const bookIdx = txtMatch ? txtMatch.index : -1;
-                
-                if(bookIdx === -1) {
-                    nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
-                    return;
-                }
-                let sliced = rawData.substring(bookIdx);
-                
-                const chapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${chapNum}|${romanChap})\\b`, 'i');
-                const chapMatch = sliced.match(chapRegex);
-                if(!chapMatch) {
-                    nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum} in the text file.</p>`;
-                    return;
-                }
-                sliced = sliced.substring(chapMatch.index);
-                
-                const nextChap = parseInt(chapNum) + 1;
-                const nextRoman = getRoman(nextChap);
-                const nextChapRegex = new RegExp(`\\n\\s*(?:CHAPTER|CHAP\\.|CH\\.)\\s*(?:${nextChap}|${nextRoman})\\b`, 'i');
-                const nextMatch = sliced.substring(100).match(nextChapRegex);
-                if(nextMatch) sliced = sliced.substring(0, nextMatch.index + 100);
-                
-                let finalContent = sliced.replace(/<scripCom[^>]*>/ig, '');
-                
-                nativeContent.innerHTML = `<div class="plaintext-block">${finalContent}</div>`;
-                nativeTitle.innerText = query + " (ASCII Text)";
-                return;
-            }
-
-            const xmlText = rawData;
-            
-            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
-            if (titleMatch) authorLabel.innerText = titleMatch[1];
-
-            const bookRegexGlobal = new RegExp(`<div[1-3][^>]*(?:id|title|n)="([^"]*\\b${bookSearchTarget}\\b[^"]*)"[^>]*>`, 'gi');
-            let m;
-            let bookIndex = -1;
-
-            while ((m = bookRegexGlobal.exec(xmlText)) !== null) {
-                const tagStr = m[1].toLowerCase();
-                if (!tagStr.includes('matthew to') && !tagStr.includes('whole bible') && !tagStr.includes('contents') && !tagStr.includes('preface') && !tagStr.includes('introduction')) {
-                    bookIndex = m.index;
-                    break;
-                }
-            }
-
-            if (bookIndex === -1) {
-                nativeContent.innerHTML = `<p>Could not isolate the book of <strong>${fullBookName}</strong> in ${targetFile}.</p>`;
-                return;
-            }
-
-            let textFromBook = xmlText.substring(bookIndex);
-
-            const chapRegex = new RegExp(`<div([1-5])[^>]*(?:id|title|n)="[^"]*(?:Chapter|Chap\\.|Ch\\.)?\\s*(?:${chapNum}|${romanChap})\\b[^"]*"[^>]*>`, 'i');
-            let chapMatch = textFromBook.match(chapRegex);
-            
-            let chapIndex = -1;
-            let currentLevel = 2; 
-
-            if (chapMatch) {
-                const tagStr = chapMatch[0].toLowerCase();
-                if (tagStr.includes('chapter') || tagStr.includes(`n="${chapNum}"`) || tagStr.includes(`n="${romanChap}"`)) {
-                    chapIndex = chapMatch.index;
-                    currentLevel = parseInt(chapMatch[1]);
-                }
-            }
-            
-            if (chapIndex === -1) {
-                const refRegex = new RegExp(`passage="\\s*${bookPrefix}[a-z]*\\.?\\s*${chapNum}\\b`, 'i');
-                const refMatch = textFromBook.match(refRegex);
-                if (refMatch) {
-                    const textBeforeRef = textFromBook.substring(0, refMatch.index);
-                    chapIndex = textBeforeRef.lastIndexOf('<div');
-                    if (chapIndex === -1) chapIndex = refMatch.index - 500;
-                }
-            }
-
-            if (chapIndex === -1) {
-                nativeContent.innerHTML = `<p>Found ${fullBookName}, but could not locate Chapter ${chapNum}.</p>`;
-                return;
-            }
-
-            let textToRender = textFromBook.substring(chapIndex);
-
-            if (verseNum) {
-                const startVerse = verseNum.split('-')[0];
-                const verseRegex = new RegExp(`<div([1-6])[^>]*(?:id|title|n)="([^"]*\\b(?:${startVerse})\\b[^"]*)"[^>]*>`, 'gi');
-                
-                let verseIndex = -1;
-                while ((m = verseRegex.exec(textToRender)) !== null) {
-                    const tagStr = m[2].toLowerCase();
-                    if (tagStr.includes('verse') || m[0].includes(`n="${startVerse}"`) || m[0].includes(`n="${verseNum}"`)) {
-                        verseIndex = m.index;
-                        currentLevel = parseInt(m[1]);
-                        break;
-                    }
-                }
-                
-                if (verseIndex !== -1) {
-                    textToRender = textToRender.substring(verseIndex);
-                }
-            }
-
-            const endRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
-            const skipLength = textToRender.indexOf('>') + 1;
-            const endMatch = endRegex.exec(textToRender.substring(skipLength));
-
-            let finalContent = endMatch ? textToRender.substring(0, skipLength + endMatch.index) : textToRender;
-
-            finalContent = finalContent
-                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:25px; font-size:20px;">$1</h4>')
-                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
-                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
-                .replace(/<scripCom[^>]*>/ig, '')
-                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
-                .replace(/<\/?div[0-9]*[^>]*>/ig, ''); 
-
-            nativeContent.innerHTML = finalContent;
-            nativeTitle.innerText = query;
-
-        } catch (error) {
-            nativeContent.innerHTML = `
-                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
-                <p>Ensure the file is named correctly in your project folder.</p>
-                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
-            `;
-        }
-    }
-
-
-    // ---------------------------------------------------------
-    // THE NATIVE DICTIONARY SLICER
-    // ---------------------------------------------------------
-    async function loadNativeDictionary(query, fileName) {
-        const nativeTitle = document.getElementById('native-title');
-        const nativeContent = document.getElementById('native-content');
-        const authorLabel = document.getElementById('native-author-label');
-        
-        nativeTitle.innerText = "Researching: " + query;
-        nativeContent.innerHTML = `<p style="color:var(--rustic-orange);"><em>Scanning local dictionary...</em></p>`;
-
-        try {
-            const response = await fetch(fileName);
-            if (!response.ok) throw new Error(`Could not find ${fileName} in your project directory.`);
-            
-            const xmlText = await response.text();
-
-            const titleMatch = xmlText.match(/<dc:title[^>]*>([^<]+)<\/dc:title>/i);
-            if (titleMatch) authorLabel.innerText = titleMatch[1];
-
-            const searchWord = query.replace(/[^a-z0-9\s-]/gi, '').trim();
-            
-            if (!searchWord) {
-                nativeContent.innerHTML = "<p>Please select or type a word to search the dictionary.</p>";
-                return;
-            }
-
-            let textToRender = "";
-
-            const termRegex = new RegExp(`<term[^>]*>[^<]*\\b${searchWord}\\b[^<]*<\\/term>`, 'i');
-            let match = termRegex.exec(xmlText);
-
-            if (match) {
-                let startIndex = match.index;
-                let sliced = xmlText.substring(startIndex);
-                
-                let nextTermIndex = sliced.substring(10).search(/<term[^>]*>/i);
-                
-                if (nextTermIndex !== -1) {
-                    textToRender = sliced.substring(0, nextTermIndex + 10);
-                } else {
-                    textToRender = sliced; 
-                }
-            } 
-            else {
-                const divRegex = new RegExp(`<div([1-6])[^>]*(?:title|id|n|name)="[^"]*\\b${searchWord}\\b[^"]*"[^>]*>`, 'i');
-                match = divRegex.exec(xmlText);
-                
-                if (match) {
-                    let startIndex = match.index;
-                    const currentLevel = parseInt(match[1]);
-                    let sliced = xmlText.substring(startIndex);
-                    
-                    const skipLength = sliced.indexOf('>') + 1;
-                    const nextDivRegex = new RegExp(`<div[1-${currentLevel}][^>]*>`, 'i');
-                    const nextDivMatch = nextDivRegex.exec(sliced.substring(skipLength));
-                    
-                    if (nextDivMatch) {
-                        textToRender = sliced.substring(0, skipLength + nextDivMatch.index);
-                    } else {
-                        textToRender = sliced;
-                    }
-                }
-            }
-
-            if (!textToRender) {
-                nativeContent.innerHTML = `<p>No entry found for <strong>${query}</strong> in ${fileName}.</p>`;
-                return;
-            }
-
-            let finalContent = textToRender
-                .replace(/<term[^>]*>(.*?)<\/term>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
-                .replace(/<title[^>]*>(.*?)<\/title>/ig, '<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">$1</h4>')
-                .replace(/<note[^>]*>/ig, '<div class="thml-note">').replace(/<\/note>/ig, '</div>')
-                .replace(/<scripref[^>]*>/ig, '<span class="scripref">').replace(/<\/scripref>/ig, '</span>')
-                .replace(/<scripCom[^>]*>/ig, '')
-                .replace(/<hi[^>]*>/ig, '<i>').replace(/<\/hi>/ig, '</i>')
-                .replace(/<p[^>]*>/ig, '<p>').replace(/<\/p>/ig, '</p>')
-                .replace(/<\/?div[0-9]*[^>]*>/ig, '')
-                .replace(/<\/?def[^>]*>/ig, '')
-                .replace(/<\/?glossary[^>]*>/ig, '');
-
-            if (!finalContent.includes('<h4')) {
-                finalContent = `<h4 style="color:var(--oxford-gold); border-bottom:1px solid #ccc; padding-bottom:5px; margin-top:0px; font-size:24px; text-transform:capitalize;">${query}</h4>` + finalContent;
-            }
-
-            nativeContent.innerHTML = finalContent;
-
-        } catch (error) {
-            nativeContent.innerHTML = `
-                <p style="color:var(--oxford-crimson);"><strong>Error loading Local Database:</strong></p>
-                <p>Please ensure you have downloaded <code>${fileName}</code> to your project folder.</p>
-                <p style="font-size:12px; color:#666; margin-top: 15px;">Technical details: ${error.message}</p>
-            `;
-        }
-    }
-
-
-    // ---------------------------------------------------------
-    // LEXICON SWITCHBOARD ENGINE (Unified Menu UI)
-    // ---------------------------------------------------------
-    
-    function updateToggleState() {
-        const isComm = document.getElementById('resourceToggle').checked;
-        const sourceSelect = document.getElementById('lexiconSource');
-        
-        if (isComm) {
-            if (sourceSelect.value !== 'vol' && sourceSelect.value !== 'barnes' && sourceSelect.value !== 'luther') {
-                sourceSelect.value = 'vol';
-            }
-        } else {
-            if (sourceSelect.value === 'vol' || sourceSelect.value === 'barnes' || sourceSelect.value === 'luther') {
-                sourceSelect.value = 'studybible';
-            }
-        }
-        
-        executeLexiconSearch(); 
-    }
-    
-    function syncToggleToDropdown() {
-        const source = document.getElementById('lexiconSource').value;
-        const toggle = document.getElementById('resourceToggle');
-        
-        toggle.checked = (source === 'vol' || source === 'barnes' || source === 'luther');
-    }
-
-    function toggleLexicon(autoSearch = false) {
-        const drawer = document.getElementById('lexicon-drawer');
-        const isOpen = drawer.classList.contains('open');
-        
-        if (!isOpen) {
-            let query = document.getElementById('lexiconSearchInput').value;
-            
-            if (autoSearch && selectedWordId) {
-                let strongsInput = document.getElementById('lexStrongs').value.trim();
-                let wordText = document.getElementById('lex-target-word').innerText.trim();
-                
-                if (strongsInput) {
-                    query = strongsInput;
-                } else if (wordText && wordText !== "No Word Selected") {
-                    query = wordText;
-                }
-                
-                document.getElementById('resourceToggle').checked = false;
-                updateToggleState();
-            }
-            
-            if (query) {
-                document.getElementById('lexiconSearchInput').value = query;
-                executeLexiconSearch();
-            }
-        }
-        
-        drawer.classList.toggle('open');
-        document.body.classList.toggle('drawer-open');
-    }
-
-    function executeLexiconSearch() {
-        let query = document.getElementById('lexiconSearchInput').value.trim();
-        if (!query) return;
-
-        const source = document.getElementById('lexiconSource').value;
-        const toggle = document.getElementById('resourceToggle');
-        
-        document.getElementById('lbl-lex').style.color = toggle.checked ? "rgba(248, 245, 238, 0.4)" : "var(--oxford-gold)";
-        document.getElementById('lbl-com').style.color = toggle.checked ? "var(--oxford-cream)" : "rgba(248, 245, 238, 0.4)";
-        
-        const iframe = document.getElementById('lexicon-iframe');
-        const nativeReader = document.getElementById('native-reader');
-        const popoutBtn = document.getElementById('lexicon-popout-btn');
-        
-        let targetUrl = "";
-        const isStrongs = /^[GH]\d+$/i.test(query);
-
-        if (source === 'vol' || source === 'barnes' || source === 'luther') {
-            iframe.style.display = 'none';
-            nativeReader.style.display = 'flex';
-            popoutBtn.style.display = 'none'; 
-            loadNativeCommentary(query, source);
-            return;
-        } 
-        
-        if (source === 'eastons.xml' || source === 'vines.xml') {
-            iframe.style.display = 'none';
-            nativeReader.style.display = 'flex';
-            popoutBtn.style.display = 'none'; 
-            loadNativeDictionary(query, source);
-            return;
-        }
-
-        nativeReader.style.display = 'none';
-        popoutBtn.style.display = 'flex'; 
-
-        if (source === 'studybible') {
-            const isOT = /\b(Gen|Exo|Lev|Num|Deu|Jos|Jud|Rut|Sam|Kgs|Chr|Ezr|Neh|Est|Job|Psa|Pro|Ecc|Sng|Isa|Jer|Lam|Eze|Dan|Hos|Joe|Amo|Obadiah|Jon|Mic|Nah|Hab|Zep|Hag|Zec|Mal|Genesis|Exodus|Leviticus|Numbers|Deuteronomy|Joshua|Judges|Ruth|Samuel|Kings|Chronicles|Ezra|Nehemiah|Esther|Psalms|Proverbs|Ecclesiastes|Song|Isaiah|Jeremiah|Lamentations|Ezekiel|Daniel|Hosea|Joel|Amos|Obadiah|Jonah|Micah|Nahum|Habakkuk|Zephaniah|Haggai|Zechariah|Malachi)\b/i.test(query);
-            const isReference = /\d/.test(query) && !isStrongs; 
-            
-            if (isStrongs) {
-                targetUrl = `https://studybible.info/strongs/${query.toUpperCase()}`;
-            } else if (isReference) {
-                targetUrl = isOT ? `https://studybible.info/IHOT/${encodeURIComponent(query)}` : `https://studybible.info/interlinear/${encodeURIComponent(query)}`;
-            } else {
-                targetUrl = `https://studybible.info/search/KJV/${encodeURIComponent(query)}`;
-            }
-            
-            iframe.src = targetUrl;
-            iframe.style.display = 'block';
-        }
-
-        document.getElementById('lexicon-popout-btn').onclick = () => openFloatingWindow(targetUrl);
-    }
-
-    // ---------------------------------------------------------
-    // THE SAVE, LOAD & EXPORT ENGINE 
-    // ---------------------------------------------------------
-    
-    window.addEventListener('DOMContentLoaded', () => { 
-        updateProjectList(); 
-        executeLexiconSearch(); 
-    });
-
-    function getSavePayload() {
-        return {
-            projectName: document.getElementById('projectName').value,
-            rawText: document.getElementById('rawTextInput').value,
-            lexiconData: lexiconData,
-            matrixData: matrixData
-        };
-    }
-
-    function saveToAppLocal() {
-        const name = document.getElementById('projectName').value.trim() || prompt("Enter Project Name:");
-        if(!name) return;
-        document.getElementById('projectName').value = name; 
-        
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-        projects[name] = getSavePayload();
-        localStorage.setItem('syntaxis_interpreter_projects', JSON.stringify(projects));
-        updateProjectList();
-        alert("Project Saved to Local Browser Storage!");
-    }
-
-    function loadFromAppLocal(name) {
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-        if (projects[name]) restoreState(projects[name]);
-    }
-
-    function deleteLocalProject(name, e) {
-        e.stopPropagation();
-        if(confirm(`Are you sure you want to delete the project "${name}"?`)) {
-            const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}');
-            delete projects[name];
-            localStorage.setItem('syntaxis_interpreter_projects', JSON.stringify(projects));
-            updateProjectList();
-        }
-    }
-
-    function updateProjectList() { 
-        const listDiv = document.getElementById('project-list'); 
-        listDiv.innerHTML = ''; 
-        const projects = JSON.parse(localStorage.getItem('syntaxis_interpreter_projects') || '{}'); 
-        Object.keys(projects).forEach(name => { 
-            listDiv.innerHTML += `<div class="proj-card" onclick="loadFromAppLocal('${name}')"><span>${name}</span><button onclick="deleteLocalProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold; padding:0 5px;" title="Delete Project">&times;</button></div>`; 
-        }); 
-    }
-
-    function exportProjectJSON() {
-        const payload = getSavePayload();
-        let name = (payload.projectName || 'interpreter_project') + '.json';
-        const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(payload, null, 2));
-        const a = document.createElement('a');
-        a.setAttribute("href", dataStr); a.setAttribute("download", name);
-        document.body.appendChild(a); a.click(); a.remove();
-    }
-
-    function triggerLoadJSON() { document.getElementById('fileInput').click(); }
-    
-    function loadProjectJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = function(e) {
-            try { restoreState(JSON.parse(e.target.result)); } 
-            catch (err) { alert("Invalid Interpreter JSON file."); }
-        };
-        reader.readAsText(file);
-    }
-
-    function restoreState(data) {
-        document.getElementById('projectName').value = data.projectName || '';
-        document.getElementById('rawTextInput').value = data.rawText || '';
-        lexiconData = data.lexiconData || {};
-        matrixData = data.matrixData || [];
-        
-        renderText(); 
-        renderLexiconCards();
-        renderMatrixTable();
-        clearSelection();
-    }
-
-    function exportSnapshot() {
-        clearSelection(); 
-        html2canvas(document.getElementById('workspace'), {
-            backgroundColor: '#e4e7ea', scale: 2 
-        }).then(canvasOutput => {
-            const link = document.createElement('a');
-            link.download = (document.getElementById('projectName').value || 'interpreter_snapshot') + '.png';
-            link.href = canvasOutput.toDataURL("image/png");
-            link.click();
-        });
-    }
-
-    // ---------------------------------------------------------
-    // TEXT ENGINE
-    // ---------------------------------------------------------
-
-    passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
-
     function renderText() {
         const raw = document.getElementById('rawTextInput').value;
         if(!raw.trim()) return;
         
         passageContainer.innerHTML = '';
-        selectedWordId = null;
-        lexEditor.style.opacity = '0.5';
-        lexEditor.style.pointerEvents = 'none';
+        lexiconData = {};
+        clearSelection();
 
         const words = raw.split(/(\s+)/); 
         let wordIndex = 0;
@@ -1152,27 +400,16 @@
                 span.id = `w-${wordIndex++}`;
                 span.innerText = chunk;
                 
-                if (lexiconData[span.id]) span.classList.add('has-data');
-
+                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
                 span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
                 passageContainer.appendChild(span);
             }
         });
-
-        const reference = document.getElementById('projectName').value.trim();
-        if (reference) {
-            document.getElementById('lexiconSearchInput').value = reference;
-            document.getElementById('resourceToggle').checked = false;
-            updateToggleState(); 
-
-            const drawer = document.getElementById('lexicon-drawer');
-            if (!drawer.classList.contains('open')) {
-                drawer.classList.add('open');
-                document.body.classList.add('drawer-open');
-            }
-        }
     }
 
+    // ---------------------------------------------------------
+    // CLICK HANDLER (Updates the Colored Info Card)
+    // ---------------------------------------------------------
     function handleWordClick(id) {
         clearSelection();
         selectedWordId = id;
@@ -1184,18 +421,23 @@
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
         
-        if (lexiconData[id]) {
-            document.getElementById('lexLemma').value = lexiconData[id].lemma || '';
-            document.getElementById('lexStrongs').value = lexiconData[id].strongs || '';
-            document.getElementById('lexParsing').value = lexiconData[id].parsing || '';
-            document.getElementById('lexDef').value = lexiconData[id].def || '';
-            document.getElementById('lexSynth').value = lexiconData[id].synth || '';
-        } else {
-            document.getElementById('lexLemma').value = '';
-            document.getElementById('lexStrongs').value = '';
-            document.getElementById('lexParsing').value = '';
-            document.getElementById('lexDef').value = '';
-            document.getElementById('lexSynth').value = '';
+        const d = lexiconData[id];
+        if (d) {
+            // Run the Grammar Engine for Colors and Text
+            const rmacParse = parseRMAC(d.parsing);
+            
+            // Set the Sidebar Border Color!
+            lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
+            
+            // Auto-fetch the dictionary definition if we have a Strongs number
+            if (d.strongs && !d.def) {
+                d.def = getStrongsDef(d.strongs);
+            }
+
+            document.getElementById('lexLemma').value = d.lemma || '';
+            document.getElementById('lexStrongs').value = d.strongs || '';
+            document.getElementById('lexParsing').value = d.parsing ? rmacParse.text : '';
+            document.getElementById('lexDef').value = d.def || '';
         }
     }
 
@@ -1207,128 +449,16 @@
         selectedWordId = null;
         lexEditor.style.opacity = '0.5';
         lexEditor.style.pointerEvents = 'none';
+        lexEditor.style.borderLeft = "4px solid #7f8c8d"; // Reset to gray
         document.getElementById('lex-target-word').innerText = "No Word Selected";
+        document.getElementById('lexLemma').value = '';
+        document.getElementById('lexStrongs').value = '';
+        document.getElementById('lexParsing').value = '';
+        document.getElementById('lexDef').value = '';
     }
 
-    // ---------------------------------------------------------
-    // LEXICON CARD ENGINE
-    // ---------------------------------------------------------
-
-    function saveLexiconData() {
-        if (!selectedWordId) return;
-        
-        const wordText = document.getElementById('lex-target-word').innerText;
-        const lemma = document.getElementById('lexLemma').value.trim();
-        const strongs = document.getElementById('lexStrongs').value.trim();
-        const parsing = document.getElementById('lexParsing').value.trim();
-        const def = document.getElementById('lexDef').value.trim();
-        const synth = document.getElementById('lexSynth').value.trim();
-
-        lexiconData[selectedWordId] = { word: wordText, lemma, strongs, parsing, def, synth };
-        document.getElementById(selectedWordId).classList.add('has-data');
-        
-        renderLexiconCards();
-        clearSelection();
-    }
-
-    function deleteLexiconData(id) {
-        delete lexiconData[id];
-        const el = document.getElementById(id);
-        if(el) el.classList.remove('has-data');
-        renderLexiconCards();
-    }
-
-    function renderLexiconCards() {
-        const keys = Object.keys(lexiconData);
-        
-        const hasVisibleCards = keys.some(id => {
-            const d = lexiconData[id];
-            return d.lemma || d.strongs || d.parsing || d.def || d.synth;
-        });
-
-        if (!hasVisibleCards) {
-            document.getElementById('lexicon-panel').style.display = 'none';
-            return;
-        }
-        
-        document.getElementById('lexicon-panel').style.display = 'block';
-        lexiconGrid.innerHTML = '';
-        
-        keys.forEach(id => {
-            const d = lexiconData[id];
-            if (!d.lemma && !d.strongs && !d.parsing && !d.def && !d.synth) return;
-            
-            const strongsHtml = d.strongs ? `<span class="lex-strongs">${d.strongs}</span>` : '';
-            const lemmaHtml = d.lemma ? `<div class="lex-lemma">Root: ${d.lemma}</div>` : '';
-            const parsingHtml = d.parsing ? `<div class="lex-parsing">${d.parsing}</div>` : '';
-            const defHtml = d.def ? `<div class="lex-def">${d.def}</div>` : '';
-            const synthHtml = d.synth ? `<div class="lex-synth">${d.synth}</div>` : '';
-
-            const card = document.createElement('div');
-            card.className = 'lex-card';
-            card.innerHTML = `
-                <div class="lex-header">
-                    <div>
-                        <div class="lex-word">${d.word} ${strongsHtml}</div>
-                    </div>
-                    <button class="card-del-btn" onclick="deleteLexiconData('${id}')" title="Delete Entry">&times;</button>
-                </div>
-                ${lemmaHtml}
-                ${parsingHtml}
-                ${defHtml}
-                ${synthHtml}
-            `;
-            lexiconGrid.appendChild(card);
-        });
-    }
-
-    // ---------------------------------------------------------
-    // MATRIX ENGINE
-    // ---------------------------------------------------------
-
-    function saveMatrixData() {
-        const ref = document.getElementById('matRef').value.trim();
-        const text = document.getElementById('matText').value.trim();
-        const notes = document.getElementById('matNotes').value.trim();
-
-        if (!ref) return;
-
-        matrixData.push({ id: Date.now(), ref, text, notes });
-        
-        document.getElementById('matRef').value = '';
-        document.getElementById('matText').value = '';
-        document.getElementById('matNotes').value = '';
-        
-        renderMatrixTable();
-    }
-
-    function deleteMatrixData(id) {
-        matrixData = matrixData.filter(m => m.id !== id);
-        renderMatrixTable();
-    }
-
-    function renderMatrixTable() {
-        if (matrixData.length === 0) {
-            document.getElementById('matrix-panel').style.display = 'none';
-            return;
-        }
-        
-        document.getElementById('matrix-panel').style.display = 'block';
-        matrixTbody.innerHTML = '';
-        
-        matrixData.forEach(m => {
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td class="matrix-ref">${m.ref}</td>
-                <td class="matrix-text">"${m.text}"</td>
-                <td class="matrix-notes">${m.notes}</td>
-                <td style="text-align:right;">
-                    <button class="card-del-btn" onclick="deleteMatrixData(${m.id})" title="Remove Reference">&times;</button>
-                </td>
-            `;
-            matrixTbody.appendChild(tr);
-        });
-    }
+    // Clear selection if they click empty space
+    passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
 
 </script>
 </body>
