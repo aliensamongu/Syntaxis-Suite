@@ -95,12 +95,16 @@
         .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, outline 0.2s; position: relative; }
         .word:hover { background-color: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; color: var(--oxford-navy); }
+        
+        /* Language Specific Classes */
+        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
 
         /* INTERLINEAR STYLES */
         .verse-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
         .verse-block:last-child { border-bottom: none; }
         .verse-num { color: var(--rustic-orange); font-weight: bold; margin-right: 8px; font-size: 0.6em; vertical-align: super; }
-        .greek-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; transition: opacity 0.3s, height 0.3s; }
+        .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; transition: opacity 0.3s, height 0.3s; }
+        .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
         /* UNIVERSAL APP NAV STYLING */
@@ -138,9 +142,18 @@
                 <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)">
                 <div style="display: flex; gap: 5px;">
                     <select id="bibleModuleSelect" style="flex: 2;">
-                        <option value="interlinear">Parallel Interlinear</option>
-                        <option value="tischendorf.xml">Tischendorf Greek NT</option>
-                        <option value="emt.xml">English Majority Text</option>
+                        <optgroup label="Interlinear">
+                            <option value="nt_interlinear">NT Interlinear (Greek/EMT)</option>
+                            <option value="ot_interlinear">OT Interlinear (Hebrew/ESV)</option>
+                        </optgroup>
+                        <optgroup label="Original Languages">
+                            <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                            <option value="hebrew_ot.xml">Hebrew OT</option>
+                        </optgroup>
+                        <optgroup label="English Translations">
+                            <option value="emt.xml">English Majority Text (EMT)</option>
+                            <option value="esv.xml">English Standard Version (ESV)</option>
+                        </optgroup>
                     </select>
                     <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load Text</button>
                 </div>
@@ -180,10 +193,10 @@
             <span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
             
             <div class="header-controls">
-                <div class="toggle-wrapper" id="greek-toggle-container" style="display: none;">
-                    <span class="toggle-label">Show Greek</span>
+                <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
+                    <span class="toggle-label" id="original-toggle-label">Show Original</span>
                     <label class="switch">
-                        <input type="checkbox" id="greekToggle" checked onchange="toggleGreekText()">
+                        <input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()">
                         <span class="slider"></span>
                     </label>
                 </div>
@@ -204,8 +217,9 @@
 <script>
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
-    const greekToggleContainer = document.getElementById('greek-toggle-container');
-    const greekToggle = document.getElementById('greekToggle');
+    const originalToggleContainer = document.getElementById('original-toggle-container');
+    const originalToggleLabel = document.getElementById('original-toggle-label');
+    const originalToggle = document.getElementById('originalToggle');
     
     let selectedWordId = null;
     let lexiconData = {}; 
@@ -263,7 +277,6 @@
         return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
     }
 
-    // UPGRADED DECODER: Safely handles numeric tense prefixes (1st/2nd Aorist)
     function parseRMAC(rmac) {
         if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; 
 
@@ -295,7 +308,6 @@
                 text = "Verb";
                 if (parts.length > 1) {
                     const rawTvm = parts[1]; 
-                    // This strips the '1' or '2' so the engine checks the right letters!
                     const tvm = rawTvm.replace(/^[0-9]+/, ''); 
                     
                     if (tvm.length >= 3) {
@@ -352,13 +364,13 @@
 
 
     // ---------------------------------------------------------
-    // THE BILINGUAL BIBLE ENGINE (Zefania + OSIS + Interlinear)
+    // THE BILINGUAL BIBLE ENGINE (Zefania + OSIS + SimpleXML + Interlinear)
     // ---------------------------------------------------------
     
-    function toggleGreekText() {
-        const isChecked = greekToggle.checked;
-        const greekLines = document.querySelectorAll('.greek-line');
-        greekLines.forEach(line => {
+    function toggleOriginalText() {
+        const isChecked = originalToggle.checked;
+        const origLines = document.querySelectorAll('.original-line');
+        origLines.forEach(line => {
             line.style.display = isChecked ? 'block' : 'none';
         });
     }
@@ -367,6 +379,7 @@
         if (!query.trim()) return;
         
         passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module...</span>`;
+        passageContainer.className = ''; 
         clearSelection();
 
         try {
@@ -386,21 +399,26 @@
             selectedWordId = null;
             let wordIndex = 0;
 
-            if (fileName === 'interlinear') {
-                greekToggleContainer.style.display = 'flex'; 
-                greekToggle.checked = true; 
+            // =====================================
+            // PATH C: THE DUAL-FETCH INTERLINEAR
+            // =====================================
+            if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
+                const isHebrew = fileName === 'ot_interlinear';
+                
+                originalToggleContainer.style.display = 'flex'; 
+                originalToggle.checked = true; 
+                originalToggleLabel.innerText = isHebrew ? 'Show Hebrew' : 'Show Greek';
 
                 const bNum = bnumberMap[fullBookName];
                 const osisId = osisMap[fullBookName];
 
-                if (!bNum || !osisId) throw new Error(`Book '${fullBookName}' mapping not found.`);
+                if (!bNum) throw new Error(`Book '${fullBookName}' mapping not found.`);
 
-                const [grkRes, engRes] = await Promise.all([
-                    fetch('tischendorf.xml'),
-                    fetch('emt.xml')
-                ]);
+                let file1 = isHebrew ? 'hebrew_ot.xml' : 'tischendorf.xml';
+                let file2 = isHebrew ? 'esv.xml' : 'emt.xml';
 
-                if (!grkRes.ok || !engRes.ok) throw new Error("Missing XML files for Interlinear mode. Ensure tischendorf.xml and emt.xml are present.");
+                const [grkRes, engRes] = await Promise.all([ fetch(file1), fetch(file2) ]);
+                if (!grkRes.ok || !engRes.ok) throw new Error("Missing XML files for Interlinear mode. Ensure both local XML files are present.");
 
                 const parser = new DOMParser();
                 const grkDoc = parser.parseFromString(await grkRes.text(), "text/xml");
@@ -408,7 +426,16 @@
 
                 const grkBookNode = grkDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
                 const grkChapNode = grkBookNode ? grkBookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
-                const engChapNode = engDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                
+                let engChapNode;
+                if (isHebrew) {
+                    // ESV format
+                    const engBookNode = engDoc.querySelector(`book[number="${bNum}"]`);
+                    engChapNode = engBookNode ? engBookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                } else {
+                    // EMT OSIS format
+                    engChapNode = engDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                }
 
                 if (!grkChapNode || !engChapNode) throw new Error(`Could not locate chapter ${chapNum} in one or both files.`);
 
@@ -426,8 +453,8 @@
                     vNumSpan.innerText = i + 1;
                     block.appendChild(vNumSpan);
 
-                    const grkLine = document.createElement('div');
-                    grkLine.className = 'greek-line';
+                    const origLine = document.createElement('div');
+                    origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     
                     if (grkVerses[i]) {
                         const grNodes = grkVerses[i].querySelectorAll('gr');
@@ -440,20 +467,23 @@
                             span.className = 'word has-data';
                             span.id = `w-${wordIndex++}`;
                             span.innerText = text + " "; 
+                            
+                            let finalStrongs = "";
+                            if (str) {
+                                if (/^[GH]/i.test(str)) finalStrongs = str;
+                                else finalStrongs = (isHebrew ? "H" : "G") + str;
+                            }
 
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: str ? "G" + str : "", parsing: rmac, def: "" };
+                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                            grkLine.appendChild(span);
+                            origLine.appendChild(span);
                         });
                     }
-                    block.appendChild(grkLine);
+                    block.appendChild(origLine);
 
                     const engLine = document.createElement('div');
                     engLine.className = 'english-line';
-
-                    if (engVerses[i]) {
-                        engLine.innerText = engVerses[i].textContent;
-                    }
+                    if (engVerses[i]) engLine.innerText = engVerses[i].textContent;
                     block.appendChild(engLine);
 
                     passageContainer.appendChild(block);
@@ -461,7 +491,7 @@
                 return;
             }
 
-            greekToggleContainer.style.display = 'none'; 
+            originalToggleContainer.style.display = 'none'; 
 
             const response = await fetch(fileName);
             if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
@@ -470,13 +500,18 @@
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
+            const isHebrew = fileName === 'hebrew_ot.xml';
+            if (isHebrew) passageContainer.className = 'rtl-text';
+
             const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
             const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
 
             if (isZefania) {
                 const bNum = bnumberMap[fullBookName];
                 const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
-                const chapNode = bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} in ${fullBookName}.`);
 
                 const verses = chapNode.querySelectorAll('VERS');
                 verses.forEach(vers => {
@@ -497,7 +532,13 @@
                             span.id = `w-${wordIndex++}`;
                             span.innerText = text + " "; 
 
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: str ? "G" + str : "", parsing: rmac, def: "" };
+                            let finalStrongs = "";
+                            if (str) {
+                                if (/^[GH]/i.test(str)) finalStrongs = str;
+                                else finalStrongs = (isHebrew ? "H" : "G") + str;
+                            }
+
+                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
                             passageContainer.appendChild(span);
                         });
@@ -508,6 +549,7 @@
             } else if (isOSIS) {
                 const osisId = osisMap[fullBookName];
                 const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} for ${fullBookName}.`);
 
                 const verses = chapNode.querySelectorAll('verse');
                 verses.forEach(vers => {
@@ -536,8 +578,38 @@
                     });
                     passageContainer.appendChild(document.createTextNode(" "));
                 });
+            } else if (isSimpleXML) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} for ${fullBookName}.`);
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => {
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vers.getAttribute('number');
+                    passageContainer.appendChild(vSpan);
+
+                    const words = vers.textContent.split(/(\s+)/);
+                    words.forEach(chunk => {
+                        if (chunk.trim() !== '') {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = chunk;
+                            
+                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                            passageContainer.appendChild(span);
+                        } else {
+                            passageContainer.appendChild(document.createTextNode(chunk));
+                        }
+                    });
+                    passageContainer.appendChild(document.createTextNode(" "));
+                });
             } else {
-                throw new Error("Unrecognized XML format. The file is neither Zefania nor OSIS.");
+                throw new Error("Unrecognized XML format.");
             }
 
         } catch (error) {
@@ -553,9 +625,10 @@
         if(!raw.trim()) return;
         
         passageContainer.innerHTML = '';
+        passageContainer.className = '';
         lexiconData = {};
         clearSelection();
-        greekToggleContainer.style.display = 'none';
+        originalToggleContainer.style.display = 'none';
 
         const words = raw.split(/(\s+)/); 
         let wordIndex = 0;
