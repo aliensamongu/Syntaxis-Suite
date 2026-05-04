@@ -263,7 +263,7 @@
         return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
     }
 
-    // NEW DECODER: Translates raw code to Plain English
+    // UPGRADED DECODER: Safely handles numeric tense prefixes (1st/2nd Aorist)
     function parseRMAC(rmac) {
         if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; 
 
@@ -273,7 +273,6 @@
         let text = "";
         let details = [];
 
-        // Linguistic Dictionaries
         const cases = {'n':'Nom', 'g':'Gen', 'd':'Dat', 'a':'Acc', 'v':'Voc'};
         const numbers = {'s':'Sing', 'p':'Plur'};
         const genders = {'m':'Masc', 'f':'Fem', 'n':'Neut'};
@@ -295,7 +294,10 @@
             case 'v':
                 text = "Verb";
                 if (parts.length > 1) {
-                    const tvm = parts[1]; 
+                    const rawTvm = parts[1]; 
+                    // This strips the '1' or '2' so the engine checks the right letters!
+                    const tvm = rawTvm.replace(/^[0-9]+/, ''); 
+                    
                     if (tvm.length >= 3) {
                         const mood = tvm[2];
                         if (mood === 'i') color = "#c0392b"; 
@@ -303,7 +305,15 @@
                         else if (mood === 'n') color = "#800000"; 
 
                         let tvmStr = [];
-                        if (tenses[tvm[0]]) tvmStr.push(tenses[tvm[0]]);
+                        let ord = "";
+                        const numMatch = rawTvm.match(/^[0-9]+/);
+                        if (numMatch) {
+                            if (numMatch[0] === '1') ord = "1st ";
+                            if (numMatch[0] === '2') ord = "2nd ";
+                            if (numMatch[0] === '3') ord = "3rd ";
+                        }
+                        
+                        if (tenses[tvm[0]]) tvmStr.push(ord + tenses[tvm[0]]);
                         if (voices[tvm[1]]) tvmStr.push(voices[tvm[1]]);
                         if (moods[tvm[2]]) tvmStr.push(moods[tvm[2]]);
                         if (tvmStr.length > 0) details.push(tvmStr.join(' '));
