@@ -122,7 +122,7 @@
                 <div style="display: flex; gap: 5px;">
                     <select id="bibleModuleSelect" style="flex: 2;">
                         <option value="tischendorf.xml">Tischendorf Greek NT</option>
-                        <option value="english_majority.xml">English Majority Text</option>
+                        <option value="emt.xml">English Majority Text</option>
                     </select>
                     <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load Text</button>
                 </div>
@@ -208,29 +208,33 @@
         "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
     };
 
+    const osisMap = {
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut",
+        "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song",
+        "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
+    };
+
     // ---------------------------------------------------------
     // DICTIONARY & RMAC PARSING ENGINES
     // ---------------------------------------------------------
 
-    // This fetches the definition from your strongs-greek-dictionary.js file
     function getStrongsDef(key) {
         if (!key) return "";
         let entry = null;
         
-        // Handles standard JS object naming conventions
         if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
         else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
         
         if (!entry) return "Definition not found in dictionary module.";
         
-        // If it's a string, return it. If it's an object, format it beautifully.
         if (typeof entry === 'string') return entry;
         return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
     }
 
-    // Translates the raw morph code into an English description and Color Code
     function parseRMAC(rmac) {
-        if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; // Default Slate Gray
+        if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; 
         
         const parts = rmac.toLowerCase().split('-');
         const pos = parts[0];
@@ -238,20 +242,20 @@
         let text = "";
 
         switch(pos) {
-            case 'n': text = "Noun"; color = "#2980b9"; break; // Blue
-            case 'a': text = "Adjective"; color = "#27ae60"; break; // Green
-            case 'adv': case 'd': text = "Adverb"; color = "#fa8072"; break; // Salmon
-            case 'prep': text = "Preposition"; color = "#8b4513"; break; // Brown
-            case 'conj': text = "Conjunction"; color = "#f1c40f"; break; // Gold
+            case 'n': text = "Noun"; color = "#2980b9"; break; 
+            case 'a': text = "Adjective"; color = "#27ae60"; break; 
+            case 'adv': case 'd': text = "Adverb"; color = "#fa8072"; break; 
+            case 'prep': text = "Preposition"; color = "#8b4513"; break; 
+            case 'conj': text = "Conjunction"; color = "#f1c40f"; break; 
             case 'v':
                 text = "Verb";
                 if (parts.length > 1) {
-                    const tvm = parts[1]; // e.g. aai
+                    const tvm = parts[1]; 
                     if (tvm.length >= 3) {
                         const mood = tvm[2];
-                        if (mood === 'i') color = "#c0392b"; // Red (Indicative)
-                        else if (mood === 'p') color = "#8e44ad"; // Purple (Participle)
-                        else if (mood === 'n') color = "#800000"; // Maroon (Infinitive)
+                        if (mood === 'i') color = "#c0392b"; 
+                        else if (mood === 'p') color = "#8e44ad"; 
+                        else if (mood === 'n') color = "#800000"; 
                     }
                 }
                 break;
@@ -260,7 +264,6 @@
             default: text = pos.toUpperCase(); color = "#7f8c8d"; break;
         }
 
-        // Append the rest of the parsing codes if they exist
         if (parts.length > 1) {
             text += " (" + parts.slice(1).join('-').toUpperCase() + ")";
         }
@@ -270,7 +273,7 @@
 
 
     // ---------------------------------------------------------
-    // THE NATIVE BIBLE ENGINE (Zefania Strong's + RMAC)
+    // THE BILINGUAL BIBLE ENGINE (Zefania + OSIS)
     // ---------------------------------------------------------
     async function loadNativeBible(query, fileName) {
         if (!query.trim()) return;
@@ -290,13 +293,7 @@
             const chapNum = match[2];
             
             const fullBookName = abbrevs[searchBook] || searchBook;
-            const bNum = bnumberMap[fullBookName];
-
-            if (!bNum) {
-                passageContainer.innerHTML = `<span style='color:var(--oxford-crimson);'>Book '${fullBookName}' not recognized by the engine.</span>`;
-                return;
-            }
-
+            
             const response = await fetch(fileName);
             if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
             const xmlText = await response.text();
@@ -304,54 +301,88 @@
             const parser = new DOMParser();
             const xmlDoc = parser.parseFromString(xmlText, "text/xml");
 
-            const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
-            if (!bookNode) throw new Error(`Could not find ${fullBookName} inside this module.`);
-
-            const chapNode = bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`);
-            if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} in ${fullBookName}.`);
-
-            // Build the UI
             passageContainer.innerHTML = ''; 
             lexiconData = {}; 
             selectedWordId = null;
             let wordIndex = 0;
 
-            const verses = chapNode.querySelectorAll('VERS');
-            verses.forEach(vers => {
-                const vNum = vers.getAttribute('vnumber');
+            // SMART DETECTOR: Is this Zefania (Tischendorf) or OSIS (EMT)?
+            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+            const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+
+            if (isZefania) {
+                // =====================================
+                // PATH A: ZEFANIA PARSER
+                // =====================================
+                const bNum = bnumberMap[fullBookName];
+                if (!bNum) throw new Error(`Book '${fullBookName}' not recognized by the Zefania engine.`);
+
+                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                if (!bookNode) throw new Error(`Could not find ${fullBookName} inside this Zefania module.`);
+
+                const chapNode = bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`);
+                if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} in ${fullBookName}.`);
+
+                const verses = chapNode.querySelectorAll('VERS');
+                verses.forEach(vers => {
+                    const vNum = vers.getAttribute('vnumber');
+                    
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vNum;
+                    passageContainer.appendChild(vSpan);
+
+                    const grNodes = vers.querySelectorAll('gr');
+                    if (grNodes.length > 0) {
+                        grNodes.forEach(gr => {
+                            const str = gr.getAttribute('str') || '';
+                            const rmac = gr.getAttribute('rmac') || '';
+                            const text = gr.textContent.trim();
+
+                            const span = document.createElement('span');
+                            span.className = 'word has-data';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = text + " "; 
+
+                            lexiconData[span.id] = {
+                                word: text.replace(/[.,;!?]/g, ''), 
+                                lemma: "", 
+                                strongs: str ? "G" + str : "", 
+                                parsing: rmac, 
+                                def: ""
+                            };
+
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                            passageContainer.appendChild(span);
+                        });
+                    }
+                    passageContainer.appendChild(document.createTextNode(" "));
+                });
                 
-                const vSpan = document.createElement('sup');
-                vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
-                vSpan.innerText = vNum;
-                passageContainer.appendChild(vSpan);
+            } else if (isOSIS) {
+                // =====================================
+                // PATH B: OSIS PARSER
+                // =====================================
+                const osisId = osisMap[fullBookName];
+                if (!osisId) throw new Error(`OSIS ID mapping not found for '${fullBookName}'.`);
 
-                const grNodes = vers.querySelectorAll('gr');
-                
-                // If the module has <gr> tags (like Tischendorf), use them.
-                if (grNodes.length > 0) {
-                    grNodes.forEach(gr => {
-                        const str = gr.getAttribute('str') || '';
-                        const rmac = gr.getAttribute('rmac') || '';
-                        const text = gr.textContent.trim();
+                // OSIS uses IDs like 'Matt.1'
+                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                if (!chapNode) throw new Error(`Could not find Chapter ${chapNum} for ${fullBookName} in OSIS format.`);
 
-                        const span = document.createElement('span');
-                        span.className = 'word has-data';
-                        span.id = `w-${wordIndex++}`;
-                        span.innerText = text + " "; 
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => {
+                    // Extract just the verse number from 'Matt.1.5'
+                    const osisVerseId = vers.getAttribute('osisID');
+                    const vNumMatch = osisVerseId.match(/\.(\d+)$/);
+                    const vNum = vNumMatch ? vNumMatch[1] : "?";
 
-                        lexiconData[span.id] = {
-                            word: text.replace(/[.,;!?]/g, ''), 
-                            lemma: "", 
-                            strongs: str ? "G" + str : "", 
-                            parsing: rmac, 
-                            def: ""
-                        };
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vNum;
+                    passageContainer.appendChild(vSpan);
 
-                        span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                        passageContainer.appendChild(span);
-                    });
-                } else {
-                    // Fallback for modules without <gr> tags (like English Majority Text)
+                    // OSIS doesn't have <gr> tags, so we slice the plain text into clickable words
                     const words = vers.textContent.split(/(\s+)/);
                     words.forEach(chunk => {
                         if (chunk.trim() !== '') {
@@ -360,6 +391,7 @@
                             span.id = `w-${wordIndex++}`;
                             span.innerText = chunk;
                             
+                            // Load it into the Lexicon Data so the user can still take custom notes!
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
                             passageContainer.appendChild(span);
@@ -367,10 +399,11 @@
                             passageContainer.appendChild(document.createTextNode(chunk));
                         }
                     });
-                }
-                
-                passageContainer.appendChild(document.createTextNode(" "));
-            });
+                    passageContainer.appendChild(document.createTextNode(" "));
+                });
+            } else {
+                throw new Error("Unrecognized XML format. The file is neither Zefania nor OSIS.");
+            }
 
         } catch (error) {
             passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Engine Error:</strong> ${error.message}</p>`;
@@ -423,13 +456,10 @@
         
         const d = lexiconData[id];
         if (d) {
-            // Run the Grammar Engine for Colors and Text
             const rmacParse = parseRMAC(d.parsing);
             
-            // Set the Sidebar Border Color!
             lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
             
-            // Auto-fetch the dictionary definition if we have a Strongs number
             if (d.strongs && !d.def) {
                 d.def = getStrongsDef(d.strongs);
             }
@@ -457,7 +487,6 @@
         document.getElementById('lexDef').value = '';
     }
 
-    // Clear selection if they click empty space
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
 
 </script>
