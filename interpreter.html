@@ -27,7 +27,6 @@
             overflow: hidden; background: var(--bg-main);
         }
         
-        /* Left Sidebar */
         #sidebar {
             width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
@@ -83,10 +82,10 @@
         .option-item { padding: 10px 15px; font-size: 12px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
         .option-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
 
-        /* Workspace */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; align-items: center; }
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .header-controls { display: flex; align-items: center; gap: 20px; }
         .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); }
         .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
         .switch input { opacity: 0; width: 0; height: 0; }
@@ -165,14 +164,14 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3>2. Lexicon & Morphology</h3>
             <div id="lexicon-editor">
-                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px;" id="lex-target-word">No Word</div>
+                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px;" id="lex-target-word">No Word Selected</div>
                 <div style="display: flex; gap: 5px;">
                     <input type="text" id="lexLemma" placeholder="Lemma" readonly>
                     <input type="text" id="lexStrongs" placeholder="Strong's" readonly>
                 </div>
                 <input type="text" id="lexParsing" placeholder="Parsing" readonly>
                 <textarea id="lexDef" placeholder="Definition..." oninput="syncPastedDef()"></textarea>
-                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="background: #c0392b; color: white;" disabled>+ Add Card</button>
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="background: #c0392b; color: white; width:100%; margin-top:5px;" disabled>+ Add Card</button>
             </div>
         </div>
 
@@ -186,14 +185,14 @@
 <div id="workspace">
     <div class="workspace-panel">
         <div class="panel-title">
-            <span>Passage <span style="font-size: 11px; color: #888;">ΣYNTAXIS</span></span>
+            <span id="workspace-label">Passage <span style="font-size: 11px; color: #888;">ΣYNTAXIS</span></span>
             <div class="header-controls">
                 <div class="toggle-wrapper" id="commentary-toggle-container" style="display: none;">
                     <span style="font-size:10px; color:var(--oxford-gold);">COMMENTARY</span>
                     <label class="switch"><input type="checkbox" id="commentaryToggle" onchange="toggleCommentary()"><span class="slider"></span></label>
                 </div>
                 <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
-                    <span style="font-size:10px;">SHOW GREEK</span>
+                    <span style="font-size:10px;">SHOW ORIGINAL</span>
                     <label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label>
                 </div>
                 <button class="std-btn secondary" onclick="toggleNotebook()">📓 Notebook</button>
@@ -226,7 +225,7 @@
 
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
-    const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
+    const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zec": 4, "zec": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
 
     window.addEventListener('DOMContentLoaded', () => {
         const selectBtn = document.getElementById('moduleSelectBtn');
@@ -249,23 +248,26 @@
         const isChecked = document.getElementById('commentaryToggle').checked;
         if (isChecked) {
             cachedBibleHTML = passageContainer.innerHTML;
-            passageContainer.innerHTML = `<p style="font-style:italic;">Syncing Matthew Henry for ${currentLoadedBook} ${currentLoadedChapter}...</p>`;
+            passageContainer.innerHTML = `<p style="font-style:italic; color:var(--oxford-gold);">Syncing Matthew Henry for ${currentLoadedBook} ${currentLoadedChapter}...</p>`;
             try {
                 const volNum = mhcVolumeMap[currentLoadedBook];
                 const res = await fetch(`vol${volNum}.xml`);
-                if (!res.ok) throw new Error(`Missing vol${volNum}.xml. Ensure all 6 volumes are in the root directory.`);
-                const html = await res.text();
-                const doc = new DOMParser().parseFromString(html, "text/html");
+                if (!res.ok) throw new Error(`Missing vol${volNum}.xml.`);
+                const xmlText = await res.text();
+                const doc = new DOMParser().parseFromString(xmlText, "text/html");
                 
+                // EXORCISM: Remove metadata blocks immediately
                 doc.querySelectorAll("generalinfo, printsourceinfo, printSourceInfo, frontmatter").forEach(el => el.remove());
 
                 const b = (osisMap[currentLoadedBook] || currentLoadedBook).toLowerCase();
+                const bTitle = currentLoadedBook.toLowerCase();
                 const cInt = parseInt(currentLoadedChapter);
-                const cRom = toRoman(cInt);
-                const cNextRom = toRoman(cInt + 1);
+                const cNext = cInt + 1;
 
-                function findLandmark(chapterRom) {
-                    const targets = [ `${b}.${chapterRom}-`, `${b}.${chapterRom}.`, `bible:${b}.${cInt}.`, `bible:${b}.${cInt}-` ];
+                function findLandmark(chapterVal) {
+                    const rom = toRoman(chapterVal);
+                    // Match dots or hyphens
+                    const targets = [ `${b}.${rom}.`, `${b}.${rom}-`, `${bTitle}.${rom}.`, `${bTitle}.${rom}-`, `bible:${b}.${chapterVal}.` ];
                     let found = null;
                     doc.querySelectorAll("[id]").forEach(el => {
                         const id = el.id.toLowerCase();
@@ -275,18 +277,22 @@
                 }
 
                 // Check direct roman numeral match AND roman numeral + 1 offset
-                let startNode = findLandmark(cRom) || findLandmark(toRoman(cInt + 1));
+                let startNode = findLandmark(cInt) || findLandmark(cInt + 1);
                 if (!startNode) throw new Error(`No commentary found for Chapter ${cInt}.`);
 
-                const stopTargets = [ `${b}.${cNextRom}-`, `${b}.${cNextRom}.`, `${b}.${toRoman(cInt+2)}.`, `bible:${b}.${cInt+1}.` ];
+                const stopTargets = [ `${b}.${toRoman(cNext)}.`, `${b}.${toRoman(cNext)}-`, `${b}.${toRoman(cNext+1)}.`, `bible:${b}.${cNext}.` ];
                 
-                passageContainer.innerHTML = `<h2>Matthew Henry: ${currentLoadedBook.toUpperCase()} ${cInt}</h2>`;
+                passageContainer.innerHTML = `<h2 style="border-bottom: 2px solid var(--oxford-gold); padding-bottom:10px;">Matthew Henry: ${currentLoadedBook.toUpperCase()} ${cInt}</h2>`;
                 let curr = startNode;
                 let count = 0;
-                while (curr && count < 500) {
+                while (curr && count < 800) {
                     const id = (curr.id || "").toLowerCase();
-                    if (count > 0 && stopTargets.some(t => id.startsWith(t))) break;
-                    passageContainer.appendChild(curr.cloneNode(true));
+                    if (count > 1 && stopTargets.some(t => id.startsWith(t))) break;
+                    
+                    // Filter duplicate intro text that isn't part of the commentary body
+                    if (!curr.innerText.includes("GENERAL INFO") && !curr.innerText.includes("Matthew Henry's Commentary")) {
+                        passageContainer.appendChild(curr.cloneNode(true));
+                    }
                     curr = curr.nextElementSibling;
                     count++;
                 }
@@ -297,19 +303,22 @@
     }
 
     async function loadNativeBible(query, fileName) {
-        passageContainer.innerHTML = "Loading...";
+        passageContainer.innerHTML = `<p style="font-style:italic;">Initializing module...</p>`;
         try {
             const res = await fetch(fileName === 'mhc_sync' ? 'vol1.xml' : fileName);
-            if (!res.ok) throw new Error("File not found");
-            const html = await res.text();
-            const doc = new DOMParser().parseFromString(html, (fileName.includes('xml') ? "text/html" : "text/html"));
+            if (!res.ok) throw new Error("File not found on local server.");
+            const xmlText = await res.text();
+            const doc = new DOMParser().parseFromString(xmlText, "text/html");
             const q = query.trim().toLowerCase();
 
+            // Table of Contents logic
             if (fileName === 'luther_tt.xml' || fileName === 'mhc_sync' || !q) {
                 passageContainer.innerHTML = "<h2>Table of Contents</h2>";
-                doc.querySelectorAll("div1").forEach(d => {
+                const divs = doc.querySelectorAll("div1");
+                divs.forEach(d => {
                     const btn = document.createElement('button');
-                    btn.className = 'std-btn secondary'; btn.style.display = "block"; btn.style.margin = "5px 0";
+                    btn.className = 'std-btn secondary';
+                    btn.style.cssText = "display:block; width:100%; text-align:left; margin:5px 0; font-family:Georgia, serif;";
                     btn.innerText = d.getAttribute('title') || d.id;
                     btn.onclick = () => loadNativeBible(d.id, fileName);
                     passageContainer.appendChild(btn);
@@ -318,25 +327,25 @@
             }
 
             const match = q.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            if (!match) throw new Error("Invalid Reference format.");
+            if (!match) throw new Error("Invalid Reference format (e.g. John 1).");
             currentLoadedBook = abbrevs[match[1]] || match[1];
             currentLoadedChapter = match[2];
 
-            // RENDER PASSAGE (The logic that was missing in previous turn)
+            // RENDER PASSAGE
             passageContainer.innerHTML = '';
             lexiconData = {}; wordIndex = 0;
             document.getElementById('commentary-toggle-container').style.display = 'flex';
             document.getElementById('original-toggle-container').style.display = (fileName.includes('nt') || fileName.includes('tischendorf') || fileName.includes('ot')) ? 'flex' : 'none';
 
-            // Universal Bible Parser (Simplified for speed)
             const bNum = bnumberMap[currentLoadedBook];
             const osisId = osisMap[currentLoadedBook];
             
+            // Format-agnostic Bible finder
             const chapNode = doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${currentLoadedChapter}"]`) || 
                              doc.querySelector(`chapter[osisID="${osisId}.${currentLoadedChapter}"]`) ||
                              doc.querySelector(`book[number="${bNum}"] chapter[number="${currentLoadedChapter}"]`);
 
-            if (!chapNode) throw new Error(`Could not find ${currentLoadedBook} ${currentLoadedChapter} in this module.`);
+            if (!chapNode) throw new Error(`Could not locate ${currentLoadedBook} ${currentLoadedChapter} in the file.`);
 
             const verses = chapNode.querySelectorAll('VERS, verse');
             verses.forEach((v, i) => {
@@ -361,7 +370,7 @@
                 passageContainer.appendChild(block);
             });
 
-        } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
+        } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Engine Error:</strong> ${e.message}</p>`; }
     }
 
     function selectModule(element) {
@@ -376,19 +385,16 @@
     }
 
     async function handleWordClick(id) {
-        if(selectedWordId) document.getElementById(selectedWordId).classList.remove('selected');
+        if(selectedWordId) {
+            const el = document.getElementById(selectedWordId);
+            if(el) el.classList.remove('selected');
+        }
         selectedWordId = id;
         document.getElementById(id).classList.add('selected');
         lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto';
         document.getElementById('addCardBtn').disabled = false;
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
-    }
-
-    function clearSelection() {
-        if(selectedWordId) document.getElementById(selectedWordId).classList.remove('selected');
-        selectedWordId = null; lexEditor.style.opacity = '0.5'; lexEditor.style.pointerEvents = 'none';
-        document.getElementById('addCardBtn').disabled = true;
     }
 
     function toggleNotebook() { notebookSidebar.classList.toggle('open'); }
