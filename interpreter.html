@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <script src="strongs-greek-dictionary.js"></script>
 
     <style>
@@ -592,7 +591,21 @@
         });
     }
 
-    // OMNI-SCANNER UPGRADE
+    // Mathematical Roman Numeral Converter
+    function toRoman(num) {
+        if (isNaN(num)) return '';
+        const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+        let roman = '', i;
+        for (i in lookup) {
+            while (num >= lookup[i]) {
+                roman += i;
+                num -= lookup[i];
+            }
+        }
+        return roman.toLowerCase();
+    }
+
+    // NEW: PRECISION OMNI-SCANNER FOR COMMENTARY (Roman Numeral Upgraded)
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -614,18 +627,24 @@
                 
                 const osisBook = osisMap[currentLoadedBook] || currentLoadedBook;
                 const b = osisBook.toLowerCase();
+                const bTitle = currentLoadedBook.toLowerCase();
                 const bShort = b.substring(0, 3);
                 const c = currentLoadedChapter;
+                const cRom = toRoman(parseInt(c)); // Generate Roman numeral!
                 
-                const allElements = xmlDoc.querySelectorAll("*");
+                const allElements = xmlDoc.querySelectorAll("[id], [osisRef], [parsed]");
                 let matchedBlocks = [];
                 let addedIds = new Set();
                 
+                // Master net of every conceivable format ThML editors use
                 const matchers = [
                     `bible:${b}.${c}`, `bible:${b}.${c}.`, `bible:${b}.${c}-`,
-                    `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`
+                    `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`,
+                    `${b}.${cRom}`, `${b}.${cRom}-`, `${b}.${cRom}.`,
+                    `${bTitle}.${cRom}`, `${bTitle}.${cRom}-`, `${bTitle}.${cRom}.`,
+                    `${osisBook.toLowerCase()}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}-`, `${osisBook.toLowerCase()}.${cRom}.`
                 ];
-                const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${currentLoadedBook.toLowerCase()}|${c}|`];
+                const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${bTitle}|${c}|`];
                 
                 allElements.forEach(el => {
                     const id = (el.getAttribute('id') || '').toLowerCase();
@@ -664,7 +683,7 @@
                 });
                 
                 if (matchedBlocks.length === 0) {
-                    throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches. Volume ${volumeNum} uses a naming format our scanner missed.`);
+                    throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches in Volume ${volumeNum}.`);
                 }
                 
                 passageContainer.innerHTML = '';
