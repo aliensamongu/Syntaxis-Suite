@@ -207,7 +207,11 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3>3. Flashcard Deck</h3>
             <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
-            <button class="std-btn" onclick="exportDeckCsv()" style="width: 100%; background: #c0392b; color: white; margin-top: 5px;" title="Exports Tab-separated CSV for easy Anki Import">⬇ Export Deck (Anki CSV)</button>
+            
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
+            </div>
         </div>
 
     </div>
@@ -743,7 +747,7 @@
         
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
-        document.getElementById('addCardBtn').disabled = false; // Enable add button
+        document.getElementById('addCardBtn').disabled = false;
         
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?׃]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
@@ -781,7 +785,7 @@
         lexEditor.style.opacity = '0.5';
         lexEditor.style.pointerEvents = 'none';
         lexEditor.style.borderLeft = "4px solid #7f8c8d";
-        document.getElementById('addCardBtn').disabled = true; // Disable add button
+        document.getElementById('addCardBtn').disabled = true;
         document.getElementById('lex-target-word').innerText = "No Word Selected";
         document.getElementById('lexLemma').value = '';
         document.getElementById('lexStrongs').value = '';
@@ -825,7 +829,7 @@
     }
 
     // ---------------------------------------------------------
-    // NEW: FLASHCARD DECK LOGIC
+    // FLASHCARD DECK LOGIC (Dual-Export Upgraded)
     // ---------------------------------------------------------
     let ankiDeck = [];
 
@@ -849,7 +853,10 @@
 
         const card = {
             front: targetWord,
-            back: formatAnkiBack(lemma, strongs, parsing, definition)
+            lemma: lemma,
+            strongs: strongs,
+            parsing: parsing,
+            def: definition
         };
 
         ankiDeck.push(card);
@@ -861,7 +868,7 @@
         setTimeout(() => msg.style.display = 'none', 1500);
     }
 
-    // Formats the back of the card with proper HTML for Anki
+    // Helper: Formats the back of the card with proper HTML for Anki
     function formatAnkiBack(lemma, strongs, parsing, def) {
         let back = "";
         if(lemma) back += `<b>Lemma:</b> ${lemma}<br>`;
@@ -871,17 +878,18 @@
         return back.trim();
     }
 
-    // Exports deck as Tab-separated CSV, which is easily handled by Anki import
-    function exportDeckCsv() {
-        if (ankiDeck.length === 0) {
-            alert("Flashcard deck is empty.");
-            return;
-        }
-        let csvContent = ""; // Anki works perfectly with tab-separated, no quotes required for most data
+    // 1. Export HTML-compiled version for Anki
+    function exportAnki() {
+        if (ankiDeck.length === 0) { alert("Flashcard deck is empty."); return; }
+        
+        let csvContent = "";
         ankiDeck.forEach(card => {
-            // Tab separator, escape existing tabs just in case (rare), ensure no newlines in the front/back cells
-            const front = card.front.replace(/\t/g, ' ').replace(/\n/g, ' ');
-            const back = card.back.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            const front = (card.front || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+            
+            // Backwards compatibility check: If card was saved with the old engine format, use it. Otherwise, compile it.
+            let back = card.back ? card.back : formatAnkiBack(card.lemma, card.strongs, card.parsing, card.def);
+            back = back.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            
             csvContent += `${front}\t${back}\n`;
         });
 
@@ -892,7 +900,38 @@
         a.click();
     }
 
-    // Load saved notebook data and flashcard deck when the app boots up
+    // 2. Export beautifully separated columns for Spreadsheets (Numbers/Excel)
+    function exportSpreadsheet() {
+        if (ankiDeck.length === 0) { alert("Flashcard deck is empty."); return; }
+        
+        let csvContent = "Word\tLemma\tStrong's\tMorphology\tDefinition\n";
+        
+        ankiDeck.forEach(card => {
+            const front = (card.front || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+            
+            // Backwards compatibility check
+            if (card.back && !card.lemma) {
+                // If it's an old card, strip out all HTML tags using regex so it looks clean in the spreadsheet
+                const cleanBack = card.back.replace(/<[^>]*>?/gm, ' ');
+                csvContent += `${front}\t\t\t\t${cleanBack}\n`;
+            } else {
+                const l = (card.lemma || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const s = (card.strongs || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const p = (card.parsing || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const d = (card.def || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                
+                csvContent += `${front}\t${l}\t${s}\t${p}\t${d}\n`;
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: "text/tab-separated-values" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Vocabulary_List.tsv";
+        a.click();
+    }
+
+    // Boot up sequence
     window.addEventListener('DOMContentLoaded', () => {
         loadNotebook();
         loadAnkiDeck();
