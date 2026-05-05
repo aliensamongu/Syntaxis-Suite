@@ -62,6 +62,7 @@
         }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+        .std-btn:disabled { opacity: 0.5; pointer-events: none; }
 
         /* Workspace Area */
         #workspace { 
@@ -196,8 +197,17 @@
                 
                 <input type="text" id="lexParsing" placeholder="Morphology / Parsing" style="color: var(--rustic-orange); font-weight: bold;" readonly>
                 
-                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;"></textarea>
+                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;" oninput="syncPastedDef()"></textarea>
+                
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width: 100%; margin-top: 5px; background: #c0392b; color: white;" disabled>+ Add to Flashcard Deck</button>
+                <div id="cardStatusMsg" style="font-size: 10px; color: #2ecc71; text-align: center; display: none;">Card Added!</div>
             </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>3. Flashcard Deck</h3>
+            <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
+            <button class="std-btn" onclick="exportDeckCsv()" style="width: 100%; background: #c0392b; color: white; margin-top: 5px;" title="Exports Tab-separated CSV for easy Anki Import">⬇ Export Deck (Anki CSV)</button>
         </div>
 
     </div>
@@ -733,6 +743,7 @@
         
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
+        document.getElementById('addCardBtn').disabled = false; // Enable add button
         
         const rawWord = document.getElementById(id).innerText.replace(/[.,;!?׃]/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
@@ -755,6 +766,12 @@
         }
     }
 
+    function syncPastedDef() {
+        if(selectedWordId && lexiconData[selectedWordId]) {
+            lexiconData[selectedWordId].def = document.getElementById('lexDef').value;
+        }
+    }
+
     function clearSelection() {
         if(selectedWordId) {
             const el = document.getElementById(selectedWordId);
@@ -764,11 +781,13 @@
         lexEditor.style.opacity = '0.5';
         lexEditor.style.pointerEvents = 'none';
         lexEditor.style.borderLeft = "4px solid #7f8c8d";
+        document.getElementById('addCardBtn').disabled = true; // Disable add button
         document.getElementById('lex-target-word').innerText = "No Word Selected";
         document.getElementById('lexLemma').value = '';
         document.getElementById('lexStrongs').value = '';
         document.getElementById('lexParsing').value = '';
         document.getElementById('lexDef').value = '';
+        document.getElementById('cardStatusMsg').style.display = 'none';
     }
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
@@ -805,8 +824,79 @@
         a.click();
     }
 
-    // Load saved notebook data when the app boots up
-    window.addEventListener('DOMContentLoaded', loadNotebook);
+    // ---------------------------------------------------------
+    // NEW: FLASHCARD DECK LOGIC
+    // ---------------------------------------------------------
+    let ankiDeck = [];
+
+    function loadAnkiDeck() {
+        ankiDeck = JSON.parse(localStorage.getItem('syntaxis_anki_deck') || '[]');
+        document.getElementById('deckCount').innerText = ankiDeck.length;
+    }
+
+    function addSelectedWordToDeck() {
+        if(!selectedWordId) return;
+        const targetWord = document.getElementById('lex-target-word').innerText;
+        const lemma = document.getElementById('lexLemma').value;
+        const strongs = document.getElementById('lexStrongs').value;
+        const parsing = document.getElementById('lexParsing').value;
+        const definition = document.getElementById('lexDef').value;
+
+        if(!targetWord || (!definition && !strongs)) {
+            alert("Need at least a word and some data (definition or Strong's) to create a card.");
+            return;
+        }
+
+        const card = {
+            front: targetWord,
+            back: formatAnkiBack(lemma, strongs, parsing, definition)
+        };
+
+        ankiDeck.push(card);
+        localStorage.setItem('syntaxis_anki_deck', JSON.stringify(ankiDeck));
+        document.getElementById('deckCount').innerText = ankiDeck.length;
+        
+        const msg = document.getElementById('cardStatusMsg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 1500);
+    }
+
+    // Formats the back of the card with proper HTML for Anki
+    function formatAnkiBack(lemma, strongs, parsing, def) {
+        let back = "";
+        if(lemma) back += `<b>Lemma:</b> ${lemma}<br>`;
+        if(strongs) back += `<b>Strong's:</b> ${strongs}<br>`;
+        if(parsing) back += `<b>Morphology:</b> ${parsing}<br>`;
+        if(def) back += `<br>${def.replace(/\n/g, '<br>')}`;
+        return back.trim();
+    }
+
+    // Exports deck as Tab-separated CSV, which is easily handled by Anki import
+    function exportDeckCsv() {
+        if (ankiDeck.length === 0) {
+            alert("Flashcard deck is empty.");
+            return;
+        }
+        let csvContent = ""; // Anki works perfectly with tab-separated, no quotes required for most data
+        ankiDeck.forEach(card => {
+            // Tab separator, escape existing tabs just in case (rare), ensure no newlines in the front/back cells
+            const front = card.front.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            const back = card.back.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            csvContent += `${front}\t${back}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: "text/tab-separated-values" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Anki_Deck.txt";
+        a.click();
+    }
+
+    // Load saved notebook data and flashcard deck when the app boots up
+    window.addEventListener('DOMContentLoaded', () => {
+        loadNotebook();
+        loadAnkiDeck();
+    });
 
 </script>
 </body>
