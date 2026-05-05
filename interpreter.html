@@ -10,6 +10,7 @@
     <style>
         :root {
             --sidebar-width: 360px;
+            --notebook-width: 340px;
             --bg-main: #e4e7ea;
             
             /* Oxford Scholar Palette */
@@ -30,7 +31,7 @@
             overflow: hidden; background: var(--bg-main);
         }
         
-        /* Sidebar */
+        /* Left Sidebar */
         #sidebar {
             width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
@@ -61,21 +62,19 @@
         }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+        .std-btn:disabled { opacity: 0.5; pointer-events: none; }
 
         /* Workspace Area */
         #workspace { 
             flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; 
             background: var(--bg-main); padding: 40px; box-sizing: border-box; 
-            gap: 30px; align-items: center; 
-            transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            gap: 30px; align-items: center; transition: 0.3s ease;
         }
-        
-        body.drawer-open #workspace { margin-right: 60vw; }
 
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* HEADER CONTROLS (Font Sizer & Toggle) */
+        /* HEADER CONTROLS */
         .header-controls { display: flex; align-items: center; gap: 20px; }
         .font-sizer { display: flex; align-items: center; gap: 8px; }
         .font-sizer span { font-family: -apple-system, sans-serif; font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px;}
@@ -96,7 +95,6 @@
         .word:hover { background-color: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; color: var(--oxford-navy); }
         
-        /* Language Specific Classes */
         .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
 
         /* INTERLINEAR STYLES */
@@ -107,19 +105,37 @@
         .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
-        /* UNIVERSAL APP NAV STYLING */
+        /* UNIVERSAL APP NAV */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: #C5A059; }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
         
-        /* The Sidebar Dynamic Info Card */
+        /* Sidebar Dynamic Info Card */
         #lexicon-editor {
             opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;
             background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small);
-            border-left: 4px solid #7f8c8d; /* Default Slate Gray */
+            border-left: 4px solid #7f8c8d;
             transition: 0.3s;
         }
+
+        /* Right Sidebar: Research Notebook */
+        #notebook-sidebar {
+            width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0;
+            border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column;
+            z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
+        }
+        #notebook-sidebar.open { display: flex; }
+        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: auto;}
+        
+        #research-notebook {
+            flex-grow: 1; resize: none; background: var(--oxford-cream);
+            color: var(--oxford-navy-dark); border: none; padding: 15px;
+            border-radius: var(--radius-small); font-family: Georgia, serif;
+            font-size: 14px; line-height: 1.6; outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
     </style>
 </head>
@@ -136,10 +152,10 @@
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 8px;">
-            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
+            <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage / Section</h3>
             
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)">
+                <input type="text" id="bibleRefInput" placeholder="Ref (e.g. Matt 1) or Section (e.g. Intro)">
                 <div style="display: flex; gap: 5px;">
                     <select id="bibleModuleSelect" style="flex: 2;">
                         <optgroup label="Interlinear">
@@ -151,8 +167,12 @@
                             <option value="hebrew_ot.xml">Hebrew OT</option>
                         </optgroup>
                         <optgroup label="English Translations">
+                            <option value="kjv_strongs.xml">KJV with Strong's</option>
                             <option value="emt.xml">English Majority Text (EMT)</option>
                             <option value="esv.xml">English Standard Version (ESV)</option>
+                        </optgroup>
+                        <optgroup label="Theological Library">
+                            <option value="luther_tt.xml">Luther's Table Talk</option>
                         </optgroup>
                     </select>
                     <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Fetches directly from local XML module">Load Text</button>
@@ -180,7 +200,20 @@
                 
                 <input type="text" id="lexParsing" placeholder="Morphology / Parsing" style="color: var(--rustic-orange); font-weight: bold;" readonly>
                 
-                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;"></textarea>
+                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;" oninput="syncPastedDef()"></textarea>
+                
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width: 100%; margin-top: 5px; background: #c0392b; color: white;" disabled>+ Add to Flashcard Deck</button>
+                <div id="cardStatusMsg" style="font-size: 10px; color: #2ecc71; text-align: center; display: none;">Card Added!</div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>3. Flashcard Deck</h3>
+            <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
+            
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
             </div>
         </div>
 
@@ -205,6 +238,8 @@
                     <span>Size</span>
                     <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
                 </div>
+
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;" title="Open Research Notebook">📓 Notebook</button>
             </div>
         </div>
         
@@ -214,15 +249,32 @@
     </div>
 </div>
 
+<div id="notebook-sidebar">
+    <div class="notebook-inner">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+            <h2 style="font-size: 20px;">Research <span style="font-weight: 300; color: var(--oxford-gold);">Notebook</span></h2>
+            <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
+        </div>
+        
+        <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
+        
+        <textarea id="research-notebook" placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></textarea>
+        
+        <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
+    </div>
+</div>
+
 <script>
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container');
     const originalToggleLabel = document.getElementById('original-toggle-label');
     const originalToggle = document.getElementById('originalToggle');
+    const notebookSidebar = document.getElementById('notebook-sidebar');
     
     let selectedWordId = null;
     let lexiconData = {}; 
+    let wordIndex = 0; // Moved wordIndex to global scope for shared use
 
     // ---------------------------------------------------------
     // MASTER BIBLE INDEXES
@@ -269,19 +321,16 @@
     async function getStrongsDef(key) {
         if (!key) return "";
         
-        // 1. CHECK GREEK
         if (key.startsWith('G')) {
             let entry = null;
             if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
             else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
-            
             if (entry) {
                 if (typeof entry === 'string') return entry;
                 return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
             }
         }
 
-        // 2. CHECK HEBREW
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
@@ -299,16 +348,13 @@
                 const lemmaNode = entryNode.querySelector('w');
                 const lemma = lemmaNode ? lemmaNode.textContent : "";
                 const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
-                
                 const meaningNode = entryNode.querySelector('meaning');
                 const meaning = meaningNode ? meaningNode.textContent : "";
-                
                 const bdbNode = entryNode.querySelector('bdb');
                 const bdb = bdbNode ? bdbNode.textContent : "";
 
                 let result = `[${lemma}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
                 if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`;
-                
                 return result;
             }
         }
@@ -318,7 +364,6 @@
 
     function parseRMAC(rmac) {
         if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; 
-
         const parts = rmac.toLowerCase().split('-');
         const pos = parts[0];
         let color = "#7f8c8d";
@@ -348,7 +393,6 @@
                 if (parts.length > 1) {
                     const rawTvm = parts[1]; 
                     const tvm = rawTvm.replace(/^[0-9]+/, ''); 
-                    
                     if (tvm.length >= 3) {
                         const mood = tvm[2];
                         if (mood === 'i') color = "#c0392b"; 
@@ -363,7 +407,6 @@
                             if (numMatch[0] === '2') ord = "2nd ";
                             if (numMatch[0] === '3') ord = "3rd ";
                         }
-                        
                         if (tenses[tvm[0]]) tvmStr.push(ord + tenses[tvm[0]]);
                         if (voices[tvm[1]]) tvmStr.push(voices[tvm[1]]);
                         if (moods[tvm[2]]) tvmStr.push(moods[tvm[2]]);
@@ -372,11 +415,8 @@
                 }
                 if (parts.length > 2) {
                     const pn = parts[2];
-                    if (pn.length >= 2 && persons[pn[0]]) {
-                        details.push(`(${persons[pn[0]]} ${numbers[pn[1]] || ''})`);
-                    } else if (pn.length >= 3) {
-                        details.push(`(${cases[pn[0]] || ''} ${numbers[pn[1]] || ''} ${genders[pn[2]] || ''})`);
-                    }
+                    if (pn.length >= 2 && persons[pn[0]]) details.push(`(${persons[pn[0]]} ${numbers[pn[1]] || ''})`);
+                    else if (pn.length >= 3) details.push(`(${cases[pn[0]] || ''} ${numbers[pn[1]] || ''} ${genders[pn[2]] || ''})`);
                 }
                 break;
             default: text = pos.toUpperCase(); color = "#7f8c8d"; break;
@@ -385,25 +425,19 @@
         if (['n','a','t','p','r','c','d','k','i','x','q','f','s'].includes(pos)) {
             if (parts.length > 1) {
                 const cng = parts[1];
-                if (cng.length >= 3) {
-                    details.push(`${cases[cng[0]] || ''} ${numbers[cng[1]] || ''} ${genders[cng[2]] || ''}`);
-                }
+                if (cng.length >= 3) details.push(`${cases[cng[0]] || ''} ${numbers[cng[1]] || ''} ${genders[cng[2]] || ''}`);
             }
         }
 
         let displayStr = text;
-        if (details.length > 0) {
-            displayStr += ": " + details.join(' ').replace(/\s+/g, ' ').trim();
-        } else if (parts.length > 1) {
-            displayStr += ` (${parts.slice(1).join('-').toUpperCase()})`;
-        }
+        if (details.length > 0) displayStr += ": " + details.join(' ').replace(/\s+/g, ' ').trim();
+        else if (parts.length > 1) displayStr += ` (${parts.slice(1).join('-').toUpperCase()})`;
 
         return { text: displayStr, color: color };
     }
 
-
     // ---------------------------------------------------------
-    // THE BILINGUAL BIBLE ENGINE (Zefania + OSIS + SimpleXML + Interlinear)
+    // THE ENGINE (Bilingual + Library Texts)
     // ---------------------------------------------------------
     
     function toggleOriginalText() {
@@ -422,6 +456,75 @@
         clearSelection();
 
         try {
+            // =====================================
+            // NEW: LIBRARY PARSER INTERCEPT (Non-Bible Texts)
+            // =====================================
+            if (fileName === 'luther_tt.xml') {
+                originalToggleContainer.style.display = 'none';
+                
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
+                const xmlText = await response.text();
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                
+                const searchTerm = query.trim().toLowerCase();
+                let targetDiv = null;
+                
+                // Search the XML for a section title or ID that matches the user's query
+                const divs = xmlDoc.querySelectorAll("div1");
+                divs.forEach(d => {
+                    const title = (d.getAttribute('title') || '').toLowerCase();
+                    const id = (d.getAttribute('id') || '').toLowerCase();
+                    if (title.includes(searchTerm) || id === searchTerm) {
+                        targetDiv = d;
+                    }
+                });
+
+                if (!targetDiv) throw new Error(`Could not find a section matching "${query}" in Luther's Table Talk.`);
+                
+                passageContainer.innerHTML = '';
+                lexiconData = {}; 
+                selectedWordId = null;
+                wordIndex = 0;
+
+                // Add Title Header
+                const titleHeading = document.createElement('h2');
+                titleHeading.style.color = "var(--oxford-navy)";
+                titleHeading.style.marginBottom = "20px";
+                titleHeading.innerText = targetDiv.getAttribute('title') || "Section";
+                passageContainer.appendChild(titleHeading);
+
+                // Extract all paragraph tags
+                const paragraphs = targetDiv.querySelectorAll("p");
+                paragraphs.forEach(p => {
+                    const pBlock = document.createElement('p');
+                    pBlock.style.marginBottom = "15px";
+                    
+                    const words = p.textContent.split(/(\s+)/);
+                    words.forEach(chunk => {
+                        if (chunk.trim() !== '') {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = chunk;
+                            
+                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?“”"']/g, '') };
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                            pBlock.appendChild(span);
+                        } else {
+                            pBlock.appendChild(document.createTextNode(chunk));
+                        }
+                    });
+                    passageContainer.appendChild(pBlock);
+                });
+                return;
+            }
+
+            // =====================================
+            // STANDARD BIBLE PARSER
+            // =====================================
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
             const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             if (!match) {
@@ -436,11 +539,76 @@
             passageContainer.innerHTML = ''; 
             lexiconData = {}; 
             selectedWordId = null;
-            let wordIndex = 0;
+            wordIndex = 0;
+            
+            let refIndex = { current: 0 };
 
-            // =====================================
-            // PATH C: THE DUAL-FETCH INTERLINEAR
-            // =====================================
+            const processZefaniaNodes = (vers, container, bNum) => {
+                const isOT = bNum >= 1 && bNum <= 39;
+                const prefix = isOT ? 'H' : 'G';
+                
+                Array.from(vers.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${refIndex.current++}`;
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'gr') {
+                        const rawStr = node.getAttribute('str') || '';
+                        const rmac = node.getAttribute('rmac') || '';
+                        
+                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0]; 
+                        let finalStrongs = "";
+                        if (cleanStr) {
+                            if (/^[GH]/i.test(cleanStr)) finalStrongs = cleanStr;
+                            else finalStrongs = prefix + cleanStr;
+                        }
+
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word has-data';
+                                span.id = `w-${refIndex.current++}`;
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'style') {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${refIndex.current++}`;
+                                span.style.fontStyle = 'italic';
+                                span.style.color = '#888';
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    }
+                });
+            };
+
             if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
                 const isHebrew = fileName === 'ot_interlinear';
                 
@@ -494,27 +662,7 @@
                     origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     
                     if (grkVerses[i]) {
-                        const grNodes = grkVerses[i].querySelectorAll('gr');
-                        grNodes.forEach(gr => {
-                            const str = gr.getAttribute('str') || '';
-                            const rmac = gr.getAttribute('rmac') || '';
-                            const text = gr.textContent.trim();
-
-                            const span = document.createElement('span');
-                            span.className = 'word has-data';
-                            span.id = `w-${wordIndex++}`;
-                            span.innerText = text + " "; 
-                            
-                            let finalStrongs = "";
-                            if (str) {
-                                if (/^[GH]/i.test(str)) finalStrongs = str;
-                                else finalStrongs = (isHebrew ? "H" : "G") + str;
-                            }
-
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                            origLine.appendChild(span);
-                        });
+                        processZefaniaNodes(grkVerses[i], origLine, bNum);
                     }
                     block.appendChild(origLine);
 
@@ -557,29 +705,7 @@
                     vSpan.innerText = vers.getAttribute('vnumber');
                     passageContainer.appendChild(vSpan);
 
-                    const grNodes = vers.querySelectorAll('gr');
-                    if (grNodes.length > 0) {
-                        grNodes.forEach(gr => {
-                            const str = gr.getAttribute('str') || '';
-                            const rmac = gr.getAttribute('rmac') || '';
-                            const text = gr.textContent.trim();
-
-                            const span = document.createElement('span');
-                            span.className = 'word has-data';
-                            span.id = `w-${wordIndex++}`;
-                            span.innerText = text + " "; 
-
-                            let finalStrongs = "";
-                            if (str) {
-                                if (/^[GH]/i.test(str)) finalStrongs = str;
-                                else finalStrongs = (isHebrew ? "H" : "G") + str;
-                            }
-
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                            passageContainer.appendChild(span);
-                        });
-                    }
+                    processZefaniaNodes(vers, passageContainer, bNum);
                     passageContainer.appendChild(document.createTextNode(" "));
                 });
                 
@@ -603,7 +729,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span');
                             span.className = 'word';
-                            span.id = `w-${wordIndex++}`;
+                            span.id = `w-${refIndex.current++}`;
                             span.innerText = chunk;
                             
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
@@ -633,7 +759,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span');
                             span.className = 'word';
-                            span.id = `w-${wordIndex++}`;
+                            span.id = `w-${refIndex.current++}`;
                             span.innerText = chunk;
                             
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
@@ -668,7 +794,7 @@
         originalToggleContainer.style.display = 'none';
 
         const words = raw.split(/(\s+)/); 
-        let wordIndex = 0;
+        wordIndex = 0;
 
         words.forEach(chunk => {
             if (chunk.trim() === '') { passageContainer.appendChild(document.createTextNode(chunk)); } 
@@ -695,8 +821,9 @@
         
         lexEditor.style.opacity = '1';
         lexEditor.style.pointerEvents = 'auto';
+        document.getElementById('addCardBtn').disabled = false;
         
-        const rawWord = document.getElementById(id).innerText.replace(/[.,;!?׃]/g, '');
+        const rawWord = document.getElementById(id).innerText.replace(/[.,;!?׃“”"']/g, '');
         document.getElementById('lex-target-word').innerText = rawWord;
         
         const d = lexiconData[id];
@@ -717,6 +844,12 @@
         }
     }
 
+    function syncPastedDef() {
+        if(selectedWordId && lexiconData[selectedWordId]) {
+            lexiconData[selectedWordId].def = document.getElementById('lexDef').value;
+        }
+    }
+
     function clearSelection() {
         if(selectedWordId) {
             const el = document.getElementById(selectedWordId);
@@ -726,14 +859,146 @@
         lexEditor.style.opacity = '0.5';
         lexEditor.style.pointerEvents = 'none';
         lexEditor.style.borderLeft = "4px solid #7f8c8d";
+        document.getElementById('addCardBtn').disabled = true;
         document.getElementById('lex-target-word').innerText = "No Word Selected";
         document.getElementById('lexLemma').value = '';
         document.getElementById('lexStrongs').value = '';
         document.getElementById('lexParsing').value = '';
         document.getElementById('lexDef').value = '';
+        document.getElementById('cardStatusMsg').style.display = 'none';
     }
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
+
+    // ---------------------------------------------------------
+    // RESEARCH NOTEBOOK LOGIC
+    // ---------------------------------------------------------
+    function toggleNotebook() {
+        notebookSidebar.classList.toggle('open');
+    }
+
+    function autoSaveNotebook() {
+        const text = document.getElementById('research-notebook').value;
+        localStorage.setItem('syntaxis_interpreter_notebook', text);
+    }
+
+    function loadNotebook() {
+        const savedText = localStorage.getItem('syntaxis_interpreter_notebook');
+        if (savedText) {
+            document.getElementById('research-notebook').value = savedText;
+        }
+    }
+
+    function exportNotebook() {
+        const text = document.getElementById('research-notebook').value;
+        if (!text.trim()) {
+            alert("Notebook is empty.");
+            return;
+        }
+        const blob = new Blob([text], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Research_Notebook.txt";
+        a.click();
+    }
+
+    // ---------------------------------------------------------
+    // FLASHCARD DECK LOGIC (Dual-Export Upgraded)
+    // ---------------------------------------------------------
+    let ankiDeck = [];
+
+    function loadAnkiDeck() {
+        ankiDeck = JSON.parse(localStorage.getItem('syntaxis_anki_deck') || '[]');
+        document.getElementById('deckCount').innerText = ankiDeck.length;
+    }
+
+    function addSelectedWordToDeck() {
+        if(!selectedWordId) return;
+        const targetWord = document.getElementById('lex-target-word').innerText;
+        const lemma = document.getElementById('lexLemma').value;
+        const strongs = document.getElementById('lexStrongs').value;
+        const parsing = document.getElementById('lexParsing').value;
+        const definition = document.getElementById('lexDef').value;
+
+        if(!targetWord || (!definition && !strongs)) {
+            alert("Need at least a word and some data (definition or Strong's) to create a card.");
+            return;
+        }
+
+        const card = {
+            front: targetWord,
+            lemma: lemma,
+            strongs: strongs,
+            parsing: parsing,
+            def: definition
+        };
+
+        ankiDeck.push(card);
+        localStorage.setItem('syntaxis_anki_deck', JSON.stringify(ankiDeck));
+        document.getElementById('deckCount').innerText = ankiDeck.length;
+        
+        const msg = document.getElementById('cardStatusMsg');
+        msg.style.display = 'block';
+        setTimeout(() => msg.style.display = 'none', 1500);
+    }
+
+    function formatAnkiBack(lemma, strongs, parsing, def) {
+        let back = "";
+        if(lemma) back += `<b>Lemma:</b> ${lemma}<br>`;
+        if(strongs) back += `<b>Strong's:</b> ${strongs}<br>`;
+        if(parsing) back += `<b>Morphology:</b> ${parsing}<br>`;
+        if(def) back += `<br>${def.replace(/\n/g, '<br>')}`;
+        return back.trim();
+    }
+
+    function exportAnki() {
+        if (ankiDeck.length === 0) { alert("Flashcard deck is empty."); return; }
+        
+        let csvContent = "";
+        ankiDeck.forEach(card => {
+            const front = (card.front || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+            let back = card.back ? card.back : formatAnkiBack(card.lemma, card.strongs, card.parsing, card.def);
+            back = back.replace(/\t/g, ' ').replace(/\n/g, ' ');
+            csvContent += `${front}\t${back}\n`;
+        });
+
+        const blob = new Blob([csvContent], { type: "text/tab-separated-values" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Anki_Deck.txt";
+        a.click();
+    }
+
+    function exportSpreadsheet() {
+        if (ankiDeck.length === 0) { alert("Flashcard deck is empty."); return; }
+        
+        let csvContent = "Word\tLemma\tStrong's\tMorphology\tDefinition\n";
+        
+        ankiDeck.forEach(card => {
+            const front = (card.front || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+            if (card.back && !card.lemma) {
+                const cleanBack = card.back.replace(/<[^>]*>?/gm, ' ');
+                csvContent += `${front}\t\t\t\t${cleanBack}\n`;
+            } else {
+                const l = (card.lemma || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const s = (card.strongs || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const p = (card.parsing || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                const d = (card.def || "").replace(/\t/g, ' ').replace(/\n/g, ' ');
+                csvContent += `${front}\t${l}\t${s}\t${p}\t${d}\n`;
+            }
+        });
+
+        const blob = new Blob([csvContent], { type: "text/tab-separated-values" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Vocabulary_List.tsv";
+        a.click();
+    }
+
+    window.addEventListener('DOMContentLoaded', () => {
+        loadNotebook();
+        loadAnkiDeck();
+    });
 
 </script>
 </body>
