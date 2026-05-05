@@ -605,7 +605,7 @@
         return roman.toLowerCase();
     }
 
-    // PRECISION OMNI-SCANNER (Text/HTML Fix)
+    // PRECISION OMNI-SCANNER (Roman Numeral + 1 Offset Upgrade)
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -622,7 +622,7 @@
                 if (!response.ok) throw new Error(`Missing ${volFileName}. Please ensure all 6 volumes are in the root directory.`);
                 const xmlText = await response.text();
                 
-                // CRITICAL FIX: Parse as HTML to bypass strict XML failure on unescaped tags/ampersands
+                // Parse as HTML to bypass strict XML failure on unescaped tags/ampersands
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/html");
                 
@@ -630,25 +630,32 @@
                 const b = osisBook.toLowerCase();
                 const bTitle = currentLoadedBook.toLowerCase();
                 const bShort = b.substring(0, 3);
+                
+                const cInt = parseInt(currentLoadedChapter);
                 const c = currentLoadedChapter;
-                const cRom = toRoman(parseInt(c)); 
+                const cRom = toRoman(cInt); 
+                const cRomPlus1 = toRoman(cInt + 1); // The "Matthew Henry Offset"
                 
                 const allElements = xmlDoc.querySelectorAll("*");
                 let matchedBlocks = [];
                 let addedIds = new Set();
                 
+                // Master net of every conceivable format ThML editors use, now including the +1 Chapter offset!
                 const matchers = [
                     `bible:${b}.${c}`, `bible:${b}.${c}.`, `bible:${b}.${c}-`,
                     `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`,
                     `${b}.${cRom}`, `${b}.${cRom}-`, `${b}.${cRom}.`,
                     `${bTitle}.${cRom}`, `${bTitle}.${cRom}-`, `${bTitle}.${cRom}.`,
                     `${osisBook.toLowerCase()}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}-`, `${osisBook.toLowerCase()}.${cRom}.`,
-                    `${b}_${cRom}`, `${b}_${c}` 
+                    `${b}_${cRom}`, `${b}_${c}`,
+                    // THE MATTHEW HENRY OFFSET MATCHERS
+                    `${b}.${cRomPlus1}`, `${b}.${cRomPlus1}-`, `${b}.${cRomPlus1}.`,
+                    `${bTitle}.${cRomPlus1}`, `${bTitle}.${cRomPlus1}-`, `${bTitle}.${cRomPlus1}.`,
+                    `${osisBook.toLowerCase()}.${cRomPlus1}`, `${osisBook.toLowerCase()}.${cRomPlus1}-`, `${osisBook.toLowerCase()}.${cRomPlus1}.`
                 ];
                 const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${bTitle}|${c}|`];
                 
                 allElements.forEach(el => {
-                    // HTML parsing converts attributes to lowercase automatically
                     const id = (el.getAttribute('id') || '').toLowerCase();
                     const osis = (el.getAttribute('osisref') || el.getAttribute('osisRef') || '').toLowerCase();
                     const parsed = (el.getAttribute('parsed') || '').toLowerCase();
