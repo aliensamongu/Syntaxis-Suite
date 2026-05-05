@@ -56,6 +56,7 @@
         }
         input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
         textarea { height: 120px; flex-shrink: 0; resize: none; line-height: 1.4; }
+        select { cursor: pointer; font-weight: bold; }
         
         #word-bank {
             height: 250px; flex-shrink: 0; margin-top: 15px; overflow-y: auto; padding: 15px;
@@ -140,11 +141,7 @@
         .context-item:hover { background: #e8e2d2; }
         .context-header { padding: 6px 20px; font-size: 10px; font-weight: bold; color: var(--oxford-crimson); text-transform: uppercase; }
 
-        .floating-card {
-            background: var(--oxford-cream); padding: 8px; border-radius: var(--radius-medium);
-            border: 1px solid var(--oxford-navy-dark);
-        }
-
+        .floating-card { background: var(--oxford-cream); padding: 8px; border-radius: var(--radius-medium); border: 1px solid var(--oxford-navy-dark); }
         #variant-modal { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(27, 38, 59, 0.95); z-index: 3000; padding: 25px; flex-direction: column; gap: 10px; }
         #variant-modal h4 { color: var(--oxford-gold); margin: 0 0 10px 0; font-size: 18px; }
         #variant-modal.active { display: flex; }
@@ -153,36 +150,11 @@
         
         .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
         .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
-    /* UNIVERSAL APP NAV STYLING */
-        .app-nav { 
-            display: flex; 
-            gap: 5px; 
-            margin-bottom: 20px; 
-            margin-top: 10px; 
-        }
-        .app-nav a { 
-            flex: 1; 
-            text-align: center; 
-            padding: 8px 4px; 
-            font-size: 9px; 
-            color: #F8F5EE; /* Oxford Cream */
-            text-decoration: none; 
-            text-transform: uppercase; 
-            font-weight: bold; 
-            letter-spacing: 1px; 
-            background: #121A2A; /* Oxford Navy Dark */
-            border: 1px solid rgba(255,255,255,0.05); 
-            border-radius: 4px; 
-            transition: 0.2s; 
-        }
-        .app-nav a:hover { 
-            border-color: #C5A059; /* Oxford Gold */
-        }
-        .app-nav a.active { 
-            background: #C5A059; /* Oxford Gold */
-            color: #121A2A; /* Oxford Navy Dark */
-            border-color: #C5A059; 
-        }
+
+        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: #C5A059; }
+        .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
     </style>
 </head>
 <body>
@@ -255,6 +227,25 @@
 <div id="right-sidebar">
     <div class="right-inner">
         <h3>Text Source</h3>
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+            <input type="text" id="dbRefInput" placeholder="Enter Ref (e.g. Matt 1)">
+            <select id="dbModuleSelect">
+                <optgroup label="Original Languages">
+                    <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                    <option value="hebrew_ot.xml">Hebrew OT</option>
+                </optgroup>
+                <optgroup label="English Translations">
+                    <option value="kjv_strongs.xml">KJV with Strong's</option>
+                    <option value="emt.xml">English Majority Text</option>
+                    <option value="esv.xml">English Standard Version</option>
+                </optgroup>
+            </select>
+            <button class="std-btn" onclick="loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
+            <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center; margin-top: 5px;"></div>
+        </div>
+        
+        <div style="text-align: center; font-size: 10px; color: #888; margin: 5px 0;">— OR PASTE TEXT —</div>
+        
         <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank(); autoSave();"></textarea>
         <div id="word-bank"></div>
     </div>
@@ -329,10 +320,111 @@
     let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     
-    // SMOOTH MOVES: snapEnabled is now false by default!
     let currentResizePoint = null, zoomLevel = 1, snapEnabled = false, rightClickedEl = null;
     
     canvas.width = 4000; canvas.height = 4000;
+
+    // --- BIBLE DATA MAPS ---
+    const abbrevs = {
+        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+        "heb": "hebrews", "jas": "james", "rev": "revelation"
+    };
+    const bnumberMap = {
+        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
+        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
+    };
+    const osisMap = {
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
+    };
+
+    // --- DIAGRAMMER BIBLE ENGINE (Text Extraction Only) ---
+    async function loadNativeBibleTextOnly(query, fileName) {
+        if (!query.trim()) return;
+        const status = document.getElementById('dbStatus');
+        status.innerText = "Extracting text...";
+        
+        try {
+            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            if (!match) { status.innerText = "Error: Invalid Ref."; return; }
+
+            const searchBook = match[1].trim().toLowerCase();
+            const chapNum = match[2];
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`File ${fileName} missing`);
+            const xmlText = await response.text();
+
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+            const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
+
+            let extractedText = "";
+
+            if (isZefania) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('VERS');
+                verses.forEach(vers => {
+                    Array.from(vers.childNodes).forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE) extractedText += node.textContent + " ";
+                        else if (node.nodeName.toLowerCase() === 'gr' || node.nodeName.toLowerCase() === 'style') {
+                            extractedText += node.textContent + " ";
+                        }
+                    });
+                });
+            } else if (isOSIS) {
+                const osisId = osisMap[fullBookName];
+                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => { extractedText += vers.textContent + " "; });
+            } else if (isSimpleXML) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => { extractedText += vers.textContent + " "; });
+            }
+
+            document.getElementById('passageInput').value = extractedText.replace(/\s+/g, ' ').trim();
+            updateWordBank();
+            autoSave();
+            status.innerText = "Loaded successfully!";
+            setTimeout(() => status.innerText = "", 3000);
+
+        } catch (error) {
+            status.innerText = error.message;
+        }
+    }
+
 
     canvas.oncontextmenu = (e) => {
         e.preventDefault();
@@ -439,10 +531,7 @@
         if (editingVariantId) {
             const v = apparatusData.find(item => item.id === editingVariantId);
             if (v) {
-                v.symbol = symbol;
-                v.reading = reading;
-                v.conviction = conviction;
-                v.date = date;
+                v.symbol = symbol; v.reading = reading; v.conviction = conviction; v.date = date;
             }
         } else {
             let targetId = null;
@@ -461,10 +550,7 @@
         const list = document.getElementById('apparatus-list'); list.innerHTML = '';
         
         const labels = {
-            'highly': 'Highly Likely',
-            'likely': 'Likely',
-            'possible': 'Possible',
-            'unlikely': 'Unlikely'
+            'highly': 'Highly Likely', 'likely': 'Likely', 'possible': 'Possible', 'unlikely': 'Unlikely'
         };
 
         apparatusData.forEach(v => { 
@@ -479,7 +565,6 @@
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
                     </svg>
                 </button>
-                
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; padding-right: 25px;">
                     <div><span class="ms-symbol">${v.symbol}</span>${targetHtml}</div>
                     <div style="text-align:right;">${badgeHtml}<div class="ms-date" style="margin-top:3px;">${v.date}</div></div>
