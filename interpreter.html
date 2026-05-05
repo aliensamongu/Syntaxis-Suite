@@ -21,17 +21,9 @@
             --radius-medium: 12px;
         }
 
-        body {
-            margin: 0; display: flex; height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-            overflow: hidden; background: var(--bg-main);
-        }
+        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background: var(--bg-main); }
         
-        #sidebar {
-            width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
-            border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
-            z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
-        }
+        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
         .sidebar-inner::-webkit-scrollbar { width: 6px; }
         .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
@@ -39,29 +31,17 @@
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
-        input[type="text"], textarea, select {
-            width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
-            border: 1px solid var(--oxford-navy-dark); padding: 10px;
-            font-family: inherit; font-size: 13px; color: var(--oxford-navy);
-            background: var(--oxford-cream); transition: 0.1s; outline: none;
-        }
-        textarea { height: 80px; resize: vertical; line-height: 1.4; overflow-y: auto; }
-        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+        input[type="text"], textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); transition: 0.1s; outline: none; }
+        textarea { height: 80px; resize: vertical; line-height: 1.4; }
 
-        .std-btn {
-            border: none; padding: 10px; border-radius: var(--radius-small);
-            cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
-            transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy);
-        }
+        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy); }
         .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
 
-        /* NAV MENU */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
-        /* DROPDOWN */
         .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
         .custom-select-btn { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
         .custom-select-btn::after { content: '▼'; font-size: 10px; color: #888; }
@@ -75,7 +55,6 @@
         .option-item { padding: 10px 15px; font-size: 12px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
         .option-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
 
-        /* MAIN */
         #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; align-items: center; }
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -88,9 +67,8 @@
         input:checked + .slider { background-color: var(--oxford-gold); }
         input:checked + .slider:before { transform: translateX(16px); }
 
-        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; width: 100%; transition: font-size 0.2s; }
-        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; position: relative; }
-        .word:hover { background: rgba(0,0,0,0.05); }
+        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; width: 100%; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; }
         .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
 
@@ -121,7 +99,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3>1. Base Passage / Section</h3>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Ref (e.g. Matt 1)">
+                <input type="text" id="bibleRefInput" placeholder="Ref (e.g. John 1)">
                 <div style="display: flex; gap: 5px; align-items: stretch;">
                     <div class="custom-select-wrapper" id="moduleSelectWrapper">
                         <div class="custom-select-btn" id="moduleSelectBtn">NT Interlinear (Greek/EMT)</div>
@@ -145,8 +123,9 @@
                                     <li class="option-item" data-val="esv.xml" onclick="selectModule(this)">ESV</li>
                                 </ul>
                             </li>
-                            <li><div class="group-label">Commentaries</div>
+                            <li><div class="group-label">Theological Library</div>
                                 <ul class="submenu">
+                                    <li class="option-item" data-val="luther_tt.xml" onclick="selectModule(this)">Luther's Table Talk</li>
                                     <li class="option-item" data-val="mhc_sync" onclick="selectModule(this)">Matthew Henry (Auto-Sync)</li>
                                 </ul>
                             </li>
@@ -221,15 +200,6 @@
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
     const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
 
-    window.addEventListener('DOMContentLoaded', () => {
-        const selectBtn = document.getElementById('moduleSelectBtn');
-        const wrapper = document.getElementById('moduleSelectWrapper');
-        const sidebarInner = document.getElementById('main-sidebar-inner');
-        selectBtn.addEventListener('click', (e) => { e.stopPropagation(); wrapper.classList.toggle('open'); sidebarInner.style.overflowY = wrapper.classList.contains('open') ? 'visible' : 'auto'; });
-        document.addEventListener('click', (e) => { if (wrapper.classList.contains('open') && !wrapper.contains(e.target)) { wrapper.classList.remove('open'); sidebarInner.style.overflowY = 'auto'; } });
-        loadNotebook(); loadAnkiDeck();
-    });
-
     function toRoman(num) {
         if (isNaN(num)) return '';
         const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
@@ -249,13 +219,10 @@
                 if (!res.ok) throw new Error(`Missing vol${volNum}.xml.`);
                 const xmlText = await res.text();
                 const doc = new DOMParser().parseFromString(xmlText, "text/html");
-                
-                doc.querySelectorAll("generalinfo, printsourceinfo, printSourceInfo, frontmatter, electronicinfo").forEach(el => el.remove());
-
+                doc.querySelectorAll("generalinfo, printsourceinfo, frontmatter").forEach(el => el.remove());
                 const b = (osisMap[currentLoadedBook] || currentLoadedBook).toLowerCase();
                 const bTitle = currentLoadedBook.toLowerCase();
                 const cInt = parseInt(currentLoadedChapter);
-
                 function findLandmark(chapterVal) {
                     const rom = toRoman(chapterVal);
                     const targets = [ `${b}.${rom}.`, `${b}.${rom}-`, `${bTitle}.${rom}.`, `${bTitle}.${rom}-`, `bible:${b}.${chapterVal}.`, `bible:${b}.${chapterVal}-` ];
@@ -266,12 +233,9 @@
                     });
                     return found;
                 }
-
                 let startNode = findLandmark(cInt) || findLandmark(cInt + 1);
                 if (!startNode) throw new Error(`Chapter Landmark not found.`);
-
                 const stopTargets = [ `${b}.${toRoman(cInt+1)}.`, `${b}.${toRoman(cInt+1)}-`, `bible:${b}.${cInt+1}.`, `${bTitle}.${toRoman(cInt+1)}.` ];
-                
                 passageContainer.innerHTML = `<h2 style="border-bottom: 2px solid var(--oxford-gold); padding-bottom:10px;">Matthew Henry: ${currentLoadedBook.toUpperCase()} ${cInt}</h2>`;
                 let curr = startNode;
                 let count = 0;
@@ -289,12 +253,12 @@
     }
 
     async function loadNativeBible(query, fileName) {
-        passageContainer.innerHTML = `<p style="font-style:italic;">Initializing module...</p>`;
+        passageContainer.innerHTML = "Initializing module...";
         try {
             const res = await fetch(fileName === 'mhc_sync' ? 'vol1.xml' : fileName);
-            if (!res.ok) throw new Error("File not found");
-            const xmlText = await res.text();
-            const doc = new DOMParser().parseFromString(xmlText, "text/html");
+            if (!res.ok) throw new Error("File not found on local server.");
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
             const q = query.trim().toLowerCase();
 
             if (fileName === 'mhc_sync' || !q) {
@@ -310,7 +274,7 @@
             }
 
             const match = q.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            if (!match) throw new Error("Invalid Reference");
+            if (!match) throw new Error("Invalid Reference.");
             currentLoadedBook = abbrevs[match[1]] || match[1];
             currentLoadedChapter = match[2];
 
@@ -328,8 +292,7 @@
 
             if (!chapNode) throw new Error(`Could not find ${currentLoadedBook} ${currentLoadedChapter}`);
 
-            const verses = chapNode.querySelectorAll('VERS, verse');
-            verses.forEach((v, i) => {
+            chapNode.querySelectorAll('VERS, verse').forEach((v, i) => {
                 const block = document.createElement('div');
                 block.className = 'verse-block';
                 const vNum = document.createElement('span'); vNum.className = 'verse-num'; vNum.innerText = i+1;
@@ -348,6 +311,20 @@
                 passageContainer.appendChild(block);
             });
         } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
+    }
+
+    function triggerLoadModule() {
+        const ref = document.getElementById('bibleRefInput').value;
+        if (!ref && selectedModuleValue !== 'mhc_sync') return;
+        document.getElementById('commentaryToggle').checked = false;
+        loadNativeBible(ref, selectedModuleValue);
+    }
+
+    function selectModule(element) {
+        selectedModuleValue = element.getAttribute('data-val');
+        document.getElementById('moduleSelectBtn').innerText = element.innerText;
+        document.getElementById('moduleSelectWrapper').classList.remove('open');
+        document.getElementById('main-sidebar-inner').style.overflowY = 'auto';
     }
 
     function handleWordClick(id) {
@@ -387,12 +364,6 @@
     function exportNotebook() {
         const blob = new Blob([document.getElementById('research-notebook').value], { type: "text/plain" });
         const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Notebook.txt"; a.click();
-    }
-    function selectModule(element) {
-        selectedModuleValue = element.getAttribute('data-val');
-        document.getElementById('moduleSelectBtn').innerText = element.innerText;
-        document.getElementById('moduleSelectWrapper').classList.remove('open');
-        document.getElementById('main-sidebar-inner').style.overflowY = 'auto';
     }
 </script>
 </body>
