@@ -10,6 +10,7 @@
     <style>
         :root {
             --sidebar-width: 360px;
+            --notebook-width: 340px;
             --bg-main: #e4e7ea;
             
             /* Oxford Scholar Palette */
@@ -30,7 +31,7 @@
             overflow: hidden; background: var(--bg-main);
         }
         
-        /* Sidebar */
+        /* Left Sidebar */
         #sidebar {
             width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
@@ -66,11 +67,8 @@
         #workspace { 
             flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; 
             background: var(--bg-main); padding: 40px; box-sizing: border-box; 
-            gap: 30px; align-items: center; 
-            transition: margin-right 0.35s cubic-bezier(0.25, 0.8, 0.25, 1); 
+            gap: 30px; align-items: center; transition: 0.3s ease;
         }
-        
-        body.drawer-open #workspace { margin-right: 60vw; }
 
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -119,6 +117,24 @@
             border-left: 4px solid #7f8c8d;
             transition: 0.3s;
         }
+
+        /* Right Sidebar: Research Notebook */
+        #notebook-sidebar {
+            width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0;
+            border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column;
+            z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
+        }
+        #notebook-sidebar.open { display: flex; }
+        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: auto;}
+        
+        #research-notebook {
+            flex-grow: 1; resize: none; background: var(--oxford-cream);
+            color: var(--oxford-navy-dark); border: none; padding: 15px;
+            border-radius: var(--radius-small); font-family: Georgia, serif;
+            font-size: 14px; line-height: 1.6; outline: none;
+            box-shadow: inset 0 2px 5px rgba(0,0,0,0.1);
+        }
+        #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
     </style>
 </head>
@@ -205,6 +221,8 @@
                     <span>Size</span>
                     <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
                 </div>
+
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;" title="Open Research Notebook">📓 Notebook</button>
             </div>
         </div>
         
@@ -214,12 +232,28 @@
     </div>
 </div>
 
+<div id="notebook-sidebar">
+    <div class="notebook-inner">
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
+            <h2 style="font-size: 20px;">Research <span style="font-weight: 300; color: var(--oxford-gold);">Notebook</span></h2>
+            <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
+        </div>
+        
+        <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
+        
+        <textarea id="research-notebook" placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></textarea>
+        
+        <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
+    </div>
+</div>
+
 <script>
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container');
     const originalToggleLabel = document.getElementById('original-toggle-label');
     const originalToggle = document.getElementById('originalToggle');
+    const notebookSidebar = document.getElementById('notebook-sidebar');
     
     let selectedWordId = null;
     let lexiconData = {}; 
@@ -419,10 +453,8 @@
             lexiconData = {}; 
             selectedWordId = null;
             
-            // We use an object to pass the index by reference into our helper function
             let refIndex = { current: 0 };
 
-            // Helper to parse Zefania Nodes (handles mixed text, <gr>, and <STYLE>)
             const processZefaniaNodes = (vers, container, bNum) => {
                 const isOT = bNum >= 1 && bNum <= 39;
                 const prefix = isOT ? 'H' : 'G';
@@ -447,7 +479,6 @@
                         const rawStr = node.getAttribute('str') || '';
                         const rmac = node.getAttribute('rmac') || '';
                         
-                        // Clean asterisks and grab first Strong's number if multiple
                         let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0]; 
                         let finalStrongs = "";
                         if (cleanStr) {
@@ -490,9 +521,6 @@
                 });
             };
 
-            // =====================================
-            // PATH C: THE DUAL-FETCH INTERLINEAR
-            // =====================================
             if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
                 const isHebrew = fileName === 'ot_interlinear';
                 
@@ -744,6 +772,41 @@
     }
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
+
+    // ---------------------------------------------------------
+    // RESEARCH NOTEBOOK LOGIC
+    // ---------------------------------------------------------
+    function toggleNotebook() {
+        notebookSidebar.classList.toggle('open');
+    }
+
+    function autoSaveNotebook() {
+        const text = document.getElementById('research-notebook').value;
+        localStorage.setItem('syntaxis_interpreter_notebook', text);
+    }
+
+    function loadNotebook() {
+        const savedText = localStorage.getItem('syntaxis_interpreter_notebook');
+        if (savedText) {
+            document.getElementById('research-notebook').value = savedText;
+        }
+    }
+
+    function exportNotebook() {
+        const text = document.getElementById('research-notebook').value;
+        if (!text.trim()) {
+            alert("Notebook is empty.");
+            return;
+        }
+        const blob = new Blob([text], { type: "text/plain" });
+        const a = document.createElement("a");
+        a.href = URL.createObjectURL(blob);
+        a.download = "Syntaxis_Research_Notebook.txt";
+        a.click();
+    }
+
+    // Load saved notebook data when the app boots up
+    window.addEventListener('DOMContentLoaded', loadNotebook);
 
 </script>
 </body>
