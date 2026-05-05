@@ -75,7 +75,7 @@
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
 
-        /* HEADER CONTROLS (Font Sizer & Toggle) */
+        /* HEADER CONTROLS */
         .header-controls { display: flex; align-items: center; gap: 20px; }
         .font-sizer { display: flex; align-items: center; gap: 8px; }
         .font-sizer span { font-family: -apple-system, sans-serif; font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px;}
@@ -96,7 +96,6 @@
         .word:hover { background-color: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; color: var(--oxford-navy); }
         
-        /* Language Specific Classes */
         .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
 
         /* INTERLINEAR STYLES */
@@ -107,17 +106,17 @@
         .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
-        /* UNIVERSAL APP NAV STYLING */
+        /* UNIVERSAL APP NAV */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: #C5A059; }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
         
-        /* The Sidebar Dynamic Info Card */
+        /* Sidebar Dynamic Info Card */
         #lexicon-editor {
             opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px;
             background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small);
-            border-left: 4px solid #7f8c8d; /* Default Slate Gray */
+            border-left: 4px solid #7f8c8d;
             transition: 0.3s;
         }
 
@@ -151,6 +150,7 @@
                             <option value="hebrew_ot.xml">Hebrew OT</option>
                         </optgroup>
                         <optgroup label="English Translations">
+                            <option value="kjv_strongs.xml">KJV with Strong's</option>
                             <option value="emt.xml">English Majority Text (EMT)</option>
                             <option value="esv.xml">English Standard Version (ESV)</option>
                         </optgroup>
@@ -269,19 +269,16 @@
     async function getStrongsDef(key) {
         if (!key) return "";
         
-        // 1. CHECK GREEK
         if (key.startsWith('G')) {
             let entry = null;
             if (typeof strongsDictionary !== 'undefined') entry = strongsDictionary[key];
             else if (typeof strongsGreekDictionary !== 'undefined') entry = strongsGreekDictionary[key];
-            
             if (entry) {
                 if (typeof entry === 'string') return entry;
                 return (entry.lemma ? `[${entry.lemma}]\n` : "") + (entry.strongs_def || entry.definition || "No text available.");
             }
         }
 
-        // 2. CHECK HEBREW
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
@@ -299,16 +296,13 @@
                 const lemmaNode = entryNode.querySelector('w');
                 const lemma = lemmaNode ? lemmaNode.textContent : "";
                 const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
-                
                 const meaningNode = entryNode.querySelector('meaning');
                 const meaning = meaningNode ? meaningNode.textContent : "";
-                
                 const bdbNode = entryNode.querySelector('bdb');
                 const bdb = bdbNode ? bdbNode.textContent : "";
 
                 let result = `[${lemma}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
                 if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`;
-                
                 return result;
             }
         }
@@ -318,7 +312,6 @@
 
     function parseRMAC(rmac) {
         if (!rmac) return { text: "No Morphology Data", color: "#7f8c8d" }; 
-
         const parts = rmac.toLowerCase().split('-');
         const pos = parts[0];
         let color = "#7f8c8d";
@@ -348,7 +341,6 @@
                 if (parts.length > 1) {
                     const rawTvm = parts[1]; 
                     const tvm = rawTvm.replace(/^[0-9]+/, ''); 
-                    
                     if (tvm.length >= 3) {
                         const mood = tvm[2];
                         if (mood === 'i') color = "#c0392b"; 
@@ -363,7 +355,6 @@
                             if (numMatch[0] === '2') ord = "2nd ";
                             if (numMatch[0] === '3') ord = "3rd ";
                         }
-                        
                         if (tenses[tvm[0]]) tvmStr.push(ord + tenses[tvm[0]]);
                         if (voices[tvm[1]]) tvmStr.push(voices[tvm[1]]);
                         if (moods[tvm[2]]) tvmStr.push(moods[tvm[2]]);
@@ -372,11 +363,8 @@
                 }
                 if (parts.length > 2) {
                     const pn = parts[2];
-                    if (pn.length >= 2 && persons[pn[0]]) {
-                        details.push(`(${persons[pn[0]]} ${numbers[pn[1]] || ''})`);
-                    } else if (pn.length >= 3) {
-                        details.push(`(${cases[pn[0]] || ''} ${numbers[pn[1]] || ''} ${genders[pn[2]] || ''})`);
-                    }
+                    if (pn.length >= 2 && persons[pn[0]]) details.push(`(${persons[pn[0]]} ${numbers[pn[1]] || ''})`);
+                    else if (pn.length >= 3) details.push(`(${cases[pn[0]] || ''} ${numbers[pn[1]] || ''} ${genders[pn[2]] || ''})`);
                 }
                 break;
             default: text = pos.toUpperCase(); color = "#7f8c8d"; break;
@@ -385,25 +373,19 @@
         if (['n','a','t','p','r','c','d','k','i','x','q','f','s'].includes(pos)) {
             if (parts.length > 1) {
                 const cng = parts[1];
-                if (cng.length >= 3) {
-                    details.push(`${cases[cng[0]] || ''} ${numbers[cng[1]] || ''} ${genders[cng[2]] || ''}`);
-                }
+                if (cng.length >= 3) details.push(`${cases[cng[0]] || ''} ${numbers[cng[1]] || ''} ${genders[cng[2]] || ''}`);
             }
         }
 
         let displayStr = text;
-        if (details.length > 0) {
-            displayStr += ": " + details.join(' ').replace(/\s+/g, ' ').trim();
-        } else if (parts.length > 1) {
-            displayStr += ` (${parts.slice(1).join('-').toUpperCase()})`;
-        }
+        if (details.length > 0) displayStr += ": " + details.join(' ').replace(/\s+/g, ' ').trim();
+        else if (parts.length > 1) displayStr += ` (${parts.slice(1).join('-').toUpperCase()})`;
 
         return { text: displayStr, color: color };
     }
 
-
     // ---------------------------------------------------------
-    // THE BILINGUAL BIBLE ENGINE (Zefania + OSIS + SimpleXML + Interlinear)
+    // THE BILINGUAL BIBLE ENGINE
     // ---------------------------------------------------------
     
     function toggleOriginalText() {
@@ -436,7 +418,77 @@
             passageContainer.innerHTML = ''; 
             lexiconData = {}; 
             selectedWordId = null;
-            let wordIndex = 0;
+            
+            // We use an object to pass the index by reference into our helper function
+            let refIndex = { current: 0 };
+
+            // Helper to parse Zefania Nodes (handles mixed text, <gr>, and <STYLE>)
+            const processZefaniaNodes = (vers, container, bNum) => {
+                const isOT = bNum >= 1 && bNum <= 39;
+                const prefix = isOT ? 'H' : 'G';
+                
+                Array.from(vers.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${refIndex.current++}`;
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'gr') {
+                        const rawStr = node.getAttribute('str') || '';
+                        const rmac = node.getAttribute('rmac') || '';
+                        
+                        // Clean asterisks and grab first Strong's number if multiple
+                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0]; 
+                        let finalStrongs = "";
+                        if (cleanStr) {
+                            if (/^[GH]/i.test(cleanStr)) finalStrongs = cleanStr;
+                            else finalStrongs = prefix + cleanStr;
+                        }
+
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word has-data';
+                                span.id = `w-${refIndex.current++}`;
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'style') {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${refIndex.current++}`;
+                                span.style.fontStyle = 'italic';
+                                span.style.color = '#888';
+                                span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    }
+                });
+            };
 
             // =====================================
             // PATH C: THE DUAL-FETCH INTERLINEAR
@@ -494,27 +546,7 @@
                     origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     
                     if (grkVerses[i]) {
-                        const grNodes = grkVerses[i].querySelectorAll('gr');
-                        grNodes.forEach(gr => {
-                            const str = gr.getAttribute('str') || '';
-                            const rmac = gr.getAttribute('rmac') || '';
-                            const text = gr.textContent.trim();
-
-                            const span = document.createElement('span');
-                            span.className = 'word has-data';
-                            span.id = `w-${wordIndex++}`;
-                            span.innerText = text + " "; 
-                            
-                            let finalStrongs = "";
-                            if (str) {
-                                if (/^[GH]/i.test(str)) finalStrongs = str;
-                                else finalStrongs = (isHebrew ? "H" : "G") + str;
-                            }
-
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                            origLine.appendChild(span);
-                        });
+                        processZefaniaNodes(grkVerses[i], origLine, bNum);
                     }
                     block.appendChild(origLine);
 
@@ -557,29 +589,7 @@
                     vSpan.innerText = vers.getAttribute('vnumber');
                     passageContainer.appendChild(vSpan);
 
-                    const grNodes = vers.querySelectorAll('gr');
-                    if (grNodes.length > 0) {
-                        grNodes.forEach(gr => {
-                            const str = gr.getAttribute('str') || '';
-                            const rmac = gr.getAttribute('rmac') || '';
-                            const text = gr.textContent.trim();
-
-                            const span = document.createElement('span');
-                            span.className = 'word has-data';
-                            span.id = `w-${wordIndex++}`;
-                            span.innerText = text + " "; 
-
-                            let finalStrongs = "";
-                            if (str) {
-                                if (/^[GH]/i.test(str)) finalStrongs = str;
-                                else finalStrongs = (isHebrew ? "H" : "G") + str;
-                            }
-
-                            lexiconData[span.id] = { word: text.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: rmac, def: "" };
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                            passageContainer.appendChild(span);
-                        });
-                    }
+                    processZefaniaNodes(vers, passageContainer, bNum);
                     passageContainer.appendChild(document.createTextNode(" "));
                 });
                 
@@ -603,7 +613,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span');
                             span.className = 'word';
-                            span.id = `w-${wordIndex++}`;
+                            span.id = `w-${refIndex.current++}`;
                             span.innerText = chunk;
                             
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
@@ -633,7 +643,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span');
                             span.className = 'word';
-                            span.id = `w-${wordIndex++}`;
+                            span.id = `w-${refIndex.current++}`;
                             span.innerText = chunk;
                             
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
