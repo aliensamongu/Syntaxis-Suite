@@ -591,7 +591,6 @@
         });
     }
 
-    // Mathematical Roman Numeral Converter
     function toRoman(num) {
         if (isNaN(num)) return '';
         const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
@@ -605,7 +604,7 @@
         return roman.toLowerCase();
     }
 
-    // PRECISION OMNI-SCANNER (Roman Numeral + 1 Offset Upgrade)
+    // PRECISION OMNI-SCANNER (Dynamic Element Catcher + 1 Offset Filter)
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -622,7 +621,6 @@
                 if (!response.ok) throw new Error(`Missing ${volFileName}. Please ensure all 6 volumes are in the root directory.`);
                 const xmlText = await response.text();
                 
-                // Parse as HTML to bypass strict XML failure on unescaped tags/ampersands
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/html");
                 
@@ -634,62 +632,62 @@
                 const cInt = parseInt(currentLoadedChapter);
                 const c = currentLoadedChapter;
                 const cRom = toRoman(cInt); 
-                const cRomPlus1 = toRoman(cInt + 1); // The "Matthew Henry Offset"
+                const cRomPlus1 = toRoman(cInt + 1); 
                 
-                const allElements = xmlDoc.querySelectorAll("*");
-                let matchedBlocks = [];
-                let addedIds = new Set();
+                // Aggressive search: Grabs EVERY element with an ID or osisRef, including raw <p> tags
+                const allElements = xmlDoc.querySelectorAll("[id], [osisref], [osisRef]");
                 
-                // Master net of every conceivable format ThML editors use, now including the +1 Chapter offset!
-                const matchers = [
-                    `bible:${b}.${c}`, `bible:${b}.${c}.`, `bible:${b}.${c}-`,
-                    `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`,
-                    `${b}.${cRom}`, `${b}.${cRom}-`, `${b}.${cRom}.`,
-                    `${bTitle}.${cRom}`, `${bTitle}.${cRom}-`, `${bTitle}.${cRom}.`,
-                    `${osisBook.toLowerCase()}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}-`, `${osisBook.toLowerCase()}.${cRom}.`,
-                    `${b}_${cRom}`, `${b}_${c}`,
-                    // THE MATTHEW HENRY OFFSET MATCHERS
-                    `${b}.${cRomPlus1}`, `${b}.${cRomPlus1}-`, `${b}.${cRomPlus1}.`,
-                    `${bTitle}.${cRomPlus1}`, `${bTitle}.${cRomPlus1}-`, `${bTitle}.${cRomPlus1}.`,
-                    `${osisBook.toLowerCase()}.${cRomPlus1}`, `${osisBook.toLowerCase()}.${cRomPlus1}-`, `${osisBook.toLowerCase()}.${cRomPlus1}.`
-                ];
-                const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${bTitle}|${c}|`];
-                
-                allElements.forEach(el => {
-                    const id = (el.getAttribute('id') || '').toLowerCase();
-                    const osis = (el.getAttribute('osisref') || el.getAttribute('osisRef') || '').toLowerCase();
-                    const parsed = (el.getAttribute('parsed') || '').toLowerCase();
-                    
-                    let isMatch = matchers.some(m => id === m || id.startsWith(m) || osis === m || osis.startsWith(m)) ||
-                                  parsedMatchers.some(p => parsed.includes(p));
-                                  
-                    if (isMatch) {
-                        let target = null;
-                        if (el.tagName.toLowerCase().includes('div')) {
-                            target = el;
-                        } else if (el.tagName.toLowerCase() === 'scripcom') {
-                            let next = el.nextElementSibling;
-                            if (next && next.tagName.toLowerCase().includes('div')) target = next;
-                            else target = el.parentElement;
-                        } else {
-                            target = el.closest('div1, div2, div3, div4, div');
-                        }
+                function extractBlocks(matchers, prefixes) {
+                    let blocks = [];
+                    let addedIds = new Set();
+                    allElements.forEach(el => {
+                        const id = (el.getAttribute('id') || '').toLowerCase();
+                        const osis = (el.getAttribute('osisref') || el.getAttribute('osisRef') || '').toLowerCase();
                         
-                        if (target && !addedIds.has(target)) {
-                            const isNested = matchedBlocks.some(parent => parent.contains(target));
-                            const isParent = matchedBlocks.some(child => target.contains(child));
+                        let isMatch = matchers.includes(id) || matchers.includes(osis) ||
+                                      prefixes.some(p => id.startsWith(p) || osis.startsWith(p));
+                                      
+                        if (isMatch) {
+                            let target = el.closest('div1, div2, div3, div4, div5, div6, div[class="Commentary"], div');
+                            if (!target) target = el; // If it's a loose paragraph without a wrapper, just grab the paragraph
                             
-                            if (isParent) {
-                                matchedBlocks = matchedBlocks.filter(child => !target.contains(child));
-                                matchedBlocks.push(target);
-                                addedIds.add(target);
-                            } else if (!isNested) {
-                                matchedBlocks.push(target);
-                                addedIds.add(target);
+                            if (target && !addedIds.has(target)) {
+                                const isNested = blocks.some(parent => parent.contains(target));
+                                const isParent = blocks.some(child => target.contains(child));
+                                
+                                if (isParent) {
+                                    blocks = blocks.filter(child => !target.contains(child));
+                                    blocks.push(target);
+                                    addedIds.add(target);
+                                } else if (!isNested) {
+                                    blocks.push(target);
+                                    addedIds.add(target);
+                                }
                             }
                         }
-                    }
-                });
+                    });
+                    
+                    // Filter out metadata garbage
+                    return blocks.filter(block => {
+                        const tag = block.tagName.toLowerCase();
+                        return tag !== 'generalinfo' && tag !== 'printsourceinfo' && tag !== 'electronicedinfo';
+                    });
+                }
+
+                // Pass 1: Standard Numbering
+                let exact1 = [
+                    `bible:${b}.${c}`, `bible:${bShort}.${c}`,
+                    `${b}.${cRom}`, `${bTitle}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}`, `${b}_${cRom}`
+                ];
+                let prefix1 = exact1.flatMap(m => [m + '.', m + '-']);
+                let matchedBlocks = extractBlocks(exact1, prefix1);
+                
+                // Pass 2: Matthew Henry Roman Numeral Offset (Only fires if Pass 1 fails)
+                if (matchedBlocks.length === 0) {
+                    let exact2 = [`${b}.${cRomPlus1}`, `${bTitle}.${cRomPlus1}`, `${osisBook.toLowerCase()}.${cRomPlus1}`];
+                    let prefix2 = exact2.flatMap(m => [m + '.', m + '-']);
+                    matchedBlocks = extractBlocks(exact2, prefix2);
+                }
                 
                 if (matchedBlocks.length === 0) {
                     throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches in Volume ${volumeNum}. Make sure the chapter exists in the commentary.`);
@@ -742,7 +740,6 @@
                 if (!response.ok) throw new Error(`Could not locate ${targetFile} in your project directory.`);
                 const xmlText = await response.text();
                 
-                // Parsing as HTML for stability
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/html");
                 
