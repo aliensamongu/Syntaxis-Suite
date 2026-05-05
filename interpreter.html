@@ -1,1 +1,343 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Σyntaxis Interpreter</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <script src="strongs-greek-dictionary.js"></script>
 
+    <style>
+        :root {
+            --sidebar-width: 360px;
+            --notebook-width: 340px;
+            --bg-main: #e4e7ea;
+            --oxford-navy: #1B263B;
+            --oxford-navy-dark: #121A2A;
+            --oxford-cream: #F8F5EE;
+            --oxford-gold: #C5A059;
+            --oxford-crimson: #8C1C13;
+            --rustic-orange: #C86428;
+            --radius-small: 8px;
+            --radius-medium: 12px;
+        }
+
+        body {
+            margin: 0; display: flex; height: 100vh;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+            overflow: hidden; background: var(--bg-main);
+        }
+        
+        #sidebar {
+            width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
+            border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
+            z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream);
+        }
+        .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
+        .sidebar-inner::-webkit-scrollbar { width: 6px; }
+        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
+        
+        h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
+        h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
+
+        input[type="text"], textarea, select {
+            width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
+            border: 1px solid var(--oxford-navy-dark); padding: 10px;
+            font-family: inherit; font-size: 13px; color: var(--oxford-navy);
+            background: var(--oxford-cream); transition: 0.1s; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+        }
+        textarea { height: 80px; resize: vertical; line-height: 1.4; overflow-y: auto; }
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+
+        .std-btn {
+            border: none; padding: 10px; border-radius: var(--radius-small);
+            cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
+            transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy);
+        }
+        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+
+        /* CASCADING FLYOUT MENU */
+        .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
+        .custom-select-btn { 
+            width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
+            border: 1px solid var(--oxford-navy-dark); padding: 10px;
+            font-family: inherit; font-size: 13px; color: var(--oxford-navy);
+            background: var(--oxford-cream); transition: 0.1s; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); cursor: pointer; 
+            display: flex; justify-content: space-between; align-items: center; font-weight: bold;
+        }
+        .custom-select-btn:hover { border-color: var(--oxford-gold); }
+        .custom-select-btn::after { content: '▼'; font-size: 10px; color: #888; }
+        
+        .dropdown-menu { 
+            position: absolute; top: 100%; left: 0; width: 100%; 
+            background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); 
+            border-radius: var(--radius-small); margin-top: 4px; padding: 0; list-style: none; 
+            display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); 
+        }
+        .custom-select-wrapper.open .dropdown-menu { display: block; }
+        .dropdown-menu > li { position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .group-label { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 12px; color: var(--oxford-navy); }
+        .group-label:hover { background: rgba(0,0,0,0.05); color: var(--rustic-orange); }
+        .group-label::after { content: '▶'; font-size: 10px; color: var(--oxford-gold); }
+        .submenu { position: absolute; top: -1px; left: 100%; width: 220px; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 0; list-style: none; display: none; box-shadow: 4px 4px 12px rgba(0,0,0,0.2); z-index: 10000; }
+        .dropdown-menu > li:hover .submenu { display: block; }
+        .option-item { padding: 10px 15px; font-size: 12px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .option-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
+
+        #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 30px; align-items: center; }
+        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
+        .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .header-controls { display: flex; align-items: center; gap: 20px; }
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); }
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        input:checked + .slider { background-color: var(--oxford-gold); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; }
+        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; }
+        
+        #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; }
+        #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; color: var(--oxford-cream); }
+        #notebook-sidebar.open { display: flex; }
+        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: auto;}
+        #research-notebook { flex-grow: 1; resize: none; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: none; padding: 15px; border-radius: var(--radius-small); font-family: Georgia, serif; font-size: 14px; line-height: 1.6; outline: none; }
+    </style>
+</head>
+<body id="app-body">
+
+<div id="sidebar">
+    <div class="sidebar-inner" id="main-sidebar-inner">
+        <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
+        <div class="app-nav" style="display: flex; gap: 5px; margin-bottom: 20px;">
+            <a href="annotator.html" style="flex:1; background:#121A2A; color:white; text-decoration:none; text-align:center; padding:5px; font-size:10px; border-radius:4px;">Annotate</a>
+            <a href="interpreter.html" style="flex:1; background:#C5A059; color:#121A2A; text-decoration:none; text-align:center; padding:5px; font-size:10px; border-radius:4px; font-weight:bold;">Interpret</a>
+        </div>
+        
+        <div style="display: flex; flex-direction: column; gap: 8px;">
+            <h3>1. Base Passage / Section</h3>
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" id="bibleRefInput" placeholder="Ref (e.g. Matt 1) or Section (e.g. Intro)">
+                <div style="display: flex; gap: 5px; align-items: stretch;">
+                    <div class="custom-select-wrapper" id="moduleSelectWrapper">
+                        <div class="custom-select-btn" id="moduleSelectBtn">NT Interlinear (Greek/EMT)</div>
+                        <ul class="dropdown-menu">
+                            <li><div class="group-label">Interlinear</div>
+                                <ul class="submenu">
+                                    <li class="option-item" data-val="nt_interlinear" onclick="selectModule(this)">NT Interlinear (Greek/EMT)</li>
+                                    <li class="option-item" data-val="ot_interlinear" onclick="selectModule(this)">OT Interlinear (Hebrew/ESV)</li>
+                                </ul>
+                            </li>
+                            <li><div class="group-label">Original Languages</div>
+                                <ul class="submenu">
+                                    <li class="option-item" data-val="tischendorf.xml" onclick="selectModule(this)">Tischendorf Greek NT</li>
+                                    <li class="option-item" data-val="hebrew_ot.xml" onclick="selectModule(this)">Hebrew OT</li>
+                                </ul>
+                            </li>
+                            <li><div class="group-label">Commentaries</div>
+                                <ul class="submenu">
+                                    <li class="option-item" data-val="mhc_sync" onclick="selectModule(this)">Matthew Henry (Auto-Sync)</li>
+                                </ul>
+                            </li>
+                        </ul>
+                    </div>
+                    <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1;">Load</button>
+                </div>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>2. Lexicon & Morphology</h3>
+            <div id="lexicon-editor">
+                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px;" id="lex-target-word">No Word</div>
+                <div style="display: flex; gap: 5px;">
+                    <input type="text" id="lexLemma" placeholder="Lemma" readonly>
+                    <input type="text" id="lexStrongs" placeholder="Strong's" readonly>
+                </div>
+                <input type="text" id="lexParsing" placeholder="Parsing" readonly>
+                <textarea id="lexDef" placeholder="Definition..." oninput="syncPastedDef()"></textarea>
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="background: #c0392b; color: white;" disabled>+ Add Card</button>
+            </div>
+        </div>
+
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>3. Flashcard Deck (<span id="deckCount">0</span>)</h3>
+            <button class="std-btn" onclick="exportAnki()" style="background: #c0392b; color: white;">⬇ Anki (.txt)</button>
+        </div>
+    </div>
+</div>
+
+<div id="workspace">
+    <div class="workspace-panel">
+        <div class="panel-title">
+            <span>Passage <span style="font-size: 11px; color: #888;">ΣYNTAXIS</span></span>
+            <div class="header-controls">
+                <div class="toggle-wrapper" id="commentary-toggle-container" style="display: none;">
+                    <span style="font-size:10px; color:var(--oxford-gold);">COMMENTARY</span>
+                    <label class="switch"><input type="checkbox" id="commentaryToggle" onchange="toggleCommentary()"><span class="slider"></span></label>
+                </div>
+                <button class="std-btn secondary" onclick="toggleNotebook()">📓 Notebook</button>
+            </div>
+        </div>
+        <div id="passage-container"></div>
+    </div>
+</div>
+
+<div id="notebook-sidebar">
+    <div class="notebook-inner">
+        <h2>Research <span style="color: var(--oxford-gold);">Notebook</span></h2>
+        <textarea id="research-notebook" oninput="autoSaveNotebook()"></textarea>
+        <button class="std-btn" onclick="exportNotebook()" style="background: #27ae60; color: white;">Export (.txt)</button>
+    </div>
+</div>
+
+<script>
+    let selectedModuleValue = "nt_interlinear";
+    const passageContainer = document.getElementById('passage-container');
+    const lexEditor = document.getElementById('lexicon-editor');
+    const notebookSidebar = document.getElementById('notebook-sidebar');
+    let selectedWordId = null, lexiconData = {}, cachedBibleHTML = "", currentLoadedBook = "", currentLoadedChapter = "";
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const selectBtn = document.getElementById('moduleSelectBtn');
+        const wrapper = document.getElementById('moduleSelectWrapper');
+        const sidebarInner = document.getElementById('main-sidebar-inner');
+        selectBtn.addEventListener('click', (e) => { e.stopPropagation(); wrapper.classList.toggle('open'); sidebarInner.style.overflowY = wrapper.classList.contains('open') ? 'visible' : 'auto'; });
+        document.addEventListener('click', (e) => { if (wrapper.classList.contains('open') && !wrapper.contains(e.target)) { wrapper.classList.remove('open'); sidebarInner.style.overflowY = 'auto'; } });
+        loadNotebook(); loadAnkiDeck();
+    });
+
+    function selectModule(element) {
+        selectedModuleValue = element.getAttribute('data-val');
+        document.getElementById('moduleSelectBtn').innerText = element.innerText;
+        document.getElementById('moduleSelectWrapper').classList.remove('open');
+        document.getElementById('main-sidebar-inner').style.overflowY = 'auto';
+    }
+
+    function triggerLoadModule() {
+        const ref = document.getElementById('bibleRefInput').value;
+        document.getElementById('commentaryToggle').checked = false;
+        document.getElementById('commentary-toggle-container').style.display = 'none';
+        loadNativeBible(ref, selectedModuleValue);
+    }
+
+    function toRoman(num) {
+        if (isNaN(num)) return '';
+        const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
+        let roman = '';
+        for (let i in lookup) { while (num >= lookup[i]) { roman += i; num -= lookup[i]; } }
+        return roman.toLowerCase();
+    }
+
+    async function toggleCommentary() {
+        const isChecked = document.getElementById('commentaryToggle').checked;
+        if (isChecked) {
+            cachedBibleHTML = passageContainer.innerHTML;
+            passageContainer.innerHTML = `<p style="font-style:italic;">Syncing Matthew Henry for ${currentLoadedBook} ${currentLoadedChapter}...</p>`;
+            
+            try {
+                const volNum = mhcVolumeMap[currentLoadedBook];
+                const res = await fetch(`vol${volNum}.xml`);
+                if (!res.ok) throw new Error(`Missing vol${volNum}.xml`);
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                
+                // EXORCISM: Remove metadata blocks before scanning
+                doc.querySelectorAll("generalinfo, printsourceinfo, frontmatter, printSourceInfo").forEach(el => el.remove());
+
+                const b = (osisMap[currentLoadedBook] || currentLoadedBook).toLowerCase();
+                const c = parseInt(currentLoadedChapter);
+                const nextC = c + 1;
+                
+                // Targets for the CURRENT chapter
+                const cRom = toRoman(c);
+                const cRomPlus1 = toRoman(c + 1); // Offset
+                
+                // Targets for the NEXT chapter (to know where to stop)
+                const nextRom = toRoman(nextC);
+                const nextRomPlus1 = toRoman(nextC + 1);
+
+                function getChapterLandmark(chapterRoman) {
+                    const seekers = [ `${b}.${chapterRoman}-`, `${b}.${chapterRoman}.`, `bible:${b}.${c}.`, `bible:${b}.${c}-` ];
+                    let found = null;
+                    doc.querySelectorAll("[id]").forEach(el => {
+                        if (!found && seekers.some(s => el.id.toLowerCase().startsWith(s))) found = el;
+                    });
+                    return found;
+                }
+
+                // Try finding the chapter Surgical Landmark
+                let startNode = getChapterLandmark(cRom) || getChapterLandmark(cRomPlus1);
+                if (!startNode) throw new Error(`Could not locate chapter surgical strike point.`);
+
+                // SURGICAL EXTRACTION: Collect siblings until the next chapter ID appears
+                const nextChapterSeekers = [ `${b}.${nextRom}-`, `${b}.${nextRom}.`, `${b}.${nextRomPlus1}-`, `${b}.${nextRomPlus1}.` ];
+                
+                passageContainer.innerHTML = `<h2>Matthew Henry: ${currentLoadedBook.toUpperCase()} ${c}</h2>`;
+                let currentNode = startNode;
+                let safetyCounter = 0;
+
+                while (currentNode && safetyCounter < 500) {
+                    // Check if this node belongs to the NEXT chapter. If so, STOP.
+                    const id = currentNode.id ? currentNode.id.toLowerCase() : "";
+                    if (safetyCounter > 0 && nextChapterSeekers.some(s => id.startsWith(s))) break;
+
+                    const clone = currentNode.cloneNode(true);
+                    passageContainer.appendChild(clone);
+                    
+                    currentNode = currentNode.nextElementSibling;
+                    safetyCounter++;
+                }
+
+            } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
+        } else {
+            passageContainer.innerHTML = cachedBibleHTML;
+        }
+    }
+
+    async function loadNativeBible(query, fileName) {
+        passageContainer.innerHTML = "Loading...";
+        try {
+            const res = await fetch(fileName === 'mhc_sync' ? 'vol1.xml' : fileName);
+            const html = await res.text();
+            const doc = new DOMParser().parseFromString(html, "text/html");
+            const q = query.trim().toLowerCase();
+
+            if (fileName === 'luther_tt.xml' || fileName === 'mhc_sync' || !q) {
+                passageContainer.innerHTML = "<h2>Table of Contents</h2>";
+                doc.querySelectorAll("div1").forEach(d => {
+                    const btn = document.createElement('button');
+                    btn.className = 'std-btn secondary';
+                    btn.style.display = "block"; btn.style.margin = "5px 0";
+                    btn.innerText = d.getAttribute('title') || d.id;
+                    btn.onclick = () => loadNativeBible(d.id, fileName);
+                    passageContainer.appendChild(btn);
+                });
+                return;
+            }
+
+            const abbrevs = { "gen": "genesis", "isa": "isaiah", "jhn": "john", "jn": "john" }; // Simplified for demo
+            const match = q.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            if (!match) throw new Error("Invalid Ref");
+            currentLoadedBook = abbrevs[match[1]] || match[1];
+            currentLoadedChapter = match[2];
+            document.getElementById('commentary-toggle-container').style.display = 'flex';
+            passageContainer.innerHTML = `<p><b>${currentLoadedBook} ${currentLoadedChapter}</b> loaded. Click <b>Commentary</b> to sync.</p>`;
+        } catch (e) { passageContainer.innerHTML = e.message; }
+    }
+
+    function loadAnkiDeck() { /* Deck Logic */ }
+    function loadNotebook() { document.getElementById('research-notebook').value = localStorage.getItem('syntaxis_notebook') || ""; }
+    function autoSaveNotebook() { localStorage.setItem('syntaxis_notebook', document.getElementById('research-notebook').value); }
+    function toggleNotebook() { notebookSidebar.classList.toggle('open'); }
+
+    const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
+    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+</script>
+</body>
+</html>
