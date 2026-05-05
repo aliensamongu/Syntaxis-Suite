@@ -605,7 +605,7 @@
         return roman.toLowerCase();
     }
 
-    // NEW: PRECISION OMNI-SCANNER FOR COMMENTARY (Roman Numeral Upgraded)
+    // PRECISION OMNI-SCANNER (Text/HTML Fix)
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -622,33 +622,35 @@
                 if (!response.ok) throw new Error(`Missing ${volFileName}. Please ensure all 6 volumes are in the root directory.`);
                 const xmlText = await response.text();
                 
+                // CRITICAL FIX: Parse as HTML to bypass strict XML failure on unescaped tags/ampersands
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const xmlDoc = parser.parseFromString(xmlText, "text/html");
                 
                 const osisBook = osisMap[currentLoadedBook] || currentLoadedBook;
                 const b = osisBook.toLowerCase();
                 const bTitle = currentLoadedBook.toLowerCase();
                 const bShort = b.substring(0, 3);
                 const c = currentLoadedChapter;
-                const cRom = toRoman(parseInt(c)); // Generate Roman numeral!
+                const cRom = toRoman(parseInt(c)); 
                 
-                const allElements = xmlDoc.querySelectorAll("[id], [osisRef], [parsed]");
+                const allElements = xmlDoc.querySelectorAll("*");
                 let matchedBlocks = [];
                 let addedIds = new Set();
                 
-                // Master net of every conceivable format ThML editors use
                 const matchers = [
                     `bible:${b}.${c}`, `bible:${b}.${c}.`, `bible:${b}.${c}-`,
                     `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`,
                     `${b}.${cRom}`, `${b}.${cRom}-`, `${b}.${cRom}.`,
                     `${bTitle}.${cRom}`, `${bTitle}.${cRom}-`, `${bTitle}.${cRom}.`,
-                    `${osisBook.toLowerCase()}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}-`, `${osisBook.toLowerCase()}.${cRom}.`
+                    `${osisBook.toLowerCase()}.${cRom}`, `${osisBook.toLowerCase()}.${cRom}-`, `${osisBook.toLowerCase()}.${cRom}.`,
+                    `${b}_${cRom}`, `${b}_${c}` 
                 ];
                 const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${bTitle}|${c}|`];
                 
                 allElements.forEach(el => {
+                    // HTML parsing converts attributes to lowercase automatically
                     const id = (el.getAttribute('id') || '').toLowerCase();
-                    const osis = (el.getAttribute('osisRef') || '').toLowerCase();
+                    const osis = (el.getAttribute('osisref') || el.getAttribute('osisRef') || '').toLowerCase();
                     const parsed = (el.getAttribute('parsed') || '').toLowerCase();
                     
                     let isMatch = matchers.some(m => id === m || id.startsWith(m) || osis === m || osis.startsWith(m)) ||
@@ -683,7 +685,7 @@
                 });
                 
                 if (matchedBlocks.length === 0) {
-                    throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches in Volume ${volumeNum}.`);
+                    throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches in Volume ${volumeNum}. Make sure the chapter exists in the commentary.`);
                 }
                 
                 passageContainer.innerHTML = '';
@@ -733,8 +735,9 @@
                 if (!response.ok) throw new Error(`Could not locate ${targetFile} in your project directory.`);
                 const xmlText = await response.text();
                 
+                // Parsing as HTML for stability
                 const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                const xmlDoc = parser.parseFromString(xmlText, "text/html");
                 
                 const searchTerm = query.trim().toLowerCase();
                 let targetDiv = null;
