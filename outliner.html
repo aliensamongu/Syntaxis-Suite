@@ -28,6 +28,8 @@
             box-sizing: border-box; color: var(--oxford-cream);
             border-right: 1px solid var(--oxford-navy-dark); overflow-y: auto;
         }
+        #sidebar::-webkit-scrollbar { width: 6px; }
+        #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 
         /* UNIVERSAL APP NAV Styling */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
@@ -38,11 +40,13 @@
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 25px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         
-        .ui-input {
+        .ui-input, select {
             width: 100%; box-sizing: border-box; padding: 12px; border-radius: var(--radius-small);
-            border: none; background: var(--oxford-cream); font-family: inherit; font-size: 14px;
-            margin-bottom: 10px; color: var(--oxford-navy-dark);
+            border: 1px solid var(--oxford-navy-dark); background: var(--oxford-cream); font-family: inherit; font-size: 14px;
+            margin-bottom: 10px; color: var(--oxford-navy-dark); outline: none; transition: 0.1s;
         }
+        select { cursor: pointer; font-weight: bold; padding: 10px; font-size: 13px; }
+        .ui-input:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
 
         .btn-row { display: flex; gap: 8px; margin-bottom: 10px; }
         
@@ -62,7 +66,6 @@
         /* Outline List */
         #outline-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
         
-        /* ADDED: Styling for new Parent/Child grouping */
         .point-group { display: flex; flex-direction: column; gap: 4px; }
         .sub-points-container { display: flex; flex-direction: column; gap: 4px; }
 
@@ -84,7 +87,6 @@
         .tool-btn { background: var(--bg-main); border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-family: serif; }
         .tool-select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
 
-        /* FIX: Added align-items: flex-start; so the editor can grow infinitely downwards */
         #document-wrapper { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; }
         
         #sermon-editor {
@@ -120,6 +122,26 @@
     <div style="display: flex; gap: 8px; margin-bottom: 20px;">
         <button class="btn btn-green" onclick="takeSnapshot()">📸 PNG</button>
         <button class="btn" style="background: #e74c3c; color: white;" onclick="exportPDF()">📄 Export PDF</button>
+    </div>
+
+    <h3 style="margin-top:0;">0. Load Passage</h3>
+    <div style="display: flex; flex-direction: column; gap: 5px;">
+        <input type="text" id="dbRefInput" class="ui-input" placeholder="Enter Ref (e.g. Matt 1)" style="margin-bottom:0; padding:10px;">
+        <div style="display: flex; gap: 5px;">
+            <select id="dbModuleSelect" style="flex: 2; margin-bottom:0;">
+                <optgroup label="Original Languages">
+                    <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                    <option value="hebrew_ot.xml">Hebrew OT</option>
+                </optgroup>
+                <optgroup label="English Translations">
+                    <option value="kjv_strongs.xml">KJV with Strong's</option>
+                    <option value="emt.xml">English Majority Text</option>
+                    <option value="esv.xml">English Standard Version</option>
+                </optgroup>
+            </select>
+            <button class="btn" onclick="loadNativeBibleToEditor(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Injects directly into document">Inject Text</button>
+        </div>
+        <div id="dbStatus" style="font-size: 10px; color: var(--oxford-gold); text-align: center; margin-top: 5px;"></div>
     </div>
 
     <h3>1. Proposition Builder</h3>
@@ -171,13 +193,124 @@
 </div>
 
 <script>
+    // --- BIBLE DATA MAPS ---
+    const abbrevs = {
+        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+        "heb": "hebrews", "jas": "james", "rev": "revelation"
+    };
+    const bnumberMap = {
+        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
+        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
+    };
+    const osisMap = {
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
+    };
+
+    // --- OUTLINER BIBLE ENGINE (Injector) ---
+    async function loadNativeBibleToEditor(query, fileName) {
+        if (!query.trim()) return;
+        const status = document.getElementById('dbStatus');
+        status.innerText = "Extracting passage...";
+        
+        try {
+            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            if (!match) { status.innerText = "Error: Invalid Ref."; return; }
+
+            const searchBook = match[1].trim().toLowerCase();
+            const chapNum = match[2];
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`File ${fileName} missing`);
+            const xmlText = await response.text();
+
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            const isHebrew = fileName === 'hebrew_ot.xml';
+            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+            const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
+
+            let htmlOut = `
+                <hr style="margin: 30px 0; border: none; border-top: 1px dashed #ccc;">
+                <h3 style="color: var(--oxford-navy); text-transform: capitalize; margin-bottom: 10px;">${fullBookName} ${chapNum}</h3>
+                <p ${isHebrew ? 'dir="rtl" style="font-family: \'SBL Hebrew\', serif; font-size: 1.3em; text-align: right;"' : 'style="line-height: 1.8;"'}>
+            `;
+
+            if (isZefania) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('VERS');
+                verses.forEach(vers => {
+                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('vnumber')}</sup>`;
+                    Array.from(vers.childNodes).forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE) htmlOut += node.textContent + " ";
+                        else if (node.nodeName.toLowerCase() === 'gr') htmlOut += node.textContent + " ";
+                        else if (node.nodeName.toLowerCase() === 'style') htmlOut += `<span style="font-style: italic; color: #888;">${node.textContent}</span> `;
+                    });
+                });
+            } else if (isOSIS) {
+                const osisId = osisMap[fullBookName];
+                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => { 
+                    const vNumMatch = vers.getAttribute('osisID').match(/\.(\d+)$/);
+                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vNumMatch ? vNumMatch[1] : "?"}</sup>${vers.textContent} `; 
+                });
+            } else if (isSimpleXML) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                if (!chapNode) throw new Error("Chapter not found.");
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => { 
+                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('number')}</sup>${vers.textContent} `; 
+                });
+            }
+
+            htmlOut += `</p><br>`;
+            document.getElementById('sermon-editor').innerHTML += htmlOut;
+            
+            status.innerText = "Injected successfully!";
+            setTimeout(() => status.innerText = "", 3000);
+
+        } catch (error) {
+            status.innerText = error.message;
+        }
+    }
+
     // 1. WORD PROCESSOR
     function formatDoc(command, value = null) {
         document.execCommand(command, false, value);
         document.getElementById('sermon-editor').focus();
     }
 
-    // 2. OUTLINE BUILDER (Rewritten for Parent/Child Drag & Drop)
+    // 2. OUTLINE BUILDER (Parent/Child Drag & Drop)
     const outlineList = document.getElementById('outline-list');
     let draggedGroup = null;
     let draggedSub = null;
@@ -199,9 +332,8 @@
             const subContainer = document.createElement('div');
             subContainer.className = 'sub-points-container';
             
-            // --- MAIN POINT GROUP DRAG LOGIC ---
             group.addEventListener('dragstart', function(e) {
-                if(e.target !== group) return; // Prevent subpoints from dragging the parent
+                if(e.target !== group) return; 
                 draggedGroup = group;
                 setTimeout(() => group.style.opacity = '0.5', 0);
                 e.stopPropagation();
@@ -214,14 +346,12 @@
             group.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
             group.addEventListener('drop', function(e) {
                 e.preventDefault(); e.stopPropagation();
-                // Handling dropping a Main Point
                 if (draggedGroup && draggedGroup !== group) {
                     const rect = group.getBoundingClientRect();
                     const dropAbove = e.clientY < rect.top + rect.height / 2;
                     if (dropAbove) outlineList.insertBefore(draggedGroup, group);
                     else outlineList.insertBefore(draggedGroup, group.nextSibling);
                 }
-                // Handling dropping a Sub Point INTO a Main Point's territory
                 if (draggedSub) {
                     subContainer.appendChild(draggedSub);
                 }
@@ -232,10 +362,9 @@
             outlineList.appendChild(group);
 
         } else {
-            // SUB POINT LOGIC
             const groups = document.querySelectorAll('.point-group');
             if (groups.length === 0) {
-                addPoint('main', 'Main Point'); // Auto-create a parent if none exists
+                addPoint('main', 'Main Point'); 
             }
             const lastGroup = document.querySelectorAll('.point-group')[document.querySelectorAll('.point-group').length - 1];
             const subContainer = lastGroup.querySelector('.sub-points-container');
@@ -249,11 +378,10 @@
                 <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
             `;
 
-            // --- SUB POINT DRAG LOGIC ---
             card.addEventListener('dragstart', function(e) {
                 draggedSub = card;
                 setTimeout(() => card.style.opacity = '0.5', 0);
-                e.stopPropagation(); // Stop the parent group from firing its drag event!
+                e.stopPropagation(); 
             });
             card.addEventListener('dragend', function(e) {
                 setTimeout(() => { card.style.opacity = '1'; draggedSub = null; }, 0);
@@ -390,7 +518,6 @@
         });
     }
 
-    // NEW: PDF Export logic
     function exportPDF() {
         const editor = document.getElementById('sermon-editor');
         const opt = {
@@ -403,7 +530,6 @@
         html2pdf().set(opt).from(editor).save();
     }
 
-    // Initialize list on load
     window.addEventListener('DOMContentLoaded', updateProjectList);
 
 </script>
