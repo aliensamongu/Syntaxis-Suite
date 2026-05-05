@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    
     <script src="strongs-greek-dictionary.js"></script>
 
     <style>
@@ -224,6 +225,12 @@
                                 </ul>
                             </li>
                             <li>
+                                <div class="group-label">Commentaries</div>
+                                <ul class="submenu">
+                                    <li class="option-item" data-val="mhc_sync" onclick="selectModule(this)">Matthew Henry (Auto-Sync)</li>
+                                </ul>
+                            </li>
+                            <li>
                                 <div class="group-label">Theological Library</div>
                                 <ul class="submenu">
                                     <li class="option-item" data-val="luther_tt.xml" onclick="selectModule(this)">Luther's Table Talk</li>
@@ -373,7 +380,7 @@
         const ref = document.getElementById('bibleRefInput').value;
         if (!selectedModuleValue) return;
         
-        if (!ref.trim() && selectedModuleValue !== 'luther_tt.xml') {
+        if (!ref.trim() && selectedModuleValue !== 'luther_tt.xml' && selectedModuleValue !== 'mhc_sync') {
              return; 
         }
         
@@ -585,7 +592,7 @@
         });
     }
 
-    // NEW: PRECISION OSIS SCANNER FOR COMMENTARY (Radar Sweep)
+    // OMNI-SCANNER UPGRADE
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -605,33 +612,60 @@
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
                 
-                const osisBook = osisMap[currentLoadedBook];
-                if (!osisBook) throw new Error("Could not map " + currentLoadedBook + " to an OSIS identifier.");
+                const osisBook = osisMap[currentLoadedBook] || currentLoadedBook;
+                const b = osisBook.toLowerCase();
+                const bShort = b.substring(0, 3);
+                const c = currentLoadedChapter;
                 
-                const shortBook = osisBook.substring(0, 3);
-                const exact1 = `Bible:${osisBook}.${currentLoadedChapter}`;
-                const prefix1 = `Bible:${osisBook}.${currentLoadedChapter}.`;
-                const exact2 = `Bible:${shortBook}.${currentLoadedChapter}`;
-                const prefix2 = `Bible:${shortBook}.${currentLoadedChapter}.`;
-                
-                const allElements = xmlDoc.querySelectorAll("[id]");
+                const allElements = xmlDoc.querySelectorAll("*");
                 let matchedBlocks = [];
+                let addedIds = new Set();
+                
+                const matchers = [
+                    `bible:${b}.${c}`, `bible:${b}.${c}.`, `bible:${b}.${c}-`,
+                    `bible:${bShort}.${c}`, `bible:${bShort}.${c}.`, `bible:${bShort}.${c}-`
+                ];
+                const parsedMatchers = [`|${b}|${c}|`, `|${bShort}|${c}|`, `|${currentLoadedBook.toLowerCase()}|${c}|`];
                 
                 allElements.forEach(el => {
-                    const id = el.getAttribute('id') || '';
-                    if (id === exact1 || id.startsWith(prefix1) || id.startsWith(exact1 + '-') ||
-                        id === exact2 || id.startsWith(prefix2) || id.startsWith(exact2 + '-')) {
-                        
+                    const id = (el.getAttribute('id') || '').toLowerCase();
+                    const osis = (el.getAttribute('osisRef') || '').toLowerCase();
+                    const parsed = (el.getAttribute('parsed') || '').toLowerCase();
+                    
+                    let isMatch = matchers.some(m => id === m || id.startsWith(m) || osis === m || osis.startsWith(m)) ||
+                                  parsedMatchers.some(p => parsed.includes(p));
+                                  
+                    if (isMatch) {
+                        let target = null;
                         if (el.tagName.toLowerCase().includes('div')) {
-                            const isNested = matchedBlocks.some(parent => parent.contains(el));
-                            if (!isNested) {
-                                matchedBlocks.push(el);
+                            target = el;
+                        } else if (el.tagName.toLowerCase() === 'scripcom') {
+                            let next = el.nextElementSibling;
+                            if (next && next.tagName.toLowerCase().includes('div')) target = next;
+                            else target = el.parentElement;
+                        } else {
+                            target = el.closest('div1, div2, div3, div4, div');
+                        }
+                        
+                        if (target && !addedIds.has(target)) {
+                            const isNested = matchedBlocks.some(parent => parent.contains(target));
+                            const isParent = matchedBlocks.some(child => target.contains(child));
+                            
+                            if (isParent) {
+                                matchedBlocks = matchedBlocks.filter(child => !target.contains(child));
+                                matchedBlocks.push(target);
+                                addedIds.add(target);
+                            } else if (!isNested) {
+                                matchedBlocks.push(target);
+                                addedIds.add(target);
                             }
                         }
                     }
                 });
                 
-                if (matchedBlocks.length === 0) throw new Error(`Could not find a commentary block for ${currentLoadedBook} Chapter ${currentLoadedChapter}.`);
+                if (matchedBlocks.length === 0) {
+                    throw new Error(`Engine searched for [${osisBook} Chapter ${c}] but found zero matches. Volume ${volumeNum} uses a naming format our scanner missed.`);
+                }
                 
                 passageContainer.innerHTML = '';
                 
@@ -668,12 +702,16 @@
         clearSelection();
 
         try {
+            // =====================================
             // LIBRARY PARSER INTERCEPT
-            if (fileName === 'luther_tt.xml') {
+            // =====================================
+            if (fileName === 'luther_tt.xml' || fileName === 'mhc_sync') {
                 originalToggleContainer.style.display = 'none';
                 
-                const response = await fetch(fileName);
-                if (!response.ok) throw new Error(`Could not locate ${fileName} in your project directory.`);
+                let targetFile = fileName === 'mhc_sync' ? 'vol1.xml' : fileName;
+                
+                const response = await fetch(targetFile);
+                if (!response.ok) throw new Error(`Could not locate ${targetFile} in your project directory.`);
                 const xmlText = await response.text();
                 
                 const parser = new DOMParser();
@@ -700,6 +738,7 @@
                 selectedWordId = null;
                 wordIndex = 0;
 
+                // Show Table of Contents
                 if (isTocRequest || !targetDiv) {
                     
                     const tocHeader = document.createElement('h2');
@@ -746,6 +785,7 @@
                     return;
                 }
 
+                // Render Chapter
                 const titleHeading = document.createElement('h2');
                 titleHeading.style.color = "var(--oxford-navy)";
                 titleHeading.style.marginBottom = "20px";
@@ -777,7 +817,9 @@
                 return;
             }
 
+            // =====================================
             // STANDARD BIBLE PARSER
+            // =====================================
             if (!query.trim()) return; 
             
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
