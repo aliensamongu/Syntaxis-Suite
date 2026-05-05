@@ -50,7 +50,7 @@
             box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
         textarea { height: 100px; resize: vertical; line-height: 1.4; overflow-y: auto; }
-        select { cursor: pointer; }
+        select { cursor: pointer; font-weight: bold; }
         input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
 
         .std-btn {
@@ -87,8 +87,23 @@
         .menu-item:hover { background: var(--oxford-navy-dark); color: var(--oxford-gold); }
 
         /* Workspace Area */
-        #workspace { flex-grow: 1; position: relative; display: flex; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 40px; align-items: flex-start; }
+        #workspace { flex-grow: 1; position: relative; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 20px; align-items: flex-start; }
         
+        .header-controls { display: flex; align-items: center; justify-content: flex-end; width: 100%; max-width: 880px; gap: 20px; }
+        .font-sizer { display: flex; align-items: center; gap: 8px; }
+        .font-sizer span { font-family: -apple-system, sans-serif; font-size: 10px; font-weight: bold; color: #888; text-transform: uppercase; letter-spacing: 1px;}
+        .font-sizer input[type=range] { width: 80px; cursor: pointer; }
+        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); }
+        .toggle-label { font-size: 10px; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; color: var(--oxford-navy); transition: 0.3s; }
+        .switch { position: relative; display: inline-block; width: 34px; height: 18px; margin: 0; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
+        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
+        input:checked + .slider { background-color: var(--oxford-gold); }
+        input:checked + .slider:before { transform: translateX(16px); }
+
+        #editor-container { display: flex; width: 100%; gap: 40px; }
+
         #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); transition: line-height 0.3s ease; line-height: 1.8; position: relative; z-index: 10; cursor: text; min-height: 50vh; }
         #text-canvas.spacing-standard { line-height: 1.8; }
         #text-canvas.spacing-loose { line-height: 2.8; }
@@ -97,6 +112,15 @@
         .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; transition: background-color 0.2s, color 0.2s, transform 0.2s; position: relative; }
         .word:hover { background-color: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
+
+        /* Language Specific & Interlinear Classes */
+        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
+        .verse-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
+        .verse-block:last-child { border-bottom: none; }
+        .verse-num { color: var(--rustic-orange); font-weight: bold; margin-right: 8px; font-size: 0.6em; vertical-align: super; }
+        .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; transition: opacity 0.3s, height 0.3s; }
+        .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
+        .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
         /* Grammar Badges */
         .grammar-tag { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 10px; font-family: -apple-system, sans-serif; font-weight: bold; color: white; padding: 2px 5px; border-radius: 4px; line-height: 1; pointer-events: none; letter-spacing: 0.5px; z-index: 5; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
@@ -147,8 +171,33 @@
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3>1. Load Text</h3>
-            <textarea id="rawTextInput" placeholder="Paste your passage here..." style="height: 80px;"></textarea>
-            <button class="std-btn" onclick="renderText()">Render onto Canvas</button>
+            
+            <div style="display: flex; flex-direction: column; gap: 5px;">
+                <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)">
+                <div style="display: flex; gap: 5px;">
+                    <select id="bibleModuleSelect" style="flex: 2;">
+                        <optgroup label="Interlinear">
+                            <option value="nt_interlinear">NT Interlinear</option>
+                            <option value="ot_interlinear">OT Interlinear</option>
+                        </optgroup>
+                        <optgroup label="Original Languages">
+                            <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                            <option value="hebrew_ot.xml">Hebrew OT</option>
+                        </optgroup>
+                        <optgroup label="English Translations">
+                            <option value="kjv_strongs.xml">KJV with Strong's</option>
+                            <option value="emt.xml">English Majority Text</option>
+                            <option value="esv.xml">English Standard Version</option>
+                        </optgroup>
+                    </select>
+                    <button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1; padding: 10px 5px;">Load Text</button>
+                </div>
+            </div>
+            
+            <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
+            
+            <textarea id="rawTextInput" placeholder="Paste your passage here..." style="height: 60px;"></textarea>
+            <button class="std-btn secondary" onclick="renderText()">Render Pasted Text</button>
         </div>
 
         <div style="display: flex; flex-direction: column; gap: 8px;">
@@ -184,11 +233,28 @@
 </div>
 
 <div id="workspace">
-    <div id="text-canvas" class="spacing-standard">
-        <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Paste text in the sidebar and click "Render onto Canvas" to begin...</span>
+    <div class="header-controls">
+        <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
+            <span class="toggle-label" id="original-toggle-label">Show Original</span>
+            <label class="switch">
+                <input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()">
+                <span class="slider"></span>
+            </label>
+        </div>
+
+        <div class="font-sizer">
+            <span>Size</span>
+            <input type="range" min="16" max="48" value="22" oninput="document.getElementById('text-canvas').style.fontSize = this.value + 'px'; requestAnimationFrame(drawArrows);">
+        </div>
     </div>
-    
-    <div id="gutter"></div>
+
+    <div id="editor-container">
+        <div id="text-canvas" class="spacing-standard">
+            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a module and type a reference to begin...</span>
+        </div>
+        
+        <div id="gutter"></div>
+    </div>
     
     <svg id="svg-layer">
         <defs id="svg-defs"></defs>
@@ -215,11 +281,292 @@
     const workspace = document.getElementById('workspace');
     const menu = document.getElementById('context-menu');
     const colorPicker = document.getElementById('color-picker');
+    const originalToggleContainer = document.getElementById('original-toggle-container');
+    const originalToggleLabel = document.getElementById('original-toggle-label');
+    const originalToggle = document.getElementById('originalToggle');
     
     let selectedWords = [];
     let lastClickedWordId = null;
     let connections = []; 
     let notes = []; 
+
+    // --- BIBLE DATA MAPS ---
+    const abbrevs = {
+        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+        "heb": "hebrews", "jas": "james", "rev": "revelation"
+    };
+    const bnumberMap = {
+        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
+        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
+    };
+    const osisMap = {
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
+    };
+
+    // --- BIBLE NATIVE LOADER ---
+    function toggleOriginalText() {
+        const isChecked = originalToggle.checked;
+        const origLines = document.querySelectorAll('.original-line');
+        origLines.forEach(line => {
+            line.style.display = isChecked ? 'block' : 'none';
+        });
+        setTimeout(drawArrows, 300);
+    }
+
+    async function loadNativeBible(query, fileName) {
+        if (!query.trim()) return;
+        
+        canvas.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module...</span>`;
+        canvas.className = 'spacing-standard'; 
+        clearAllWorkspace();
+        originalToggleContainer.style.display = 'none';
+
+        try {
+            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            if (!match) {
+                canvas.innerHTML = "<span style='color:var(--oxford-crimson);'>Please enter a valid Book and Chapter (e.g., Matthew 1).</span>";
+                return;
+            }
+
+            const searchBook = match[1].trim().toLowerCase();
+            const chapNum = match[2];
+            const fullBookName = abbrevs[searchBook] || searchBook;
+            
+            canvas.innerHTML = ''; 
+            let wordIndex = 0;
+
+            const processZefaniaNodes = (vers, container) => {
+                Array.from(vers.childNodes).forEach(node => {
+                    if (node.nodeType === Node.TEXT_NODE) {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${wordIndex++}`;
+                                span.innerText = chunk;
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'gr') {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${wordIndex++}`;
+                                span.innerText = chunk;
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    } else if (node.nodeName.toLowerCase() === 'style') {
+                        const words = node.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${wordIndex++}`;
+                                span.style.fontStyle = 'italic';
+                                span.style.color = '#888';
+                                span.innerText = chunk;
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                                container.appendChild(span);
+                            } else {
+                                container.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    }
+                });
+            };
+
+            // INTERLINEAR PATH
+            if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
+                const isHebrew = fileName === 'ot_interlinear';
+                originalToggleContainer.style.display = 'flex'; 
+                originalToggle.checked = true; 
+                originalToggleLabel.innerText = isHebrew ? 'Show Hebrew' : 'Show Greek';
+
+                const bNum = bnumberMap[fullBookName];
+                const osisId = osisMap[fullBookName];
+
+                let file1 = isHebrew ? 'hebrew_ot.xml' : 'tischendorf.xml';
+                let file2 = isHebrew ? 'esv.xml' : 'emt.xml';
+
+                const [grkRes, engRes] = await Promise.all([ fetch(file1), fetch(file2) ]);
+                if (!grkRes.ok || !engRes.ok) throw new Error("Missing XML files for Interlinear mode.");
+
+                const parser = new DOMParser();
+                const grkDoc = parser.parseFromString(await grkRes.text(), "text/xml");
+                const engDoc = parser.parseFromString(await engRes.text(), "text/xml");
+
+                const grkBookNode = grkDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                const grkChapNode = grkBookNode ? grkBookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+                
+                let engChapNode;
+                if (isHebrew) {
+                    const engBookNode = engDoc.querySelector(`book[number="${bNum}"]`);
+                    engChapNode = engBookNode ? engBookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                } else {
+                    engChapNode = engDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                }
+
+                if (!grkChapNode || !engChapNode) throw new Error(`Could not locate chapter ${chapNum}.`);
+
+                const grkVerses = Array.from(grkChapNode.querySelectorAll('VERS'));
+                const engVerses = Array.from(engChapNode.querySelectorAll('verse'));
+                const maxVerses = Math.max(grkVerses.length, engVerses.length);
+
+                for (let i = 0; i < maxVerses; i++) {
+                    const block = document.createElement('div');
+                    block.className = 'verse-block';
+
+                    const vNumSpan = document.createElement('span');
+                    vNumSpan.className = 'verse-num';
+                    vNumSpan.innerText = i + 1;
+                    block.appendChild(vNumSpan);
+
+                    const origLine = document.createElement('div');
+                    origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
+                    if (grkVerses[i]) processZefaniaNodes(grkVerses[i], origLine);
+                    block.appendChild(origLine);
+
+                    const engLine = document.createElement('div');
+                    engLine.className = 'english-line';
+                    if (engVerses[i]) {
+                        const words = engVerses[i].textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span');
+                                span.className = 'word';
+                                span.id = `w-${wordIndex++}`;
+                                span.innerText = chunk;
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                                engLine.appendChild(span);
+                            } else {
+                                engLine.appendChild(document.createTextNode(chunk));
+                            }
+                        });
+                    }
+                    block.appendChild(engLine);
+                    canvas.appendChild(block);
+                }
+                return;
+            }
+
+            // SINGLE MODULE PATH
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`Could not locate ${fileName}`);
+            const xmlText = await response.text();
+
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            if (fileName === 'hebrew_ot.xml') canvas.className = 'rtl-text spacing-standard';
+
+            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+            const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
+
+            if (isZefania) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+
+                const verses = chapNode.querySelectorAll('VERS');
+                verses.forEach(vers => {
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vers.getAttribute('vnumber');
+                    canvas.appendChild(vSpan);
+                    processZefaniaNodes(vers, canvas);
+                    canvas.appendChild(document.createTextNode(" "));
+                });
+                
+            } else if (isOSIS) {
+                const osisId = osisMap[fullBookName];
+                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => {
+                    const vNumMatch = vers.getAttribute('osisID').match(/\.(\d+)$/);
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vNumMatch ? vNumMatch[1] : "?";
+                    canvas.appendChild(vSpan);
+
+                    const words = vers.textContent.split(/(\s+)/);
+                    words.forEach(chunk => {
+                        if (chunk.trim() !== '') {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = chunk;
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                            canvas.appendChild(span);
+                        } else {
+                            canvas.appendChild(document.createTextNode(chunk));
+                        }
+                    });
+                    canvas.appendChild(document.createTextNode(" "));
+                });
+            } else if (isSimpleXML) {
+                const bNum = bnumberMap[fullBookName];
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+
+                const verses = chapNode.querySelectorAll('verse');
+                verses.forEach(vers => {
+                    const vSpan = document.createElement('sup');
+                    vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
+                    vSpan.innerText = vers.getAttribute('number');
+                    canvas.appendChild(vSpan);
+
+                    const words = vers.textContent.split(/(\s+)/);
+                    words.forEach(chunk => {
+                        if (chunk.trim() !== '') {
+                            const span = document.createElement('span');
+                            span.className = 'word';
+                            span.id = `w-${wordIndex++}`;
+                            span.innerText = chunk;
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(e, span.id); };
+                            canvas.appendChild(span);
+                        } else {
+                            canvas.appendChild(document.createTextNode(chunk));
+                        }
+                    });
+                    canvas.appendChild(document.createTextNode(" "));
+                });
+            }
+
+        } catch (error) {
+            canvas.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Engine Error:</strong> ${error.message}</p>`;
+        }
+    }
+
 
     // --- COLOR & LABEL ENGINE ---
     let activeSystemColor = colorPicker.value;
@@ -256,7 +603,7 @@
     }
 
     function editLabel(labelElement, event) {
-        event.stopPropagation(); // Prevents clicking the label while editing
+        event.stopPropagation(); 
         const textSpan = labelElement.querySelector('.label-text');
         const currentName = textSpan.innerText;
         const newName = prompt("Edit Label Name:", currentName);
@@ -266,10 +613,10 @@
     }
 
     function deleteLabel(labelElement, event) {
-        event.stopPropagation(); // Prevents clicking the label while deleting
+        event.stopPropagation(); 
         if (confirm("Are you sure you want to delete this label?")) {
             if (labelElement.classList.contains('active-label')) {
-                syncColorPicker(); // Fall back to the color picker if the active label is deleted
+                syncColorPicker(); 
             }
             labelElement.remove();
         }
@@ -298,8 +645,10 @@
         if(!raw.trim()) return;
         
         canvas.innerHTML = '';
+        canvas.className = 'spacing-standard';
         connections = []; notes = []; gutter.innerHTML = ''; svgPaths.innerHTML = '';
         selectedWords = []; lastClickedWordId = null;
+        originalToggleContainer.style.display = 'none';
 
         const words = raw.split(/(\s+)/); 
         let wordIndex = 0;
@@ -386,9 +735,7 @@
     }
 
     // --- MARKUP ENGINE ---
-    function getRandomInt(min, max) {
-        return Math.floor(Math.random() * (max - min + 1)) + min;
-    }
+    function getRandomInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; }
 
     function applyMarkup(type) {
         if (selectedWords.length === 0) {
@@ -402,30 +749,22 @@
             const el = document.getElementById(id);
             if (type === 'highlight') {
                 el.style.transform = ''; 
-                
                 el.style.backgroundColor = hexToRgba(color, 0.5);
                 el.style.borderBottom = ''; 
-                
                 el.style.borderRadius = '3px 8px / 8px 3px';
                 el.style.boxShadow = `0 0 4px ${hexToRgba(color, 0.4)}`;
-                
                 el.style.display = 'inline-block';
                 const rot = getRandomInt(-5, 5) / 10;
                 const skew = getRandomInt(-10, 10) / 10;
                 el.style.transform = `rotate(${rot}deg) skew(${skew}deg)`;
-
             } else if (type === 'underline') {
                 el.style.transform = ''; el.style.boxShadow = ''; el.style.backgroundColor = '';
-
                 const existingTag = el.querySelector('.grammar-tag');
                 if(existingTag) existingTag.remove(); 
-
                 const currentDepth = el.querySelectorAll('.ul-layer').length;
                 const innerContent = el.innerHTML;
                 const offset = 4 + (currentDepth * 5);
-                
                 el.innerHTML = `<span class="ul-layer" style="text-decoration: underline; text-decoration-style: ${style}; text-decoration-color: ${color}; text-underline-offset: ${offset}px; text-decoration-thickness: 2px;">${innerContent}</span>`;
-                
                 if(existingTag) el.appendChild(existingTag);
             }
         });
@@ -433,10 +772,7 @@
     }
 
     function promptGrammarTag() {
-        if (selectedWords.length === 0) {
-            alert("Please click to select some words in the canvas first!");
-            return;
-        }
+        if (selectedWords.length === 0) { alert("Please click to select some words in the canvas first!"); return; }
         const label = prompt("Enter Tag (e.g. SUBJ, VERB, APP):");
         if (!label) return;
         const color = activeSystemColor;
@@ -472,19 +808,14 @@
     }
 
     function clearAllWorkspace() {
-        if(confirm("Clear all formatting, notes, and arrows?")) {
-            document.querySelectorAll('.word').forEach(el => {
-                el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
-                el.style = '';
-                const tag = el.querySelector('.grammar-tag');
-                el.innerHTML = tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText.trim();
-            });
-            connections = [];
-            notes = [];
-            drawArrows();
-            renderGutter();
-            clearSelection();
-        }
+        document.querySelectorAll('.word').forEach(el => {
+            el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
+            el.style = '';
+            const tag = el.querySelector('.grammar-tag');
+            el.innerHTML = tag ? el.innerText.replace(tag.innerText, '').trim() : el.innerText.trim();
+        });
+        connections = []; notes = [];
+        drawArrows(); renderGutter(); clearSelection();
     }
 
     // --- SVG ARROWS ENGINE ---
@@ -510,10 +841,7 @@
     }
 
     function applyArrow() {
-        if (selectedWords.length < 2) {
-            alert("Please select at least two words to connect them with an arrow.");
-            return;
-        }
+        if (selectedWords.length < 2) { alert("Please select at least two words to connect them with an arrow."); return; }
         const startId = selectedWords[0];
         const endId = selectedWords[selectedWords.length - 1];
         const style = document.getElementById('lineStyle').value;
@@ -565,10 +893,7 @@
 
     // --- MARGIN NOTES ENGINE ---
     function addMarginNote() {
-        if (selectedWords.length === 0) {
-            alert("Please select the words in the canvas you want to attach the note to first!");
-            return;
-        }
+        if (selectedWords.length === 0) { alert("Please select the words in the canvas you want to attach the note to first!"); return; }
         const text = prompt("Enter Margin Note:");
         if (!text) return;
         
@@ -643,10 +968,7 @@
         const note = notes.find(n => n.id === id);
         if (!note) return;
         const newText = prompt("Edit Margin Note:", note.text);
-        if (newText !== null && newText.trim() !== "") {
-            note.text = newText;
-            renderGutter();
-        }
+        if (newText !== null && newText.trim() !== "") { note.text = newText; renderGutter(); }
     }
 
     function deleteNote(noteId, e) {
@@ -715,10 +1037,7 @@
 
     function deleteProject(key, e) {
         e.stopPropagation();
-        if(confirm("Delete this saved annotation?")) {
-            localStorage.removeItem(key);
-            updateProjectList();
-        }
+        if(confirm("Delete this saved annotation?")) { localStorage.removeItem(key); updateProjectList(); }
     }
 
     function downloadJSON() {
@@ -739,7 +1058,7 @@
     }
 
     function exportSnapshot() {
-        html2canvas(document.getElementById('workspace'), { backgroundColor: '#e4e7ea' }).then(canvasOutput => {
+        html2canvas(document.getElementById('editor-container'), { backgroundColor: '#e4e7ea' }).then(canvasOutput => {
             const link = document.createElement('a');
             link.download = 'annotator_snapshot.png';
             link.href = canvasOutput.toDataURL();
