@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
-    
     <script src="strongs-greek-dictionary.js"></script>
 
     <style>
@@ -63,7 +62,7 @@
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
         .std-btn:disabled { opacity: 0.5; pointer-events: none; }
 
-        /* --- NEW CUSTOM FLYOUT MENU STYLES --- */
+        /* CASCADING FLYOUT MENU STYLES */
         .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
         .custom-select-btn { 
             width: 100%; box-sizing: border-box; border-radius: var(--radius-small);
@@ -284,6 +283,15 @@
             <span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
             
             <div class="header-controls">
+                
+                <div class="toggle-wrapper" id="commentary-toggle-container" style="display: none; border-color: var(--oxford-gold);">
+                    <span class="toggle-label" style="color: var(--oxford-gold);">Sync Commentary</span>
+                    <label class="switch">
+                        <input type="checkbox" id="commentaryToggle" onchange="toggleCommentary()">
+                        <span class="slider"></span>
+                    </label>
+                </div>
+
                 <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
                     <span class="toggle-label" id="original-toggle-label">Show Original</span>
                     <label class="switch">
@@ -324,7 +332,7 @@
 
 <script>
     // ---------------------------------------------------------
-    // CASCADING FLYOUT MENU LOGIC (Completely Refactored)
+    // CASCADING FLYOUT MENU LOGIC
     // ---------------------------------------------------------
     let selectedModuleValue = "nt_interlinear";
 
@@ -333,7 +341,6 @@
         const wrapper = document.getElementById('moduleSelectWrapper');
         const sidebarInner = document.getElementById('main-sidebar-inner');
         
-        // Ensure the button registers the click flawlessly
         selectBtn.addEventListener('click', (e) => {
             e.stopPropagation();
             if (wrapper.classList.contains('open')) {
@@ -341,12 +348,10 @@
                 sidebarInner.style.overflowY = 'auto';
             } else {
                 wrapper.classList.add('open');
-                // Disable scrolling temporarily so the flyout can break out of the sidebar constraints
                 sidebarInner.style.overflowY = 'visible';
             }
         });
 
-        // Close menu if clicking anywhere else on the screen
         document.addEventListener('click', (e) => {
             if (wrapper.classList.contains('open') && !wrapper.contains(e.target)) {
                 wrapper.classList.remove('open');
@@ -367,11 +372,19 @@
     function triggerLoadModule() {
         const ref = document.getElementById('bibleRefInput').value;
         if (!selectedModuleValue) return;
+        
+        if (!ref.trim() && selectedModuleValue !== 'luther_tt.xml') {
+             return; 
+        }
+        
+        document.getElementById('commentaryToggle').checked = false;
+        document.getElementById('commentary-toggle-container').style.display = 'none';
+        
         loadNativeBible(ref, selectedModuleValue);
     }
 
     // ---------------------------------------------------------
-    // CORE UI VARIABLES
+    // CORE UI VARIABLES & SYNC MEMORY
     // ---------------------------------------------------------
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
@@ -383,6 +396,22 @@
     let selectedWordId = null;
     let lexiconData = {}; 
     let wordIndex = 0; 
+    
+    let cachedBibleHTML = ""; 
+    let currentLoadedBook = "";
+    let currentLoadedChapter = "";
+
+    // ---------------------------------------------------------
+    // COMMENTARY VOLUME MAPPER
+    // ---------------------------------------------------------
+    const mhcVolumeMap = {
+        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1,
+        "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2,
+        "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3,
+        "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
+        "matthew": 5, "mark": 5, "luke": 5, "john": 5,
+        "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
+    };
 
     // ---------------------------------------------------------
     // MASTER BIBLE INDEXES
@@ -545,7 +574,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE ENGINE (Bilingual + Library Texts)
+    // THE ENGINE (Bilingual + Library Texts + Auto-TOC)
     // ---------------------------------------------------------
     
     function toggleOriginalText() {
@@ -556,15 +585,86 @@
         });
     }
 
-    async function loadNativeBible(query, fileName) {
-        if (!query.trim()) return;
+    // NEW: PRECISION OSIS SCANNER FOR COMMENTARY
+    async function toggleCommentary() {
+        const isChecked = document.getElementById('commentaryToggle').checked;
         
+        if (isChecked) {
+            cachedBibleHTML = passageContainer.innerHTML;
+            passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Syncing Matthew Henry for ${currentLoadedBook} ${currentLoadedChapter}...</span>`;
+            
+            try {
+                const volumeNum = mhcVolumeMap[currentLoadedBook];
+                if (!volumeNum) throw new Error("Could not map this book to a commentary volume.");
+                const volFileName = `vol${volumeNum}.xml`;
+                
+                const response = await fetch(volFileName);
+                if (!response.ok) throw new Error(`Missing ${volFileName}. Please ensure all 6 volumes are in the root directory.`);
+                const xmlText = await response.text();
+                
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+                
+                // OSIS Precision Targeting
+                const osisBook = osisMap[currentLoadedBook];
+                if (!osisBook) throw new Error("Could not map " + currentLoadedBook + " to an OSIS identifier.");
+                
+                const divs = xmlDoc.querySelectorAll("div.Commentary");
+                let matchedBlocks = [];
+                
+                // ThML uses "Bible:Gen.1.x", we search for any block beginning with "Bible:Gen.1."
+                const targetPrefix = `Bible:${osisBook}.${currentLoadedChapter}`;
+                
+                divs.forEach(d => {
+                    const id = d.getAttribute('id') || '';
+                    if (id === targetPrefix || id.startsWith(targetPrefix + '.')) {
+                        matchedBlocks.push(d);
+                    }
+                });
+                
+                if (matchedBlocks.length === 0) throw new Error(`Could not find a commentary block for ${currentLoadedBook} Chapter ${currentLoadedChapter}.`);
+                
+                passageContainer.innerHTML = '';
+                
+                const titleHeading = document.createElement('h2');
+                titleHeading.style.color = "var(--oxford-navy)";
+                titleHeading.style.marginBottom = "20px";
+                titleHeading.style.borderBottom = "2px solid var(--oxford-gold)";
+                titleHeading.style.paddingBottom = "10px";
+                titleHeading.innerText = `Matthew Henry: ${currentLoadedBook.toUpperCase()} ${currentLoadedChapter}`;
+                passageContainer.appendChild(titleHeading);
+
+                matchedBlocks.forEach(block => {
+                    const wrapper = document.createElement('div');
+                    wrapper.style.marginBottom = "30px";
+                    wrapper.style.paddingBottom = "20px";
+                    wrapper.style.borderBottom = "1px solid rgba(0,0,0,0.1)";
+                    
+                    // We render the HTML exactly as the Commentary editor intended
+                    wrapper.innerHTML = block.innerHTML; 
+                    passageContainer.appendChild(wrapper);
+                });
+                
+            } catch (error) {
+                passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);"><strong>Sync Error:</strong> ${error.message}</p>`;
+            }
+            
+        } else {
+            // Commentary toggled OFF - instantly restore Bible text
+            passageContainer.innerHTML = cachedBibleHTML;
+        }
+    }
+
+
+    async function loadNativeBible(query, fileName) {
         passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module...</span>`;
         passageContainer.className = ''; 
         clearSelection();
 
         try {
+            // =====================================
             // LIBRARY PARSER INTERCEPT
+            // =====================================
             if (fileName === 'luther_tt.xml') {
                 originalToggleContainer.style.display = 'none';
                 
@@ -577,23 +677,73 @@
                 
                 const searchTerm = query.trim().toLowerCase();
                 let targetDiv = null;
-                
                 const divs = xmlDoc.querySelectorAll("div1");
-                divs.forEach(d => {
-                    const title = (d.getAttribute('title') || '').toLowerCase();
-                    const id = (d.getAttribute('id') || '').toLowerCase();
-                    if (title.includes(searchTerm) || id === searchTerm) {
-                        targetDiv = d;
-                    }
-                });
-
-                if (!targetDiv) throw new Error(`Could not find a section matching "${query}" in Luther's Table Talk.`);
                 
+                let isTocRequest = searchTerm === '' || searchTerm === 'toc' || searchTerm === 'index';
+
+                if (!isTocRequest) {
+                    divs.forEach(d => {
+                        const title = (d.getAttribute('title') || '').toLowerCase();
+                        const id = (d.getAttribute('id') || '').toLowerCase();
+                        if (title.includes(searchTerm) || id === searchTerm) {
+                            targetDiv = d;
+                        }
+                    });
+                }
+
                 passageContainer.innerHTML = '';
                 lexiconData = {}; 
                 selectedWordId = null;
                 wordIndex = 0;
 
+                // Show Table of Contents
+                if (isTocRequest || !targetDiv) {
+                    
+                    const tocHeader = document.createElement('h2');
+                    tocHeader.style.color = "var(--oxford-navy)";
+                    tocHeader.style.marginBottom = "20px";
+                    tocHeader.innerText = (!targetDiv && !isTocRequest) ? "Section not found. Table of Contents:" : "Table of Contents";
+                    passageContainer.appendChild(tocHeader);
+
+                    const tocList = document.createElement('div');
+                    tocList.style.display = "flex";
+                    tocList.style.flexDirection = "column";
+                    tocList.style.gap = "10px";
+                    tocList.style.width = "100%";
+                    tocList.style.maxWidth = "600px";
+
+                    divs.forEach(d => {
+                        const title = d.getAttribute('title') || 'Unnamed Section';
+                        const id = d.getAttribute('id') || '';
+                        
+                        const btn = document.createElement('button');
+                        btn.className = 'std-btn secondary';
+                        btn.style.textAlign = "left";
+                        btn.style.padding = "15px";
+                        btn.style.fontSize = "14px";
+                        btn.style.fontFamily = "Georgia, serif";
+                        btn.style.color = "var(--oxford-navy-dark)";
+                        btn.style.background = "rgba(0,0,0,0.03)";
+                        btn.style.border = "1px solid rgba(0,0,0,0.1)";
+                        
+                        btn.innerHTML = `<span style="color:var(--oxford-gold); margin-right: 10px; font-family: sans-serif;">[${id}]</span> ${title}`;
+                        
+                        btn.onclick = () => {
+                            document.getElementById('bibleRefInput').value = id || title;
+                            loadNativeBible(id || title, fileName);
+                        };
+                        
+                        btn.onmouseover = () => { btn.style.background = "var(--oxford-gold)"; btn.style.color = "var(--oxford-navy)"; };
+                        btn.onmouseout = () => { btn.style.background = "rgba(0,0,0,0.03)"; btn.style.color = "var(--oxford-navy-dark)"; };
+                        
+                        tocList.appendChild(btn);
+                    });
+                    
+                    passageContainer.appendChild(tocList);
+                    return;
+                }
+
+                // Render Chapter
                 const titleHeading = document.createElement('h2');
                 titleHeading.style.color = "var(--oxford-navy)";
                 titleHeading.style.marginBottom = "20px";
@@ -625,7 +775,11 @@
                 return;
             }
 
+            // =====================================
             // STANDARD BIBLE PARSER
+            // =====================================
+            if (!query.trim()) return; 
+            
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
             const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             if (!match) {
@@ -636,6 +790,11 @@
             const searchBook = match[1].trim().toLowerCase();
             const chapNum = match[2];
             const fullBookName = abbrevs[searchBook] || searchBook;
+            
+            // Save global state for the commentary sync engine
+            currentLoadedBook = fullBookName;
+            currentLoadedChapter = chapNum;
+            document.getElementById('commentary-toggle-container').style.display = 'flex';
             
             passageContainer.innerHTML = ''; 
             lexiconData = {}; 
@@ -893,6 +1052,7 @@
         lexiconData = {};
         clearSelection();
         originalToggleContainer.style.display = 'none';
+        document.getElementById('commentary-toggle-container').style.display = 'none';
 
         const words = raw.split(/(\s+)/); 
         wordIndex = 0;
@@ -1093,6 +1253,7 @@
     window.addEventListener('DOMContentLoaded', () => {
         loadNotebook();
         loadAnkiDeck();
+        document.getElementById('moduleSelectBtn').innerText = "NT Interlinear (Greek/EMT)";
     });
 
 </script>
