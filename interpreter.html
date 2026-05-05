@@ -585,7 +585,7 @@
         });
     }
 
-    // NEW: PRECISION OSIS SCANNER FOR COMMENTARY
+    // NEW: PRECISION OSIS SCANNER FOR COMMENTARY (Radar Sweep)
     async function toggleCommentary() {
         const isChecked = document.getElementById('commentaryToggle').checked;
         
@@ -605,20 +605,29 @@
                 const parser = new DOMParser();
                 const xmlDoc = parser.parseFromString(xmlText, "text/xml");
                 
-                // OSIS Precision Targeting
                 const osisBook = osisMap[currentLoadedBook];
                 if (!osisBook) throw new Error("Could not map " + currentLoadedBook + " to an OSIS identifier.");
                 
-                const divs = xmlDoc.querySelectorAll("div.Commentary");
+                const shortBook = osisBook.substring(0, 3);
+                const exact1 = `Bible:${osisBook}.${currentLoadedChapter}`;
+                const prefix1 = `Bible:${osisBook}.${currentLoadedChapter}.`;
+                const exact2 = `Bible:${shortBook}.${currentLoadedChapter}`;
+                const prefix2 = `Bible:${shortBook}.${currentLoadedChapter}.`;
+                
+                const allElements = xmlDoc.querySelectorAll("[id]");
                 let matchedBlocks = [];
                 
-                // ThML uses "Bible:Gen.1.x", we search for any block beginning with "Bible:Gen.1."
-                const targetPrefix = `Bible:${osisBook}.${currentLoadedChapter}`;
-                
-                divs.forEach(d => {
-                    const id = d.getAttribute('id') || '';
-                    if (id === targetPrefix || id.startsWith(targetPrefix + '.')) {
-                        matchedBlocks.push(d);
+                allElements.forEach(el => {
+                    const id = el.getAttribute('id') || '';
+                    if (id === exact1 || id.startsWith(prefix1) || id.startsWith(exact1 + '-') ||
+                        id === exact2 || id.startsWith(prefix2) || id.startsWith(exact2 + '-')) {
+                        
+                        if (el.tagName.toLowerCase().includes('div')) {
+                            const isNested = matchedBlocks.some(parent => parent.contains(el));
+                            if (!isNested) {
+                                matchedBlocks.push(el);
+                            }
+                        }
                     }
                 });
                 
@@ -638,9 +647,7 @@
                     const wrapper = document.createElement('div');
                     wrapper.style.marginBottom = "30px";
                     wrapper.style.paddingBottom = "20px";
-                    wrapper.style.borderBottom = "1px solid rgba(0,0,0,0.1)";
-                    
-                    // We render the HTML exactly as the Commentary editor intended
+                    wrapper.style.borderBottom = "1px dashed rgba(0,0,0,0.1)";
                     wrapper.innerHTML = block.innerHTML; 
                     passageContainer.appendChild(wrapper);
                 });
@@ -650,7 +657,6 @@
             }
             
         } else {
-            // Commentary toggled OFF - instantly restore Bible text
             passageContainer.innerHTML = cachedBibleHTML;
         }
     }
@@ -662,9 +668,7 @@
         clearSelection();
 
         try {
-            // =====================================
             // LIBRARY PARSER INTERCEPT
-            // =====================================
             if (fileName === 'luther_tt.xml') {
                 originalToggleContainer.style.display = 'none';
                 
@@ -696,7 +700,6 @@
                 selectedWordId = null;
                 wordIndex = 0;
 
-                // Show Table of Contents
                 if (isTocRequest || !targetDiv) {
                     
                     const tocHeader = document.createElement('h2');
@@ -743,7 +746,6 @@
                     return;
                 }
 
-                // Render Chapter
                 const titleHeading = document.createElement('h2');
                 titleHeading.style.color = "var(--oxford-navy)";
                 titleHeading.style.marginBottom = "20px";
@@ -775,9 +777,7 @@
                 return;
             }
 
-            // =====================================
             // STANDARD BIBLE PARSER
-            // =====================================
             if (!query.trim()) return; 
             
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
@@ -791,7 +791,6 @@
             const chapNum = match[2];
             const fullBookName = abbrevs[searchBook] || searchBook;
             
-            // Save global state for the commentary sync engine
             currentLoadedBook = fullBookName;
             currentLoadedChapter = chapNum;
             document.getElementById('commentary-toggle-container').style.display = 'flex';
@@ -1040,9 +1039,6 @@
         }
     }
 
-    // ---------------------------------------------------------
-    // PLAIN TEXT RENDERING
-    // ---------------------------------------------------------
     function renderText() {
         const raw = document.getElementById('rawTextInput').value;
         if(!raw.trim()) return;
@@ -1072,9 +1068,6 @@
         });
     }
 
-    // ---------------------------------------------------------
-    // CLICK HANDLER
-    // ---------------------------------------------------------
     async function handleWordClick(id) {
         clearSelection();
         selectedWordId = id;
@@ -1131,9 +1124,6 @@
 
     passageContainer.addEventListener('click', (e) => { if (e.target === passageContainer) clearSelection(); });
 
-    // ---------------------------------------------------------
-    // RESEARCH NOTEBOOK LOGIC
-    // ---------------------------------------------------------
     function toggleNotebook() {
         notebookSidebar.classList.toggle('open');
     }
@@ -1163,9 +1153,6 @@
         a.click();
     }
 
-    // ---------------------------------------------------------
-    // FLASHCARD DECK LOGIC
-    // ---------------------------------------------------------
     let ankiDeck = [];
 
     function loadAnkiDeck() {
