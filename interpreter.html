@@ -16,79 +16,72 @@
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
-            --rustic-orange: #C86428;
             --radius-small: 8px;
             --radius-medium: 12px;
         }
 
-        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background: var(--bg-main); }
+        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; background: var(--bg-main); }
         
-        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
+        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; color: var(--oxford-cream); }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
-        .sidebar-inner::-webkit-scrollbar { width: 6px; }
-        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
-        input[type="text"], textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); transition: 0.1s; outline: none; }
-        textarea { height: 80px; resize: vertical; line-height: 1.4; }
+        input[type="text"], textarea { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); outline: none; }
+        textarea { height: 80px; resize: vertical; }
 
-        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy); }
-        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 10px; text-transform: uppercase; transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy); }
+        .std-btn:hover { filter: brightness(1.1); transform: translateY(-1px); }
         .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 2px; font-size: 8px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; border: 1px solid rgba(255,255,255,0.1); }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
         .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
-        .custom-select-btn { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-weight: bold; }
-        .custom-select-btn::after { content: '▼'; font-size: 10px; color: #888; }
-        .dropdown-menu { position: absolute; top: 100%; left: 0; width: 100%; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); margin-top: 4px; padding: 0; list-style: none; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
+        .custom-select-btn { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-size: 12px; background: var(--oxford-cream); cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--oxford-navy); font-weight: bold; }
+        .dropdown-menu { position: absolute; top: 100%; left: 0; width: 100%; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); margin-top: 4px; padding: 0; list-style: none; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
         .custom-select-wrapper.open .dropdown-menu { display: block; }
-        .dropdown-menu > li { position: relative; border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .group-label { padding: 10px 15px; display: flex; justify-content: space-between; align-items: center; cursor: pointer; font-weight: bold; font-size: 12px; color: var(--oxford-navy); }
-        .group-label::after { content: '▶'; font-size: 10px; color: var(--oxford-gold); }
-        .submenu { position: absolute; top: -1px; left: 100%; width: 220px; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); padding: 0; list-style: none; display: none; box-shadow: 4px 4px 12px rgba(0,0,0,0.2); }
+        .group-label { padding: 10px 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: var(--oxford-navy); cursor: pointer; }
+        .submenu { position: absolute; top: -1px; left: 100%; width: 200px; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); display: none; list-style: none; padding: 0; box-shadow: 4px 4px 12px rgba(0,0,0,0.2); }
         .dropdown-menu > li:hover .submenu { display: block; }
-        .option-item { padding: 10px 15px; font-size: 12px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .option-item:hover { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
+        .option-item { padding: 10px 15px; font-size: 11px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .option-item:hover { background: var(--oxford-gold); }
 
-        #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; align-items: center; }
-        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative; }
+        #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; align-items: center; }
+        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
-        .header-controls { display: flex; align-items: center; gap: 20px; }
-        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; border: 1px solid rgba(0,0,0,0.1); }
-        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
+        
+        .toggle-wrapper { display: flex; align-items: center; gap: 8px; background: rgba(0,0,0,0.05); padding: 4px 10px; border-radius: 20px; }
+        .switch { position: relative; display: inline-block; width: 30px; height: 16px; }
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
         input:checked + .slider { background-color: var(--oxford-gold); }
-        input:checked + .slider:before { transform: translateX(16px); }
+        input:checked + .slider:before { transform: translateX(14px); }
 
         #passage-container { font-family: Georgia, serif; font-size: 22px; color: var(--oxford-navy-dark); line-height: 2.0; width: 100%; }
-        .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; }
-        .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); font-weight: bold; }
-        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
+        .word { display: inline-block; padding: 2px 4px; margin: 0 1px; border-radius: 4px; cursor: pointer; }
+        .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197,160,89,0.1); }
 
-        .verse-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
-        .verse-num { color: var(--rustic-orange); font-weight: bold; margin-right: 8px; font-size: 0.6em; vertical-align: super; }
-        .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; }
-        .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; }
+        .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
+        .verse-num { color: var(--oxford-crimson); font-weight: bold; font-size: 0.6em; vertical-align: super; margin-right: 8px; }
+        .original-line { color: var(--oxford-navy); }
+        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; }
 
-        #lexicon-editor { background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; opacity: 0.5; pointer-events: none; transition: 0.3s; }
-        #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; color: var(--oxford-cream); }
+        #lexicon-editor { background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; opacity: 0.5; pointer-events: none; }
+        #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
-        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: auto;}
-        #research-notebook { flex-grow: 1; resize: none; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: none; padding: 15px; border-radius: var(--radius-small); font-family: Georgia, serif; font-size: 14px; line-height: 1.6; outline: none; }
+        .notebook-inner { padding: 20px; display: flex; flex-direction: column; flex-grow: 1; gap: 10px; }
+        #research-notebook { flex-grow: 1; background: var(--oxford-cream); border: none; padding: 15px; border-radius: 4px; font-family: Georgia; }
     </style>
 </head>
-<body id="app-body">
+<body>
 
 <div id="sidebar">
-    <div class="sidebar-inner" id="main-sidebar-inner">
-        <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
+    <div class="sidebar-inner">
+        <h2>Σyntaxis</h2>
         <div class="app-nav">
             <a href="annotator.html">Annotate</a>
             <a href="app.html">Diagram</a>
@@ -96,65 +89,59 @@
             <a href="outliner.html">Outline</a>
         </div>
         
-        <div style="display: flex; flex-direction: column; gap: 8px;">
-            <h3>1. Base Passage / Section</h3>
+        <div>
+            <h3>1. Load Passage</h3>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Ref (e.g. John 1)">
-                <div style="display: flex; gap: 5px; align-items: stretch;">
-                    <div class="custom-select-wrapper" id="moduleSelectWrapper">
-                        <div class="custom-select-btn" id="moduleSelectBtn">NT Interlinear (Greek/EMT)</div>
+                <input type="text" id="bibleRefInput" placeholder="e.g. John 1">
+                <div style="display: flex; gap: 5px;">
+                    <div class="custom-select-wrapper" id="modWrapper">
+                        <div class="custom-select-btn" id="modBtn">NT Interlinear</div>
                         <ul class="dropdown-menu">
                             <li><div class="group-label">Interlinear</div>
                                 <ul class="submenu">
-                                    <li class="option-item" data-val="nt_interlinear" onclick="selectModule(this)">NT Interlinear (Greek/EMT)</li>
-                                    <li class="option-item" data-val="ot_interlinear" onclick="selectModule(this)">OT Interlinear (Hebrew/ESV)</li>
+                                    <li class="option-item" data-val="nt_interlinear">NT Greek/EMT</li>
+                                    <li class="option-item" data-val="ot_interlinear">OT Hebrew/ESV</li>
                                 </ul>
                             </li>
-                            <li><div class="group-label">Original Languages</div>
+                            <li><div class="group-label">Languages</div>
                                 <ul class="submenu">
-                                    <li class="option-item" data-val="tischendorf.xml" onclick="selectModule(this)">Tischendorf Greek NT</li>
-                                    <li class="option-item" data-val="hebrew_ot.xml" onclick="selectModule(this)">Hebrew OT</li>
+                                    <li class="option-item" data-val="tischendorf.xml">Tischendorf</li>
+                                    <li class="option-item" data-val="hebrew_ot.xml">Hebrew OT</li>
                                 </ul>
                             </li>
-                            <li><div class="group-label">English Translations</div>
+                            <li><div class="group-label">English</div>
                                 <ul class="submenu">
-                                    <li class="option-item" data-val="kjv_strongs.xml" onclick="selectModule(this)">KJV with Strong's</li>
-                                    <li class="option-item" data-val="emt.xml" onclick="selectModule(this)">EMT</li>
-                                    <li class="option-item" data-val="esv.xml" onclick="selectModule(this)">ESV</li>
+                                    <li class="option-item" data-val="kjv_strongs.xml">KJV Strong's</li>
+                                    <li class="option-item" data-val="esv.xml">ESV</li>
                                 </ul>
                             </li>
-                            <li><div class="group-label">Theological Library</div>
+                            <li><div class="group-label">Library</div>
                                 <ul class="submenu">
-                                    <li class="option-item" data-val="luther_tt.xml" onclick="selectModule(this)">Luther's Table Talk</li>
-                                    <li class="option-item" data-val="mhc_sync" onclick="selectModule(this)">Matthew Henry (Auto-Sync)</li>
+                                    <li class="option-item" data-val="mhc_sync">Matthew Henry</li>
+                                    <li class="option-item" data-val="luther_tt.xml">Luther</li>
                                 </ul>
                             </li>
                         </ul>
                     </div>
-                    <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1;">Load</button>
+                    <button class="std-btn" onclick="triggerLoad()">Load</button>
                 </div>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>2. Lexicon & Morphology</h3>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>2. Lexicon</h3>
             <div id="lexicon-editor">
-                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px;" id="lex-target-word">No Word Selected</div>
-                <div style="display: flex; gap: 5px;">
-                    <input type="text" id="lexLemma" placeholder="Lemma" readonly>
-                    <input type="text" id="lexStrongs" placeholder="Strong's" readonly>
-                </div>
-                <input type="text" id="lexParsing" placeholder="Parsing" readonly>
-                <textarea id="lexDef" placeholder="Definition..." oninput="syncPastedDef()"></textarea>
-                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="background: #c0392b; color: white; width:100%; margin-top:5px;" disabled>+ Add Card</button>
+                <div id="lex-target-word" style="font-weight: bold; color: var(--oxford-gold);">No Word</div>
+                <input type="text" id="lexDef" placeholder="Paste definition here..." oninput="saveLex()">
+                <button class="std-btn" onclick="addCard()" style="width:100%; margin-top:5px;">+ Add Card</button>
             </div>
         </div>
 
-        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>3. Flashcard Deck (<span id="deckCount">0</span>)</h3>
+        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>3. Deck (<span id="deckCount">0</span>)</h3>
             <div style="display: flex; gap: 5px;">
-                <button class="std-btn" onclick="exportAnki()" style="flex:1; background: #c0392b; color: white;">⬇ Anki (.txt)</button>
-                <button class="std-btn" onclick="exportSpreadsheet()" style="flex:1; background: #27ae60; color: white;">⬇ Excel (.tsv)</button>
+                <button class="std-btn" onclick="exportAnki()" style="flex:1;">Anki</button>
+                <button class="std-btn" onclick="exportExcel()" style="flex:1;">Excel</button>
             </div>
         </div>
     </div>
@@ -163,17 +150,13 @@
 <div id="workspace">
     <div class="workspace-panel">
         <div class="panel-title">
-            <span>Passage <span style="font-size: 11px; color: #888;">ΣYNTAXIS</span></span>
+            <span id="header-label">Σyntaxis Interpretation</span>
             <div class="header-controls">
-                <div class="toggle-wrapper" id="commentary-toggle-container" style="display: none;">
-                    <span style="font-size:10px; color:var(--oxford-gold);">COMMENTARY</span>
-                    <label class="switch"><input type="checkbox" id="commentaryToggle" onchange="toggleCommentary()"><span class="slider"></span></label>
+                <div class="toggle-wrapper" id="sync-ui" style="display: none;">
+                    <span style="font-size:9px; color:var(--oxford-gold);">SYNC COMMENTARY</span>
+                    <label class="switch"><input type="checkbox" id="syncToggle" onchange="runSync()"><span class="slider"></span></label>
                 </div>
-                <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
-                    <span id="orig-toggle-label" style="font-size:10px;">SHOW ORIGINAL</span>
-                    <label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label>
-                </div>
-                <button class="std-btn secondary" onclick="toggleNotebook()">📓 Notebook</button>
+                <button class="std-btn secondary" onclick="toggleNote()">📓 Notebook</button>
             </div>
         </div>
         <div id="passage-container"></div>
@@ -182,188 +165,163 @@
 
 <div id="notebook-sidebar">
     <div class="notebook-inner">
-        <h2>Research <span style="color: var(--oxford-gold);">Notebook</span></h2>
-        <textarea id="research-notebook" oninput="autoSaveNotebook()"></textarea>
-        <button class="std-btn" onclick="exportNotebook()" style="background: #27ae60; color: white;">Export (.txt)</button>
+        <h2>Notebook</h2>
+        <textarea id="research-notebook" oninput="saveNote()"></textarea>
+        <button class="std-btn" onclick="exportNote()">Export .txt</button>
     </div>
 </div>
 
 <script>
-    let selectedModuleValue = "nt_interlinear";
-    const passageContainer = document.getElementById('passage-container');
-    const lexEditor = document.getElementById('lexicon-editor');
-    const notebookSidebar = document.getElementById('notebook-sidebar');
-    let selectedWordId = null, lexiconData = {}, wordIndex = 0, cachedBibleHTML = "", currentLoadedBook = "", currentLoadedChapter = "";
-
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
     const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
 
+    let currentMod = "nt_interlinear", selectedWordId = null, lexData = {}, wordIdx = 0, bibleCache = "", loadedBook = "", loadedChap = "";
+
+    window.addEventListener('DOMContentLoaded', () => {
+        const btn = document.getElementById('modBtn'), wrap = document.getElementById('modWrapper');
+        btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); };
+        document.querySelectorAll('.option-item').forEach(opt => {
+            opt.onclick = () => { currentMod = opt.dataset.val; btn.innerText = opt.innerText; wrap.classList.remove('open'); };
+        });
+        document.getElementById('research-notebook').value = localStorage.getItem('syntaxis_note') || "";
+        loadDeckCount();
+    });
+
     function toRoman(num) {
         if (isNaN(num)) return '';
         const lookup = {M:1000,CM:900,D:500,CD:400,C:100,XC:90,L:50,XL:40,X:10,IX:9,V:5,IV:4,I:1};
-        let roman = '';
-        for (let i in lookup) { while (num >= lookup[i]) { roman += i; num -= lookup[i]; } }
-        return roman.toLowerCase();
+        let r = ''; for (let i in lookup) { while (num >= lookup[i]) { r += i; num -= lookup[i]; } }
+        return r.toLowerCase();
     }
 
-    async function toggleCommentary() {
-        const isChecked = document.getElementById('commentaryToggle').checked;
-        if (isChecked) {
-            cachedBibleHTML = passageContainer.innerHTML;
-            passageContainer.innerHTML = `<p style="font-style:italic; color:var(--oxford-gold);">Syncing Matthew Henry for ${currentLoadedBook} ${currentLoadedChapter}...</p>`;
-            try {
-                const volNum = mhcVolumeMap[currentLoadedBook];
-                const res = await fetch(`vol${volNum}.xml`);
-                if (!res.ok) throw new Error(`Missing vol${volNum}.xml.`);
-                const xmlText = await res.text();
-                const doc = new DOMParser().parseFromString(xmlText, "text/html");
-                doc.querySelectorAll("generalinfo, printsourceinfo, frontmatter").forEach(el => el.remove());
-                const b = (osisMap[currentLoadedBook] || currentLoadedBook).toLowerCase();
-                const bTitle = currentLoadedBook.toLowerCase();
-                const cInt = parseInt(currentLoadedChapter);
-                function findLandmark(chapterVal) {
-                    const rom = toRoman(chapterVal);
-                    const targets = [ `${b}.${rom}.`, `${b}.${rom}-`, `${bTitle}.${rom}.`, `${bTitle}.${rom}-`, `bible:${b}.${chapterVal}.`, `bible:${b}.${chapterVal}-` ];
-                    let found = null;
-                    doc.querySelectorAll("[id]").forEach(el => {
-                        const id = el.id.toLowerCase();
-                        if (!found && targets.some(t => id.startsWith(t))) found = el;
-                    });
-                    return found;
-                }
-                let startNode = findLandmark(cInt) || findLandmark(cInt + 1);
-                if (!startNode) throw new Error(`Chapter Landmark not found.`);
-                const stopTargets = [ `${b}.${toRoman(cInt+1)}.`, `${b}.${toRoman(cInt+1)}-`, `bible:${b}.${cInt+1}.`, `${bTitle}.${toRoman(cInt+1)}.` ];
-                passageContainer.innerHTML = `<h2 style="border-bottom: 2px solid var(--oxford-gold); padding-bottom:10px;">Matthew Henry: ${currentLoadedBook.toUpperCase()} ${cInt}</h2>`;
-                let curr = startNode;
-                let count = 0;
-                while (curr && count < 800) {
-                    const id = (curr.id || "").toLowerCase();
-                    if (count > 1 && stopTargets.some(t => id.startsWith(t))) break;
-                    passageContainer.appendChild(curr.cloneNode(true));
-                    curr = curr.nextElementSibling;
-                    count++;
-                }
-            } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
-        } else {
-            passageContainer.innerHTML = cachedBibleHTML;
-        }
-    }
+    async function triggerLoad() {
+        const query = document.getElementById('bibleRefInput').value.trim().toLowerCase();
+        if (!query && currentMod !== 'mhc_sync') return;
+        document.getElementById('syncToggle').checked = false;
+        document.getElementById('sync-ui').style.display = 'none';
+        
+        const container = document.getElementById('passage-container');
+        container.innerHTML = "Loading...";
 
-    async function loadNativeBible(query, fileName) {
-        passageContainer.innerHTML = "Initializing module...";
         try {
-            const res = await fetch(fileName === 'mhc_sync' ? 'vol1.xml' : fileName);
-            if (!res.ok) throw new Error("File not found on local server.");
-            const html = await res.text();
-            const doc = new DOMParser().parseFromString(html, "text/html");
-            const q = query.trim().toLowerCase();
+            const res = await fetch(currentMod === 'mhc_sync' ? 'vol1.xml' : currentMod);
+            const text = await res.text();
+            const doc = new DOMParser().parseFromString(text, "text/html");
 
-            if (fileName === 'mhc_sync' || !q) {
-                passageContainer.innerHTML = "<h2>Table of Contents</h2>";
+            if (currentMod === 'mhc_sync' || !query) {
+                container.innerHTML = "<h2>Library Index</h2>";
                 doc.querySelectorAll("div1").forEach(d => {
-                    const btn = document.createElement('button');
-                    btn.className = 'std-btn secondary'; btn.style.display = "block"; btn.style.width = "100%"; btn.style.textAlign="left"; btn.style.margin = "5px 0";
-                    btn.innerText = d.getAttribute('title') || d.id;
-                    btn.onclick = () => loadNativeBible(d.id, fileName);
-                    passageContainer.appendChild(btn);
+                    const b = document.createElement('button');
+                    b.className = 'std-btn secondary'; b.style.display="block"; b.style.width="100%"; b.style.margin="5px 0";
+                    b.innerText = d.getAttribute('title') || d.id;
+                    b.onclick = () => { document.getElementById('bibleRefInput').value = d.id; triggerLoad(); };
+                    container.appendChild(b);
                 });
                 return;
             }
 
-            const match = q.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            if (!match) throw new Error("Invalid Reference.");
-            currentLoadedBook = abbrevs[match[1]] || match[1];
-            currentLoadedChapter = match[2];
+            const match = query.match(/^(\d?\s*[a-z]+)\s*(\d+)/);
+            if (!match) throw new Error("Format: Book Chapter (e.g. John 1)");
+            loadedBook = abbrevs[match[1]] || match[1];
+            loadedChap = match[2];
+            document.getElementById('sync-ui').style.display = 'flex';
 
-            passageContainer.innerHTML = '';
-            lexiconData = {}; wordIndex = 0;
-            document.getElementById('commentary-toggle-container').style.display = 'flex';
-            document.getElementById('original-toggle-container').style.display = (fileName.includes('nt') || fileName.includes('ot') || fileName.includes('tischendorf')) ? 'flex' : 'none';
+            const bN = bnumberMap[loadedBook], oN = osisMap[loadedBook];
+            const chap = doc.querySelector(`BIBLEBOOK[bnumber="${bN}"] CHAPTER[cnumber="${loadedChap}"]`) || 
+                         doc.querySelector(`chapter[osisID="${oN}.${loadedChap}"]`) ||
+                         doc.querySelector(`book[number="${bN}"] chapter[number="${loadedChap}"]`);
 
-            const bNum = bnumberMap[currentLoadedBook];
-            const osisId = osisMap[currentLoadedBook];
-            
-            const chapNode = doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${currentLoadedChapter}"]`) || 
-                             doc.querySelector(`chapter[osisID="${osisId}.${currentLoadedChapter}"]`) ||
-                             doc.querySelector(`book[number="${bNum}"] chapter[number="${currentLoadedChapter}"]`);
+            if (!chap) throw new Error("Passage not found in this module.");
 
-            if (!chapNode) throw new Error(`Could not find ${currentLoadedBook} ${currentLoadedChapter}`);
-
-            chapNode.querySelectorAll('VERS, verse').forEach((v, i) => {
-                const block = document.createElement('div');
-                block.className = 'verse-block';
-                const vNum = document.createElement('span'); vNum.className = 'verse-num'; vNum.innerText = i+1;
-                block.appendChild(vNum);
-                const txt = document.createElement('div'); txt.className = 'original-line';
-                v.textContent.split(/(\s+)/).forEach(chunk => {
-                    if (chunk.trim()) {
-                        const span = document.createElement('span'); span.className = 'word'; span.id = `w-${wordIndex++}`;
-                        span.innerText = chunk;
-                        span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
-                        lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
-                        txt.appendChild(span);
-                    } else txt.appendChild(document.createTextNode(chunk));
+            container.innerHTML = ''; lexData = {}; wordIdx = 0;
+            chap.querySelectorAll('VERS, verse').forEach((v, i) => {
+                const row = document.createElement('div'); row.className = 'verse-block';
+                row.innerHTML = `<span class="verse-num">${i+1}</span>`;
+                const line = document.createElement('div'); line.className = 'original-line';
+                v.textContent.split(/(\s+)/).forEach(w => {
+                    if (w.trim()) {
+                        const s = document.createElement('span'); s.className = 'word'; s.id = `w-${wordIdx++}`;
+                        s.innerText = w; s.onclick = (e) => { e.stopPropagation(); clickWord(s.id); };
+                        lexData[s.id] = { word: w.replace(/[.,;!?]/g, '') };
+                        line.appendChild(s);
+                    } else line.appendChild(document.createTextNode(w));
                 });
-                block.appendChild(txt);
-                passageContainer.appendChild(block);
+                row.appendChild(line); container.appendChild(row);
             });
-        } catch (e) { passageContainer.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
+        } catch (e) { container.innerHTML = `<p style="color:var(--oxford-crimson);">${e.message}</p>`; }
     }
 
-    function triggerLoadModule() {
-        const ref = document.getElementById('bibleRefInput').value;
-        if (!ref && selectedModuleValue !== 'mhc_sync') return;
-        document.getElementById('commentaryToggle').checked = false;
-        loadNativeBible(ref, selectedModuleValue);
+    async function runSync() {
+        const active = document.getElementById('syncToggle').checked;
+        const container = document.getElementById('passage-container');
+        if (active) {
+            bibleCache = container.innerHTML;
+            container.innerHTML = "Searching Commentary...";
+            try {
+                const vol = mhcVolumeMap[loadedBook];
+                const res = await fetch(`vol${vol}.xml`);
+                const html = await res.text();
+                const doc = new DOMParser().parseFromString(html, "text/html");
+                doc.querySelectorAll("generalinfo, printsourceinfo, frontmatter").forEach(x => x.remove());
+
+                const b = (osisMap[loadedBook] || loadedBook).toLowerCase();
+                const c = parseInt(loadedChap);
+                
+                const find = (v) => {
+                    const r = toRoman(v);
+                    const ts = [ `${b}.${r}.`, `${b}.${r}-`, `bible:${b}.${c}.` ];
+                    let f = null; doc.querySelectorAll("[id]").forEach(el => { if (!f && ts.some(t => el.id.toLowerCase().startsWith(t))) f = el; });
+                    return f;
+                };
+
+                let start = find(c) || find(c + 1);
+                if (!start) throw new Error("No commentary match found.");
+
+                const stopTs = [ `${b}.${toRoman(c+1)}.`, `${b}.${toRoman(c+1)}-`, `${b}.${toRoman(c+2)}.`, `bible:${b}.${c+1}.` ];
+                container.innerHTML = `<h2>Matthew Henry: ${loadedBook.toUpperCase()} ${c}</h2>`;
+                let cur = start; let cnt = 0;
+                while (cur && cnt < 800) {
+                    if (cnt > 0 && stopTs.some(t => (cur.id||"").toLowerCase().startsWith(t))) break;
+                    container.appendChild(cur.cloneNode(true));
+                    cur = cur.nextElementSibling; cnt++;
+                }
+            } catch (e) { container.innerHTML = e.message; }
+        } else { container.innerHTML = bibleCache; }
     }
 
-    function selectModule(element) {
-        selectedModuleValue = element.getAttribute('data-val');
-        document.getElementById('moduleSelectBtn').innerText = element.innerText;
-        document.getElementById('moduleSelectWrapper').classList.remove('open');
-        document.getElementById('main-sidebar-inner').style.overflowY = 'auto';
-    }
-
-    function handleWordClick(id) {
+    function clickWord(id) {
         if(selectedWordId) document.getElementById(selectedWordId).classList.remove('selected');
         selectedWordId = id; document.getElementById(id).classList.add('selected');
-        lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto';
-        document.getElementById('addCardBtn').disabled = false;
-        document.getElementById('lex-target-word').innerText = lexiconData[id].word;
+        const ed = document.getElementById('lexicon-editor'); ed.style.opacity = '1'; ed.style.pointerEvents = 'auto';
+        document.getElementById('lex-target-word').innerText = lexData[id].word;
+        document.getElementById('lexDef').value = lexData[id].def || "";
     }
 
-    function syncPastedDef() { if(selectedWordId) lexiconData[selectedWordId].def = document.getElementById('lexDef').value; }
-    function toggleNotebook() { notebookSidebar.classList.toggle('open'); }
-    function autoSaveNotebook() { localStorage.setItem('syntaxis_notebook', document.getElementById('research-notebook').value); }
-    function loadNotebook() { document.getElementById('research-notebook').value = localStorage.getItem('syntaxis_notebook') || ""; }
-    
-    let ankiDeck = [];
-    function loadAnkiDeck() { ankiDeck = JSON.parse(localStorage.getItem('anki_deck') || '[]'); document.getElementById('deckCount').innerText = ankiDeck.length; }
-    function addSelectedWordToDeck() {
-        const card = { front: document.getElementById('lex-target-word').innerText, back: document.getElementById('lexDef').value };
-        ankiDeck.push(card); localStorage.setItem('anki_deck', JSON.stringify(ankiDeck));
-        document.getElementById('deckCount').innerText = ankiDeck.length;
+    function saveLex() { if(selectedWordId) lexData[selectedWordId].def = document.getElementById('lexDef').value; }
+    function addCard() {
+        let d = JSON.parse(localStorage.getItem('syntaxis_deck') || '[]');
+        d.push({ f: lexData[selectedWordId].word, b: lexData[selectedWordId].def });
+        localStorage.setItem('syntaxis_deck', JSON.stringify(d));
+        loadDeckCount();
     }
-    function exportAnki() {
-        let csv = ankiDeck.map(c => `${c.front}\t${c.back}`).join('\n');
-        const blob = new Blob([csv], { type: "text/plain" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Anki_Deck.txt"; a.click();
+    function loadDeckCount() { document.getElementById('deckCount').innerText = JSON.parse(localStorage.getItem('syntaxis_deck') || '[]').length; }
+    function exportAnki() { 
+        let t = JSON.parse(localStorage.getItem('syntaxis_deck') || '[]').map(c => `${c.f}\t${c.b}`).join('\n');
+        download(t, "Syntaxis_Anki.txt");
     }
-    function exportSpreadsheet() {
-        let tsv = "Word\tDefinition\n" + ankiDeck.map(c => `${c.front}\t${c.back}`).join('\n');
-        const blob = new Blob([tsv], { type: "text/tab-separated-values" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Vocabulary.tsv"; a.click();
+    function exportExcel() {
+        let t = "Word\tDefinition\n" + JSON.parse(localStorage.getItem('syntaxis_deck') || '[]').map(c => `${c.f}\t${c.b}`).join('\n');
+        download(t, "Syntaxis_Vocab.tsv");
     }
+    function download(t, f) { const b = new Blob([t], {type:"text/plain"}); const a = document.createElement('a'); a.href=URL.createObjectURL(b); a.download=f; a.click(); }
+    function toggleNote() { document.getElementById('notebook-sidebar').classList.toggle('open'); }
+    function saveNote() { localStorage.setItem('syntaxis_note', document.getElementById('research-notebook').value); }
+    function exportNote() { download(document.getElementById('research-notebook').value, "Notes.txt"); }
     function toggleOriginalText() {
-        const checked = document.getElementById('originalToggle').checked;
-        document.querySelectorAll('.original-line').forEach(l => l.style.display = checked ? 'block' : 'none');
-    }
-    function exportNotebook() {
-        const blob = new Blob([document.getElementById('research-notebook').value], { type: "text/plain" });
-        const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Notebook.txt"; a.click();
+        const c = document.getElementById('originalToggle').checked;
+        document.querySelectorAll('.original-line').forEach(l => l.style.display = c ? 'block' : 'none');
     }
 </script>
 </body>
