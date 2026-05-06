@@ -6,13 +6,12 @@
     <style>
         :root { --sidebar-width: 380px; --right-sidebar-width: 320px; --bg-main: #e4e7ea; --oxford-navy: #1B263B; --oxford-navy-dark: #121A2A; --oxford-cream: #F8F5EE; --oxford-gold: #C5A059; --oxford-crimson: #8C1C13; --rustic-orange: #C86428; --radius-small: 8px; --radius-medium: 12px; }
         body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background: var(--bg-main); }
-        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); }
+        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; }
-        #right-sidebar { width: var(--right-sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 90; box-shadow: -2px 0 15px rgba(0,0,0,0.15); }
+        #right-sidebar { width: var(--right-sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 90; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
-        h2 { margin: 0; color: var(--oxford-cream); font-family: Georgia, serif; font-size: 24px; }
-        .ix { font-size: 14px; text-decoration: overline; margin-left: 4px; font-weight: bold; color: var(--oxford-gold); }
+        h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
         h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
         input[type="text"], textarea, select { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); transition: 0.1s; outline: none; box-shadow: inset 0 2px 4px rgba(0,0,0,0.05); }
@@ -32,7 +31,9 @@
         .tool:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
         .tool svg { width: 28px; height: 28px; stroke: var(--oxford-navy); fill: none; stroke-width: 3.5; display: block; margin: 0 auto 6px; }
         
-        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.1s; }
+        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.1s; background: var(--oxford-gold); color: var(--oxford-navy); }
+        .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+        
         .btn-group { display: flex; gap: 5px; }
         .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.1s; }
         .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
@@ -54,7 +55,8 @@
         .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
         .proj-card:hover { border-color: var(--oxford-gold); }
 
-        #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; }
+        /* The Modal CSS that got dropped! */
+        #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 400px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
     </style>
 </head>
@@ -74,7 +76,7 @@
             <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
             <div style="display: flex; gap: 8px;">
                 <input type="text" id="verseReference" placeholder="Ref (e.g. 1Pet 3:18)" oninput="autoSave()" style="flex:1;">
-                <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save App</button>
+                <button class="std-btn" onclick="saveToApp()" style="flex-shrink:0;">Save App</button>
             </div>
         </div>
 
@@ -99,10 +101,10 @@
         </div>
 
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="tool" onclick="openBlockModal()" style="font-size: 13px;">📝 Add Text Block</div>
-            <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px;">➔ Add Labeled Arrow</div>
-            <div class="tool" onclick="addShape('single_line')" style="font-size: 13px;">↘ Add Simple Line</div>
-            <div class="tool" onclick="addShape('text')" style="font-size: 13px;">🏷 Add Free Label</div>
+            <div class="tool" onclick="openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
+            <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Add Curved Arrow</div>
+            <div class="tool" onclick="addShape('single_line')" style="font-size: 13px; padding: 15px;">↘ Add Simple Line</div>
+            <div class="tool" onclick="addShape('text')" style="font-size: 13px; padding: 15px;">🏷 Add Free Label</div>
         </div>
         
         <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); width: 100%; margin-top:10px;">Flip Selection (F)</button>
@@ -119,7 +121,7 @@
 
         <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px;">
             <button class="std-btn" onclick="exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
-            <button class="std-btn" onclick="saveProject()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+            <button class="std-btn" onclick="saveProject()" style="flex:1;">Save</button>
             <button class="std-btn" onclick="triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
             <input type="file" id="fileInput" style="display:none;" onchange="fallbackLoad(event)">
         </div>
@@ -152,7 +154,7 @@
                     <option value="esv.xml">English Standard Version (ESV)</option>
                 </optgroup>
             </select>
-            <button class="std-btn" onclick="loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
+            <button class="std-btn" onclick="loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)">Extract Text</button>
             <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center; margin-top: 5px;"></div>
         </div>
         
@@ -174,7 +176,7 @@
 
 <div id="block-modal-overlay">
     <div id="block-modal">
-        <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px;">Add Text Block</h3>
+        <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; font-size: 16px;">Add Text Block</h3>
         <textarea id="block-input" placeholder="Type or paste the clause/phrase here..."></textarea>
         <div style="display: flex; gap: 10px;">
             <button class="std-btn secondary" onclick="closeBlockModal()" style="flex:1;">Cancel</button>
@@ -197,12 +199,10 @@
     
     canvas.width = 4000; canvas.height = 4000;
 
-    // --- BIBLE DATA MAPS ---
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
 
-    // --- TAB SWITCHER ---
     function switchDiagramTab(tab) {
         activeTab = tab;
         document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
@@ -211,15 +211,14 @@
         document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
     }
 
-    // --- DIAGRAMMER BIBLE ENGINE (Text Extraction Only) ---
     async function loadNativeBibleTextOnly(query, fileName) {
         if (!query.trim()) return;
         const status = document.getElementById('dbStatus');
-        status.innerText = "Extracting text...";
+        status.innerText = "Extracting...";
         
         try {
-            let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             if (!match) { status.innerText = "Error: Invalid Ref."; return; }
 
             const searchBook = match[1].trim().toLowerCase();
@@ -234,7 +233,7 @@
                 const tsvText = await res.text();
                 
                 const bNum = bnumberMap[fullBookName];
-                if (!bNum) throw new Error(`Book '${fullBookName}' mapping not found.`);
+                if (!bNum) throw new Error(`Book mapping not found.`);
 
                 const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
                 const lines = tsvText.split('\n');
@@ -269,12 +268,11 @@
 
             const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
             const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
-            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
 
             let extractedText = "";
-
             const bNum = bnumberMap[fullBookName];
             const osisId = osisMap[fullBookName];
+            
             let chapNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chapNum}"]`);
             if (!chapNode) chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
             if (!chapNode) {
@@ -312,7 +310,6 @@
             status.innerText = error.message;
         }
     }
-
 
     canvas.oncontextmenu = (e) => {
         e.preventDefault();
@@ -448,7 +445,6 @@
             const vp = document.getElementById('canvas-viewport');
             const dX = vp ? (vp.scrollLeft + vp.clientWidth / 2) / zoomLevel : 500;
             const dY = vp ? (vp.scrollTop + vp.clientHeight / 2) / zoomLevel : 500;
-            // Approximate height based on line count
             const lines = text.split('\n').length;
             elements.push({ 
                 id: Date.now() + Math.random(), type: 'block_text', 
@@ -460,6 +456,7 @@
         draw(); autoSave();
         closeBlockModal();
     }
+
     function addLabeledArrow() {
         const label = prompt("Enter Arrow Label (e.g. Ground, Inference):");
         if (!label) return;
@@ -468,7 +465,7 @@
         const dY = vp ? (vp.scrollTop + vp.clientHeight / 2) / zoomLevel : 500;
         elements.push({ 
             id: Date.now() + Math.random(), type: 'labeled_arrow', 
-            x: dX, y: dY, w: 0, h: 100, // Default drawing downward
+            x: dX, y: dY, w: 100, h: 100, // Diagonal so it's easy to grab both ends
             dx_left: 0, dx_top: 0, dy_top: 0, 
             val: label, flip: 1, group: null, color: '#C5A059', thickness: 2.5, bold: false, lineStyle: 'solid' 
         }); 
@@ -500,8 +497,8 @@
                 x2=Math.max(el.x-(25*f), el.x+(el.w*f));
                 y1=el.y-el.h; y2=el.y;
             } else if (el.type==='block_text' || el.type==='labeled_arrow') {
-                x1=Math.min(el.x, el.x+el.w);
-                x2=Math.max(el.x, el.x+el.w);
+                x1=Math.min(el.x, el.x+(el.w*f));
+                x2=Math.max(el.x, el.x+(el.w*f));
                 y1=Math.min(el.y, el.y+el.h);
                 y2=Math.max(el.y, el.y+el.h);
             } else { 
@@ -579,7 +576,7 @@
         const clickedShape = elements.find(el => { 
             if(el.type === 'text') return false; 
             if(el.type === 'block_text') { return mx > el.x && mx < el.x + el.w && my > el.y && my < el.y + el.h; }
-            if(el.type === 'labeled_arrow') { return false; } // handled by resize anchors mostly
+            if(el.type === 'labeled_arrow') { return false; } 
             return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; 
         });
         
@@ -686,9 +683,14 @@
             }
             else if (el.type === 'labeled_arrow') {
                 const ex = el.x + (el.w * f), ey = el.y + el.h;
-                ctx.moveTo(el.x, el.y); ctx.lineTo(ex, ey);
-                ctx.stroke(); // Draw line first
-                const angle = Math.atan2(ey - el.y, ex - el.x);
+                ctx.moveTo(el.x, el.y);
+                const cp1x = el.x + (el.w * f) / 2;
+                const cp1y = el.y;
+                const cp2x = el.x + (el.w * f) / 2;
+                const cp2y = ey;
+                ctx.bezierCurveTo(cp1x, cp1y, cp2x, cp2y, ex, ey);
+                ctx.stroke(); 
+                const angle = Math.atan2(ey - cp2y, ex - cp2x);
                 drawArrowhead(ctx, ex, ey, angle, el.color || '#C5A059');
             }
             
