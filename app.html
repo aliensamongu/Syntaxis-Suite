@@ -193,7 +193,7 @@
             <div class="tool" onclick="addShape('text')"><strong style="font-size:20px;">Label</strong></div>
             <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 3;">Flip Selection (F)</button>
             
-            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBankAndSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
+            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBank(); autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
 
             <div class="palette floating-card" style="margin-top: 10px; grid-column: span 3; align-items: center; justify-content: space-between; gap: 5px;">
                 <button id="snapToggle" onclick="toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#fff; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
@@ -237,7 +237,7 @@
                 </optgroup>
                 <optgroup label="English Translations">
                     <option value="kjv_strongs.xml">KJV with Strong's</option>
-                    <option value="emt.xml">English Majority Text</option>
+                    <option value="emtv.xml">English Majority Text (EMTV)</option>
                     <option value="esv.xml">English Standard Version</option>
                 </optgroup>
             </select>
@@ -280,7 +280,7 @@
         <div id="variant-modal">
             <h4 id="modal-title">Add Manuscript</h4>
             
-            <div class="quick-keys">
+            <div class="quickkeys">
                 <button type="button" class="quick-key" onclick="insertSiglum('𝔓')">𝔓</button>
                 <button type="button" class="quick-key" onclick="insertSiglum('א')">א</button>
                 <button type="button" class="quick-key" onclick="insertSiglum('B')">B</button>
@@ -338,20 +338,24 @@
         "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
         "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
         "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
-        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
-        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "isa": "isaiah", "jer": "jeremiah", "lamentations": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joel": "joel", "amos": "amos", "obadiah": "obadiah", "jon": "jonah", "mic": "micah",
         "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
         "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
         "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
         "heb": "hebrews", "jas": "james", "rev": "revelation"
     };
+
     const bnumberMap = {
         "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
         "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
     };
+
     const osisMap = {
-        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
-        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut",
+        "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song",
+        "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
         "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
     };
 
@@ -668,10 +672,10 @@
         elements.forEach(el => { 
             const f=el.flip||1; let x1,x2,y1,y2; 
             if(el.type==='prep_shelf' || el.type==='modifier'){ 
-                x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); 
-                x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); 
-                y1=Math.min(el.y,el.y+el.dy_top); 
-                y2=Math.max(el.y,el.y+el.dy_top); 
+                x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dxtop*f)); 
+                x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dxtop*f)); 
+                y1=Math.min(el.y,el.y+el.dytop); 
+                y2=Math.max(el.y,el.y+el.dytop); 
             } else if (el.type==='subject_baseline') {
                 x1=Math.min(el.x - (el.dx_left*f), el.x+(el.w*f));
                 x2=Math.max(el.x - (el.dx_left*f), el.x+(el.w*f));
@@ -715,166 +719,4 @@
                 else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30) { targetEl = el; targetPoint = 'line_end'; } 
             }
             else if (el.type === 'subject_baseline') {
-                if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'subj_left'; }
-                else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'subj_right'; }
-            }
-            else if (el.type === 'modifier') {
-                if (Math.hypot(el.x + (el.dx_top*f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'mod_top'; }
-                else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'mod_right'; }
-            }
-            else if (el.type === 'prep_shelf') { 
-                if (Math.hypot(el.x + (el.dx_top * f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_top'; } 
-                else if (Math.hypot(el.x + (el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_bottom'; } 
-            }
-            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
-                if (Math.hypot(el.type === 'pred_nom' ? el.x - (25*f) : el.x, (el.y - el.h) - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'height'; } 
-                else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'width'; } 
-            }
-            else if (el.type !== 'text' && el.type !== 'x_line' && Math.hypot(el.x + (el.w * f) - mx, el.y + el.h - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'default'; }
-        });
-        
-        if (targetEl) { 
-            isResizing = true; selectedElements = [targetEl]; currentResizePoint = targetPoint; 
-            document.getElementById('styleColor').value = targetEl.color || '#333333';
-            document.getElementById('styleWeight').value = targetEl.thickness || 2.5;
-            draw(); return; 
-        }
-        
-        const clickedText = elements.find(el => el.type === 'text' && Math.abs(el.x - mx) < 60 && Math.abs(el.y - my) < 25);
-        const clickedShape = elements.find(el => { if(el.type === 'text') return false; return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; });
-        
-        if (clickedText || clickedShape) { 
-            const clicked = clickedText || clickedShape; 
-            if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
-            isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
-            document.getElementById('styleColor').value = clicked.color || '#333333';
-            document.getElementById('styleWeight').value = clicked.thickness || 2.5;
-
-            if (clickedText && apparatusData.some(v => v.targetId === clickedText.id)) {
-                document.getElementById('apparatus-drawer').classList.add('open');
-            }
-        }
-        else { isMarquee = true; marqueeStart = {x: mx, y: my}; selectedElements = []; }
-        draw();
-    };
-    
-    window.onmousemove = (e) => {
-        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
-        if (isResizing) {
-            const el = selectedElements[0], f = el.flip;
-            if (el.type === 'single_line') { 
-                let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my;
-                if (currentResizePoint === 'line_start') { 
-                    let ex = el.x + (el.w * f), ey = el.y + el.h;
-                    if (snapEnabled) { if (Math.abs(ty - ey) <= 20) ty = ey; if (Math.abs(tx - ex) <= 20) tx = ex; }
-                    el.x = tx; el.y = ty; el.w = (ex - tx) / f; el.h = ey - ty;
-                } else { 
-                    if (snapEnabled) { if (Math.abs(ty - el.y) <= 20) ty = el.y; if (Math.abs(tx - el.x) <= 20) tx = el.x; }
-                    el.w = (tx - el.x) / f; el.h = ty - el.y; 
-                } 
-            }
-            else if (el.type === 'subject_baseline') {
-                if (currentResizePoint === 'subj_left') { el.dx_left = Math.max(20, snapEnabled ? Math.round(((el.x - mx) * f) / 10) * 10 : (el.x - mx) * f); }
-                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); }
-            }
-            else if (el.type === 'modifier') {
-                if (currentResizePoint === 'mod_top') {
-                    el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f;
-                    el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y;
-                } else {
-                    el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f);
-                }
-            }
-            else if (el.type === 'prep_shelf') { 
-                if (currentResizePoint === 'prep_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } 
-                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } 
-            }
-            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
-                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - (snapEnabled ? Math.round(my/10)*10 : my)); } 
-                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } 
-            }
-            else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); el.h = Math.max(10, snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y); }
-        } else if (isDragging) { 
-            const dx = mx - dragOffset.x, dy = my - dragOffset.y; 
-            selectedElements.forEach(el => { el.x += dx; el.y += dy; }); 
-            dragOffset.x = mx; dragOffset.y = my; 
-        }
-        else if (isMarquee) { 
-            marqueeEnd = {x: mx, y: my}; 
-            const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); 
-            selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); 
-        }
-        draw();
-    };
-    
-    window.onmouseup = () => { if (isDragging && snapEnabled) { selectedElements.forEach(el => { el.x = Math.round(el.x / 10) * 10; el.y = Math.round(el.y / 10) * 10; }); } if (isDragging || isResizing || isMarquee) autoSave(); isDragging = isResizing = isMarquee = false; draw(); };
-    window.onkeydown = (e) => { if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; const k = e.key.toLowerCase(); if (k === 'g') { const gid = Date.now(); selectedElements.forEach(el => el.group = gid); } else if (k === 'u') { selectedElements.forEach(el => el.group = null); } else if (k === 'f') flipSelected(); else if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; updateWordBank(); } else if (e.key.startsWith('Arrow')) { const n = e.shiftKey ? 10 : 2; if (e.key === 'ArrowUp') selectedElements.forEach(el => el.y -= n); else if (e.key === 'ArrowDown') selectedElements.forEach(el => el.y += n); else if (e.key === 'ArrowLeft') selectedElements.forEach(el => el.x -= n); else if (e.key === 'ArrowRight') selectedElements.forEach(el => el.x += n); } draw(); autoSave(); };
-
-    function draw() {
-        ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
-        for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
-        for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
-        
-        elements.forEach(el => {
-            const isSel = selectedElements.includes(el), f = el.flip; 
-            ctx.beginPath(); 
-            ctx.strokeStyle = el.color || '#333'; 
-            ctx.fillStyle = el.color || '#333'; 
-            ctx.lineWidth = el.thickness || 2.5; 
-            ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
-            
-            if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
-            
-            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.dx_left*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
-            else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
-            else if (el.type === 'pred_nom') { ctx.moveTo(el.x - (25*f), el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
-            else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dxtop*f), el.y + el.dytop); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
-            else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dxtop * f), el.y + el.dytop); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
-            else if (el.type === 'stilt') { ctx.moveTo(el.x - (el.w*f), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.moveTo(el.x - (20*f), el.y + 25); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (20*f), el.y + 25); }
-            else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
-            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
-            else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
-            else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
-            else if (el.type === 'text') { 
-                ctx.setLineDash([]); ctx.fillText(el.val, el.x, el.y); 
-                
-                if (apparatusData.some(v => v.targetId === el.id)) {
-                    ctx.beginPath();
-                    ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2);
-                    ctx.fillStyle = '#C86428'; 
-                    ctx.fill();
-                    ctx.fillStyle = el.color || '#333'; 
-                }
-            }
-            
-            ctx.stroke(); ctx.setLineDash([]);
-            
-            if (isSel) {
-                ctx.fillStyle = '#3498db'; 
-                ctx.strokeStyle = '#3498db';
-                const hR = 6 / Math.sqrt(zoomLevel);
-                
-                if (el.type === 'text') {
-                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
-                    const m = ctx.measureText(el.val);
-                    ctx.strokeRect(el.x - 4, el.y - 20, m.width + 8, 26);
-                    ctx.setLineDash([]);
-                }
-                else if (el.type === 'x_line') {
-                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
-                    ctx.strokeRect(el.x - 35, el.y - 35, 70, 70);
-                    ctx.setLineDash([]);
-                }
-                else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
-                else if (el.type === 'subject_baseline') { ctx.beginPath(); ctx.arc(el.x - (el.dx_left*f), el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                else if (el.type === 'modifier') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top*f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                else if (el.type === 'prep_shelf') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top * f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { ctx.beginPath(); ctx.arc(el.type === 'pred_nom' ? el.x - (25*f) : el.x, el.y - el.h, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                else { ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
-            }
-        });
-        if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); ctx.setLineDash([]); }
-    }
-</script>
-</body>
-</html>
+                if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my)
