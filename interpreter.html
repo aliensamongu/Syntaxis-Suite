@@ -166,7 +166,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>. Wildcard <b>*</b> supported.
+                Find Words, Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Wildcard <b>*</b> supported.
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -185,7 +185,7 @@
             <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; width: 100%; padding: 8px; font-size: 11px; margin-bottom: 5px; box-sizing: border-box;">
             
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. lov* or αγαπ*)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
+                <input type="text" id="advancedSearchInput" placeholder="e.g. lov* or αγαπ*..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
                 <div style="display: flex; gap: 5px;">
                     <button class="std-btn" onclick="executeAdvancedSearch()" style="flex: 2;">Run Search</button>
                     <button class="std-btn secondary" onclick="clearAdvancedSearch()" style="flex: 1;">Clear</button>
@@ -249,7 +249,9 @@
             <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
         </div>
         <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
+        
         <div id="research-notebook" contenteditable="true" data-placeholder="Start typing your notes..." oninput="autoSaveNotebook()"></div>
+        
         <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
     </div>
 </div>
@@ -306,6 +308,9 @@
         if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; 
     });
 
+    // ---------------------------------------------------------
+    // MASTER BIBLE INDEXES
+    // ---------------------------------------------------------
     const abbrevs = {
         "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
         "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
@@ -358,6 +363,9 @@
         else { langSelect.style.display = 'none'; langSelect.value = 'orig'; }
     }
 
+    // ---------------------------------------------------------
+    // LEXICAL ENGINES
+    // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
     async function getStrongsDef(key) {
         if (!key) return "";
@@ -468,26 +476,22 @@
 
         let isMatch = false;
 
-        // 2. Morphology Match 
-        // Triggered only if term consists of Latin letters, numbers, hyphens, and asterisks
-        if (/^[A-Za-z0-9\-*]+$/.test(term)) {
-            // Asterisk represents exactly ONE character placeholder in morph codes
+        // 2. Morphology Match (Only if Latin, numbers, hyphens, and asterisks)
+        if (/^[A-Za-z0-9\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
+            // Asterisk = exactly ONE character in morph codes
             const morphRegex = new RegExp("^" + term.replace(/\*/g, '.') + "$", "i");
             if (morphRegex.test(wordData.parsing || "")) {
                 isMatch = true;
             }
         }
 
-        // 3. Lexical / Word Match
-        // Triggered if the Morph check failed (or wasn't run)
+        // 3. Lexical / Word Match (Fallback if Morph failed or wasn't checked)
         if (!isMatch) {
             let cleanTerm = stripPunctuationAndAccents(term);
-            // Escape special regex characters (except the asterisk) so it doesn't crash on standard punctuation
+            // Escape special chars except the asterisk
             let escapedTerm = cleanTerm.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-            
-            // Asterisk represents UNLIMITED characters (expanding wildcard) in lexical searches
-            let wordRegexStr = "^" + escapedTerm.replace(/\*/g, '.*') + "$";
-            let wordRegex = new RegExp(wordRegexStr, "i");
+            // Asterisk = UNLIMITED characters in lexical searches
+            let wordRegex = new RegExp("^" + escapedTerm.replace(/\*/g, '.*') + "$", "i");
             
             let cleanWord = stripPunctuationAndAccents(wordData.word || "");
             let cleanLemma = stripPunctuationAndAccents(wordData.lemma || "");
@@ -918,11 +922,9 @@
                     if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
                     const block = document.createElement('div'); block.className = 'verse-block';
                     const num = document.createElement('span'); num.className = 'verse-num'; num.innerText = vNumInt; block.appendChild(num);
-                    
                     const origLine = document.createElement('div'); origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     if (v1[i]) processZefaniaNodes(v1[i], origLine, bNum);
                     block.appendChild(origLine);
-                    
                     const engLine = document.createElement('div'); engLine.className = 'english-line';
                     if (v2[i]) {
                         v2[i].textContent.split(/(\s+)/).forEach(chunk => {
@@ -1072,7 +1074,6 @@
         }
     }
 
-    // Shielded Context Menu Buttons
     document.getElementById('cm-search-lemma').addEventListener('click', (e) => {
         e.stopPropagation();
         if (rightClickedData) {
