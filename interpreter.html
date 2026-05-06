@@ -734,7 +734,7 @@
                 function findLandmark(cVal) {
                     const r = toRomanMH(cVal);
                     const targets = [ `${b}.${r}.`, `${b}.${r}-`, `${bTitle}.${r}.`, `${bTitle}.${r}-`, `bible:${b}.${cVal}.`, `bible:${b}.${cVal}-` ];
-                    let f = null; doc.querySelectorAll("[id]").forEach(el => { if (!f && targets.some(t => el.id.toLowerCase().startsWith(t))) f = el; });
+                    let f = null; doc.querySelectorAll("[id]").forEach(el => { if (!f && targets.some(t => id.startsWith(t))) f = el; });
                     return f;
                 }
 
