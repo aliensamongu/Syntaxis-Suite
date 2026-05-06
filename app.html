@@ -148,7 +148,7 @@
         .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
         .proj-card:hover { border-color: var(--oxford-gold); }
         
-        .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
+        .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; text-decoration: none; }
         .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
@@ -228,7 +228,7 @@
     <div class="right-inner">
         <h3>Text Source</h3>
         <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-            <input type="text" id="dbRefInput" placeholder="Enter Ref (e.g. Matt 1)">
+            <input type="text" id="dbRefInput" placeholder="Enter Ref (e.g. Matt 1:1-5)">
             <select id="dbModuleSelect">
                 <optgroup label="Original Languages">
                     <option value="tischendorf.xml">Tischendorf Greek NT</option>
@@ -272,15 +272,15 @@
         <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <div style="font-size: 10px; color: var(--oxford-gold); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; text-align:center;">Free English Resources</div>
             <div style="display:flex; gap:10px;">
-                <button onclick="launchResource('net')" class="resource-link" style="cursor:pointer;">NET Bible ↗</button>
-                <button onclick="launchResource('step')" class="resource-link" style="cursor:pointer;">STEP Bible ↗</button>
+                <a href="https://netbible.org" target="_blank" class="resource-link">NET Bible ↗</a>
+                <a href="https://www.stepbible.org" target="_blank" class="resource-link">STEP Bible ↗</a>
             </div>
         </div>
 
         <div id="variant-modal">
             <h4 id="modal-title">Add Manuscript</h4>
             
-            <div class="quickkeys">
+            <div class="quick-keys">
                 <button type="button" class="quick-key" onclick="insertSiglum('𝔓')">𝔓</button>
                 <button type="button" class="quick-key" onclick="insertSiglum('א')">א</button>
                 <button type="button" class="quick-key" onclick="insertSiglum('B')">B</button>
@@ -338,8 +338,8 @@
         "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
         "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
         "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
-        "isa": "isaiah", "jer": "jeremiah", "lamentations": "lamentations", "eze": "ezekiel", "dan": "daniel",
-        "hos": "hosea", "joel": "joel", "amos": "amos", "obadiah": "obadiah", "jon": "jonah", "mic": "micah",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
         "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
         "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
         "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
@@ -367,13 +367,47 @@
         
         try {
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             if (!match) { status.innerText = "Error: Invalid Ref."; return; }
 
             const searchBook = match[1].trim().toLowerCase();
             const chapNum = match[2];
+            const startVerse = match[3] ? parseInt(match[3]) : null;
+            const endVerse = match[4] ? parseInt(match[4]) : startVerse;
             const fullBookName = abbrevs[searchBook] || searchBook;
             
+            if (fileName === 'srgnt.tsv') {
+                const res = await fetch('srgnt.tsv');
+                if (!res.ok) throw new Error("Could not find srgnt.tsv");
+                const tsvText = await res.text();
+                
+                const bNum = bnumberMap[fullBookName];
+                if (!bNum) throw new Error(`Book '${fullBookName}' mapping not found.`);
+
+                const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
+                const lines = tsvText.split('\n');
+                let extractedText = "";
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const cols = line.split('\t');
+                    const id = cols[0];
+
+                    if (id.startsWith(targetPrefix)) {
+                        const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
+                        if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
+                        extractedText += cols[1] + " ";
+                    }
+                }
+                document.getElementById('passageInput').value = extractedText.replace(/\s+/g, ' ').trim();
+                updateWordBank();
+                autoSave();
+                status.innerText = "Loaded successfully!";
+                setTimeout(() => status.innerText = "", 3000);
+                return;
+            }
+
             const response = await fetch(fileName);
             if (!response.ok) throw new Error(`File ${fileName} missing`);
             const xmlText = await response.text();
@@ -387,37 +421,34 @@
 
             let extractedText = "";
 
-            if (isZefania) {
-                const bNum = bnumberMap[fullBookName];
-                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
-                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
-                if (!chapNode) throw new Error("Chapter not found.");
+            const bNum = bnumberMap[fullBookName];
+            const osisId = osisMap[fullBookName];
+            let chapNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chapNum}"]`);
+            if (!chapNode) chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+            if (!chapNode) {
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chapNum}"]`);
+            }
+            if (!chapNode) throw new Error(`Chapter ${chapNum} not found.`);
 
-                const verses = chapNode.querySelectorAll('VERS');
-                verses.forEach(vers => {
+            let verses = isZefania ? chapNode.querySelectorAll('VERS') : chapNode.querySelectorAll('verse');
+            
+            verses.forEach(vers => {
+                let vNumStr = vers.getAttribute('vnumber') || vers.getAttribute('number') || vers.getAttribute('osisID')?.split('.').pop() || "0";
+                let vNumInt = parseInt(vNumStr);
+                if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) return;
+
+                if (isZefania) {
                     Array.from(vers.childNodes).forEach(node => {
                         if (node.nodeType === Node.TEXT_NODE) extractedText += node.textContent + " ";
                         else if (node.nodeName.toLowerCase() === 'gr' || node.nodeName.toLowerCase() === 'style') {
                             extractedText += node.textContent + " ";
                         }
                     });
-                });
-            } else if (isOSIS) {
-                const osisId = osisMap[fullBookName];
-                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
-                if (!chapNode) throw new Error("Chapter not found.");
-
-                const verses = chapNode.querySelectorAll('verse');
-                verses.forEach(vers => { extractedText += vers.textContent + " "; });
-            } else if (isSimpleXML) {
-                const bNum = bnumberMap[fullBookName];
-                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
-                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
-                if (!chapNode) throw new Error("Chapter not found.");
-
-                const verses = chapNode.querySelectorAll('verse');
-                verses.forEach(vers => { extractedText += vers.textContent + " "; });
-            }
+                } else {
+                    extractedText += vers.textContent + " ";
+                }
+            });
 
             document.getElementById('passageInput').value = extractedText.replace(/\s+/g, ' ').trim();
             updateWordBank();
@@ -464,31 +495,6 @@
             window.open(`https://greekcntr.org/collation/index.htm?v=${ntBooks[bookName]}${parseInt(match[3]).toString().padStart(3,'0')}${(match[4]?parseInt(match[4]):1).toString().padStart(3,'0')}`, "_blank"); 
         } else {
             window.open("https://greekcntr.org", "_blank");
-        }
-    }
-
-    function launchResource(type) {
-        let textToParse = document.getElementById('verseReference').value.trim() || document.getElementById('projectName').value.trim();
-        if (!textToParse) {
-            window.open(type === 'net' ? "https://netbible.org" : "https://www.stepbible.org", "_blank");
-            return;
-        }
-        
-        const match = textToParse.match(/(1\s*|2\s*|3\s*)?([a-zA-Z]+)[\s\.]*(\d+)(?:[\s:\.]+(\d+))?/);
-        if(!match) { 
-            window.open(type === 'net' ? "https://netbible.org" : "https://www.stepbible.org", "_blank");
-            return; 
-        }
-        
-        const bookNum = match[1] ? match[1].replace(/\s+/g, '') : '';
-        const bookText = match[2];
-        const chapter = match[3];
-        const safeBook = bookNum + bookText;
-        
-        if (type === 'net') {
-            window.open(`https://netbible.org/bible/${safeBook}+${chapter}`, "_blank");
-        } else if (type === 'step') {
-            window.open(`https://www.stepbible.org/?q=reference=${safeBook}.${chapter}`, "_blank");
         }
     }
 
@@ -594,6 +600,15 @@
         }
     }
 
+    function updateProjectList() { 
+        const listDiv = document.getElementById('project-list'); 
+        listDiv.innerHTML = ''; 
+        const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}'); 
+        Object.keys(projects).forEach(name => { 
+            listDiv.innerHTML += `<div class="proj-card" onclick="loadFromApp('${name}')"><span>${name}</span><button onclick="deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold; padding:0 5px;" title="Delete Project">&times;</button></div>`; 
+        }); 
+    }
+
     function applyStyle(prop, val) { selectedElements.forEach(el => { if (prop === 'bold' && el.type === 'text') el.bold = !el.bold; else el[prop] = val; }); draw(); autoSave(); }
     function setZoom(delta) { zoomLevel = Math.max(0.2, Math.min(3, zoomLevel + delta)); canvas.style.transform = `scale(${zoomLevel})`; canvas.style.transformOrigin = 'top left'; }
     function toggleSnap() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; }
@@ -672,10 +687,10 @@
         elements.forEach(el => { 
             const f=el.flip||1; let x1,x2,y1,y2; 
             if(el.type==='prep_shelf' || el.type==='modifier'){ 
-                x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dxtop*f)); 
-                x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dxtop*f)); 
-                y1=Math.min(el.y,el.y+el.dytop); 
-                y2=Math.max(el.y,el.y+el.dytop); 
+                x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); 
+                x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); 
+                y1=Math.min(el.y,el.y+el.dy_top); 
+                y2=Math.max(el.y,el.y+el.dy_top); 
             } else if (el.type==='subject_baseline') {
                 x1=Math.min(el.x - (el.dx_left*f), el.x+(el.w*f));
                 x2=Math.max(el.x - (el.dx_left*f), el.x+(el.w*f));
@@ -719,4 +734,166 @@
                 else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30) { targetEl = el; targetPoint = 'line_end'; } 
             }
             else if (el.type === 'subject_baseline') {
-                if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my)
+                if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'subj_left'; }
+                else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'subj_right'; }
+            }
+            else if (el.type === 'modifier') {
+                if (Math.hypot(el.x + (el.dx_top*f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'mod_top'; }
+                else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'mod_right'; }
+            }
+            else if (el.type === 'prep_shelf') { 
+                if (Math.hypot(el.x + (el.dx_top * f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_top'; } 
+                else if (Math.hypot(el.x + (el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_bottom'; } 
+            }
+            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
+                if (Math.hypot(el.type === 'pred_nom' ? el.x - (25*f) : el.x, (el.y - el.h) - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'height'; } 
+                else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'width'; } 
+            }
+            else if (el.type !== 'text' && el.type !== 'x_line' && Math.hypot(el.x + (el.w * f) - mx, el.y + el.h - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'default'; }
+        });
+        
+        if (targetEl) { 
+            isResizing = true; selectedElements = [targetEl]; currentResizePoint = targetPoint; 
+            document.getElementById('styleColor').value = targetEl.color || '#333333';
+            document.getElementById('styleWeight').value = targetEl.thickness || 2.5;
+            draw(); return; 
+        }
+        
+        const clickedText = elements.find(el => el.type === 'text' && Math.abs(el.x - mx) < 60 && Math.abs(el.y - my) < 25);
+        const clickedShape = elements.find(el => { if(el.type === 'text') return false; return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; });
+        
+        if (clickedText || clickedShape) { 
+            const clicked = clickedText || clickedShape; 
+            if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
+            isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
+            document.getElementById('styleColor').value = clicked.color || '#333333';
+            document.getElementById('styleWeight').value = clicked.thickness || 2.5;
+
+            if (clickedText && apparatusData.some(v => v.targetId === clickedText.id)) {
+                document.getElementById('apparatus-drawer').classList.add('open');
+            }
+        }
+        else { isMarquee = true; marqueeStart = {x: mx, y: my}; selectedElements = []; }
+        draw();
+    };
+    
+    window.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
+        if (isResizing) {
+            const el = selectedElements[0], f = el.flip;
+            if (el.type === 'single_line') { 
+                let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my;
+                if (currentResizePoint === 'line_start') { 
+                    let ex = el.x + (el.w * f), ey = el.y + el.h;
+                    if (snapEnabled) { if (Math.abs(ty - ey) <= 20) ty = ey; if (Math.abs(tx - ex) <= 20) tx = ex; }
+                    el.x = tx; el.y = ty; el.w = (ex - tx) / f; el.h = ey - ty;
+                } else { 
+                    if (snapEnabled) { if (Math.abs(ty - el.y) <= 20) ty = el.y; if (Math.abs(tx - el.x) <= 20) tx = el.x; }
+                    el.w = (tx - el.x) / f; el.h = ty - el.y; 
+                } 
+            }
+            else if (el.type === 'subject_baseline') {
+                if (currentResizePoint === 'subj_left') { el.dx_left = Math.max(20, snapEnabled ? Math.round(((el.x - mx) * f) / 10) * 10 : (el.x - mx) * f); }
+                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); }
+            }
+            else if (el.type === 'modifier') {
+                if (currentResizePoint === 'mod_top') {
+                    el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f;
+                    el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y;
+                } else {
+                    el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f);
+                }
+            }
+            else if (el.type === 'prep_shelf') { 
+                if (currentResizePoint === 'prep_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } 
+                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } 
+            }
+            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
+                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - (snapEnabled ? Math.round(my/10)*10 : my)); } 
+                else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } 
+            }
+            else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); el.h = Math.max(10, snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y); }
+        } else if (isDragging) { 
+            const dx = mx - dragOffset.x, dy = my - dragOffset.y; 
+            selectedElements.forEach(el => { el.x += dx; el.y += dy; }); 
+            dragOffset.x = mx; dragOffset.y = my; 
+        }
+        else if (isMarquee) { 
+            marqueeEnd = {x: mx, y: my}; 
+            const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); 
+            selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); 
+        }
+        draw();
+    };
+    
+    window.onmouseup = () => { if (isDragging && snapEnabled) { selectedElements.forEach(el => { el.x = Math.round(el.x / 10) * 10; el.y = Math.round(el.y / 10) * 10; }); } if (isDragging || isResizing || isMarquee) autoSave(); isDragging = isResizing = isMarquee = false; draw(); };
+    window.onkeydown = (e) => { if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; const k = e.key.toLowerCase(); if (k === 'g') { const gid = Date.now(); selectedElements.forEach(el => el.group = gid); } else if (k === 'u') { selectedElements.forEach(el => el.group = null); } else if (k === 'f') flipSelected(); else if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; updateWordBank(); } else if (e.key.startsWith('Arrow')) { const n = e.shiftKey ? 10 : 2; if (e.key === 'ArrowUp') selectedElements.forEach(el => el.y -= n); else if (e.key === 'ArrowDown') selectedElements.forEach(el => el.y += n); else if (e.key === 'ArrowLeft') selectedElements.forEach(el => el.x -= n); else if (e.key === 'ArrowRight') selectedElements.forEach(el => el.x += n); } draw(); autoSave(); };
+
+    function draw() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
+        for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+        for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
+        
+        elements.forEach(el => {
+            const isSel = selectedElements.includes(el), f = el.flip; 
+            ctx.beginPath(); 
+            ctx.strokeStyle = el.color || '#333'; 
+            ctx.fillStyle = el.color || '#333'; 
+            ctx.lineWidth = el.thickness || 2.5; 
+            ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
+            
+            if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
+            
+            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.dx_left*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
+            else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'pred_nom') { ctx.moveTo(el.x - (25*f), el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top*f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dx_top * f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
+            else if (el.type === 'stilt') { ctx.moveTo(el.x - (el.w*f), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.moveTo(el.x - (20*f), el.y + 25); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (20*f), el.y + 25); }
+            else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
+            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
+            else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
+            else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
+            else if (el.type === 'text') { 
+                ctx.setLineDash([]); ctx.fillText(el.val, el.x, el.y); 
+                
+                if (apparatusData.some(v => v.targetId === el.id)) {
+                    ctx.beginPath();
+                    ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2);
+                    ctx.fillStyle = 'var(--rustic-orange)'; 
+                    ctx.fill();
+                    ctx.fillStyle = el.color || '#333'; 
+                }
+            }
+            
+            ctx.stroke(); ctx.setLineDash([]);
+            
+            if (isSel) {
+                ctx.fillStyle = '#3498db'; 
+                ctx.strokeStyle = '#3498db';
+                const hR = 6 / Math.sqrt(zoomLevel);
+                
+                if (el.type === 'text') {
+                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+                    const m = ctx.measureText(el.val);
+                    ctx.strokeRect(el.x - 4, el.y - 20, m.width + 8, 26);
+                    ctx.setLineDash([]);
+                }
+                else if (el.type === 'x_line') {
+                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
+                    ctx.strokeRect(el.x - 35, el.y - 35, 70, 70);
+                    ctx.setLineDash([]);
+                }
+                else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
+                else if (el.type === 'subject_baseline') { ctx.beginPath(); ctx.arc(el.x - (el.dx_left*f), el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
+                else if (el.type === 'modifier') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top*f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
+                else if (el.type === 'prep_shelf') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top * f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
+                else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { ctx.beginPath(); ctx.arc(el.type === 'pred_nom' ? el.x - (25*f) : el.x, el.y - el.h, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
+                else { ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
+            }
+        });
+        if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); ctx.setLineDash([]); }
+    }
+</script>
+</body>
+</html>
