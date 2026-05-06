@@ -11,15 +11,12 @@
             --sidebar-width: 360px;
             --notebook-width: 340px;
             --bg-main: #e4e7ea;
-            
-            /* Oxford Scholar Palette */
             --oxford-navy: #1B263B;
             --oxford-navy-dark: #121A2A;
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
             --rustic-orange: #C86428;
-            
             --radius-small: 8px;
             --radius-medium: 12px;
         }
@@ -166,7 +163,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any text to auto-search!
+                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>. Wildcard <b>*</b> supported.
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -459,21 +456,49 @@
     }
 
     // ---------------------------------------------------------
-    // ADVANCED MORPHOLOGICAL, LEMMA & ENGLISH SEARCH ENGINE
+    // DUAL-REGEX WILDCARD SEARCH ENGINE (RESTORED & BULLETPROOFED)
     // ---------------------------------------------------------
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
     function matchTerm(term, wordData) {
-        term = term.trim(); if (!term) return false;
-        
-        if (/^[A-Za-z0-9\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
-            return new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "");
+        term = term.trim(); 
+        if (!term) return false;
+
+        // 1. Strong's Number Match
+        if (/^[GH]\d+$/.test(term.toUpperCase())) {
+            return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
         }
-        
-        if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
-        
-        const cleanTerm = stripPunctuationAndAccents(term);
-        return stripPunctuationAndAccents(wordData.word || "") === cleanTerm || stripPunctuationAndAccents(wordData.lemma || "") === cleanTerm;
+
+        let isMatch = false;
+
+        // 2. Morphology Match 
+        // Only run this if the term contains a hyphen (which all RMAC codes have) 
+        // and consists of standard morph code characters.
+        if (term.includes('-') && /^[A-Za-z0-9\-*]+$/.test(term)) {
+            const morphRegex = new RegExp("^" + term.replace(/\*/g, '.') + "$", "i");
+            if (morphRegex.test(wordData.parsing || "")) {
+                isMatch = true;
+            }
+        }
+
+        // 3. Lexical / Surface Word Match (The Smart Fallback)
+        if (!isMatch) {
+            let cleanTerm = stripPunctuationAndAccents(term);
+            // Escape special chars EXCEPT the asterisk
+            let escapedTerm = cleanTerm.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+            // Convert asterisk to universal wildcard
+            let wordRegexStr = "^" + escapedTerm.replace(/\*/g, '.*') + "$";
+            let wordRegex = new RegExp(wordRegexStr, "i");
+            
+            let cleanWord = stripPunctuationAndAccents(wordData.word || "");
+            let cleanLemma = stripPunctuationAndAccents(wordData.lemma || "");
+            
+            if (wordRegex.test(cleanWord) || wordRegex.test(cleanLemma)) {
+                isMatch = true;
+            }
+        }
+
+        return isMatch;
     }
 
     function toggleCustomSearchScope() {
@@ -494,7 +519,6 @@
         document.getElementById('search-modal').style.display = 'none';
     }
 
-    // Connect Modal AND Notebook Clicks to the Lexicon Editor
     async function handleModalWordClick(el) {
         document.querySelectorAll('#modal-results-container .modal-search-match, #research-notebook .modal-search-match').forEach(e => e.style.outline = 'none');
         el.style.outline = '2px dashed var(--oxford-navy)';
@@ -905,11 +929,7 @@
             if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
                 if (!match) throw new Error("Enter a valid Book and Chapter.");
                 const isHebrew = fileName === 'ot_interlinear';
-                if (originalToggleContainer) { 
-                    originalToggleContainer.style.display = 'flex'; 
-                    if (originalToggle) originalToggle.checked = true; 
-                    if (originalToggleLabel) originalToggleLabel.innerText = isHebrew ? 'Show Hebrew' : 'Show Greek'; 
-                }
+                if(originalToggleContainer) { originalToggleContainer.style.display = 'flex'; if (originalToggle) originalToggle.checked = true; if (originalToggleLabel) originalToggleLabel.innerText = isHebrew ? 'Show Hebrew' : 'Show Greek'; }
                 const bNum = bnumberMap[currentLoadedBook], osisId = osisMap[currentLoadedBook];
                 if (!bNum) throw new Error(`Book '${currentLoadedBook}' mapping not found.`);
                 
@@ -1082,14 +1102,20 @@
         e.stopPropagation();
         if (rightClickedData) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) { document.getElementById('advancedSearchInput').value = term; executeAdvancedSearch(); }
+            if (term) {
+                document.getElementById('advancedSearchInput').value = term;
+                executeAdvancedSearch();
+            }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
     document.getElementById('cm-search-morph').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.parsing) { document.getElementById('advancedSearchInput').value = rightClickedData.parsing; executeAdvancedSearch(); }
+        if (rightClickedData && rightClickedData.parsing) {
+            document.getElementById('advancedSearchInput').value = rightClickedData.parsing;
+            executeAdvancedSearch();
+        }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
@@ -1097,14 +1123,20 @@
         e.stopPropagation();
         if (rightClickedData && rightClickedData.parsing) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) { document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`; executeAdvancedSearch(); }
+            if (term) {
+                document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`;
+                executeAdvancedSearch();
+            }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
     
     document.getElementById('cm-search-english').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.word) { document.getElementById('advancedSearchInput').value = rightClickedData.word; executeAdvancedSearch(); }
+        if (rightClickedData && rightClickedData.word) {
+            document.getElementById('advancedSearchInput').value = rightClickedData.word;
+            executeAdvancedSearch();
+        }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
