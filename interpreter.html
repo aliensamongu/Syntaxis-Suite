@@ -48,8 +48,8 @@
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
         #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; align-items: center; transition: 0.3s; position: relative; }
-        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
-        .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
+        .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative;}
+        .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
         
         .header-controls { display: flex; align-items: center; gap: 20px; }
         .font-sizer { display: flex; align-items: center; gap: 8px; }
@@ -60,7 +60,7 @@
         .switch { position: relative; display: inline-block; width: 30px; height: 16px; margin: 0;}
         .switch input { opacity: 0; width: 0; height: 0; }
         .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
+        .slider:before { position: absolute; content: ""; height: 10px; width: 10px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; box-shadow: 0 1px 3px rgba(0,0,0,0.3); }
         input:checked + .slider { background-color: var(--oxford-gold); }
         input:checked + .slider:before { transform: translateX(14px); }
 
@@ -103,7 +103,7 @@
 <body id="app-body">
 
 <div id="sidebar">
-    <div class="sidebar-inner" id="main-sidebar-inner">
+    <div class="sidebar-inner">
         <h2>Σyntaxis <span style="font-weight: 300;">Interpreter</span></h2>
         <div class="app-nav">
             <a href="annotator.html">Annotate</a>
@@ -114,6 +114,7 @@
         
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
+            
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)" onkeypress="if(event.key === 'Enter') triggerLoadModule()">
                 <div style="display: flex; gap: 5px;">
@@ -140,21 +141,26 @@
                     <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1; padding: 10px 5px;">Load Text</button>
                 </div>
             </div>
-            <textarea id="rawTextInput" placeholder="Or paste text here..." style="height: 40px; font-size:11px;"></textarea>
-            <button class="std-btn secondary" onclick="renderText()">Render Text</button>
+            
+            <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
+            
+            <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
+            <button class="std-btn secondary" onclick="renderText()">Render Pasted Text</button>
         </div>
 
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">2. Lexicon & Morphology</h3>
+            <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to view data.</div>
+            
             <div id="lexicon-editor">
-                <div id="lex-target-word" style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;">No Word</div>
+                <div style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;" id="lex-target-word">No Word Selected</div>
                 <div style="display: flex; gap: 5px;">
-                    <input type="text" id="lexLemma" placeholder="Lemma" readonly>
-                    <input type="text" id="lexStrongs" placeholder="Strong's" style="width: 80px;" readonly>
+                    <input type="text" id="lexLemma" placeholder="Root Lemma" style="flex: 2;" readonly>
+                    <input type="text" id="lexStrongs" placeholder="Strong's" style="flex: 1;" readonly>
                 </div>
-                <input type="text" id="lexParsing" placeholder="Morphology" readonly>
-                <textarea id="lexDef" placeholder="Definition..." style="height:60px;" oninput="syncPastedDef()"></textarea>
-                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width:100%; margin-top:5px; background: #c0392b; color: white;" disabled>+ Add Card</button>
+                <input type="text" id="lexParsing" placeholder="Morphology / Parsing" style="color: var(--rustic-orange); font-weight: bold;" readonly>
+                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;" oninput="syncPastedDef()"></textarea>
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width: 100%; margin-top: 5px; background: #c0392b; color: white;" disabled>+ Add to Flashcards</button>
                 <div id="cardStatusMsg" style="font-size: 10px; color: #2ecc71; text-align: center; display: none;">Card Added!</div>
             </div>
         </div>
@@ -169,7 +175,7 @@
                 <select id="searchScopeSelect" style="flex: 1; padding: 8px; font-size: 11px;" onchange="toggleCustomSearchScope()">
                     <option value="chapter">Current Chapter View</option>
                     <option value="book">Current Book</option>
-                    <option value="nt">Entire NT</option>
+                    <option value="nt">Entire NT / OT</option>
                     <option value="custom">Custom Range</option>
                 </select>
                 <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; flex: 1; padding: 8px; font-size: 11px;">
@@ -184,11 +190,12 @@
             </div>
         </div>
 
-        <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
-            <h3>4. Flashcard Deck (<span id="deckCount">0</span>)</h3>
-            <div style="display: flex; gap: 5px;">
-                <button class="std-btn" onclick="exportAnki()" style="flex:1; background: #c0392b; color: white;">⬇ Anki</button>
-                <button class="std-btn" onclick="exportSpreadsheet()" style="flex:1; background: #27ae60; color: white;">⬇ Excel</button>
+        <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <h3>4. Flashcard Deck</h3>
+            <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
             </div>
         </div>
     </div>
@@ -197,15 +204,22 @@
 <div id="workspace">
     <div class="workspace-panel">
         <div class="panel-title">
-            <span id="workspace-label">Passage Interpretation</span>
+            <span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
+            
             <div class="header-controls">
-                <div class="toggle-wrapper" id="sync-ui" style="display: none; border: 1px solid var(--oxford-gold);">
-                    <span style="font-size:9px; color:var(--oxford-gold); font-weight: bold;">SYNC COMMENTARY</span>
-                    <label class="switch"><input type="checkbox" id="syncToggle" onchange="runCommentarySync()"><span class="slider"></span></label>
+                <div class="toggle-wrapper" id="sync-ui" style="display: none; border-color: var(--oxford-gold);">
+                    <span class="toggle-label" style="color: var(--oxford-gold);">Sync Commentary</span>
+                    <label class="switch">
+                        <input type="checkbox" id="syncToggle" onchange="runCommentarySync()">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
-                    <span id="orig-toggle-label" style="font-size:10px;">SHOW ORIGINAL</span>
-                    <label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label>
+                    <span class="toggle-label" id="original-toggle-label">Show Original</span>
+                    <label class="switch">
+                        <input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()">
+                        <span class="slider"></span>
+                    </label>
                 </div>
                 <div class="font-sizer">
                     <span>Size</span>
@@ -215,7 +229,7 @@
             </div>
         </div>
         <div id="passage-container">
-            <p style="color:#aaa; font-style:italic;">Select a module and type a reference (e.g., John 1:1-5) to begin...</p>
+            <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a module and type a reference to begin...</span>
         </div>
     </div>
 </div>
@@ -223,12 +237,12 @@
 <div id="notebook-sidebar">
     <div class="notebook-inner">
         <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;">
-            <h2 style="font-size: 20px;">Research <span style="color: var(--oxford-gold);">Notebook</span></h2>
-            <button onclick="toggleNotebook()" style="background:none; border:none; color:white; cursor:pointer; font-size:20px;">&times;</button>
+            <h2 style="font-size: 20px;">Research <span style="font-weight: 300; color: var(--oxford-gold);">Notebook</span></h2>
+            <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
         </div>
         <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
-        <textarea id="research-notebook" placeholder="Start typing your notes..." oninput="autoSaveNotebook()"></textarea>
-        <button class="std-btn" onclick="exportNote()" style="background: #27ae60; color: white;">Export Text (.txt)</button>
+        <textarea id="research-notebook" placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></textarea>
+        <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
     </div>
 </div>
 
@@ -261,7 +275,7 @@
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container');
-    const originalToggleLabel = document.getElementById('orig-toggle-label');
+    const originalToggleLabel = document.getElementById('original-toggle-label');
     const originalToggle = document.getElementById('originalToggle');
     const notebookSidebar = document.getElementById('notebook-sidebar');
     const syncUi = document.getElementById('sync-ui');
@@ -275,7 +289,6 @@
     let currentLoadedBook = ""; 
     let currentLoadedChapter = "";
 
-    // Global Click Listener to dismiss context menu
     document.addEventListener('click', () => { if (contextMenu) contextMenu.style.display = 'none'; });
 
     // ---------------------------------------------------------
@@ -320,7 +333,6 @@
         "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
     };
 
-    // Init cleanly with no ghost variables
     window.addEventListener('DOMContentLoaded', () => {
         loadNotebook(); 
         loadAnkiDeck();
@@ -476,12 +488,11 @@
         const query = document.getElementById('advancedSearchInput').value.trim();
         const scope = document.getElementById('searchScopeSelect').value;
         const msgBox = document.getElementById('searchResultMsg');
-        const mod = document.getElementById('bibleModuleSelect').value;
+        const originalMod = document.getElementById('bibleModuleSelect').value;
         clearAdvancedSearch();
         
         if (!query) return;
 
-        // Parse Boolean Ops
         const opMatch = query.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i);
         let termA = query, termB = null, op = null, withinDist = 5;
         if (opMatch) {
@@ -528,24 +539,30 @@
             msgBox.innerText = `${matchCount} matches in current view`;
             
         } else {
-            if (mod === 'mhc_sync' || mod === 'luther_tt.xml') {
+            // HEADLESS BACKGROUND SEARCH
+            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') {
                 alert("Advanced search requires a primary biblical text module (e.g. SRGNT or Tischendorf).");
                 return;
             }
             
-            let scopeLabel = scope === 'book' ? (currentLoadedBook || "Current Book").toUpperCase() : "ENTIRE NEW TESTAMENT";
+            // Intercept Interlinear and use its underlying root text
+            let fetchMod = originalMod;
+            if (originalMod === 'nt_interlinear') fetchMod = 'tischendorf.xml';
+            if (originalMod === 'ot_interlinear') fetchMod = 'hebrew_ot.xml';
+
+            let scopeLabel = scope === 'book' ? (currentLoadedBook || "Current Book").toUpperCase() : "ENTIRE TEXT";
             if (scope === 'custom') scopeLabel = document.getElementById('customSearchRange').value || "CUSTOM RANGE";
-            openSearchModal(`Query: [${query}] in ${scopeLabel} via ${mod}`);
+            openSearchModal(`Query: [${query}] in ${scopeLabel} via ${fetchMod}`);
             
             try {
-                const res = await fetch(mod);
-                if (!res.ok) throw new Error("Could not fetch module for background search.");
+                const res = await fetch(fetchMod);
+                if (!res.ok) throw new Error(`Could not fetch ${fetchMod} for background search.`);
                 const fileText = await res.text();
                 
                 let resultsHTML = "";
                 let totalMatches = 0;
                 
-                if (mod === 'srgnt.tsv') {
+                if (fetchMod === 'srgnt.tsv') {
                     const lines = fileText.split('\n');
                     let currentVerseRef = "";
                     let currentVerseWords = [];
@@ -603,7 +620,83 @@
                     processVerse(); 
 
                 } else {
-                    resultsHTML = `<div style="color:var(--oxford-crimson);">Background searching is currently optimized for SRGNT.tsv. XML background scanning is in development.</div>`;
+                    // XML BACKGROUND SCANNER (Tischendorf / Hebrew)
+                    const xmlDoc = new DOMParser().parseFromString(fileText, "text/xml");
+                    const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+                    
+                    let books = isZefania ? xmlDoc.querySelectorAll('BIBLEBOOK') : xmlDoc.querySelectorAll('book');
+                    
+                    for (let book of books) {
+                        let bNum = parseInt(isZefania ? book.getAttribute('bnumber') : book.getAttribute('number'));
+                        let bName = bnumberToName[bNum] || "Unknown";
+                        if (scope === 'book' && bName !== currentLoadedBook.toLowerCase()) continue;
+                        
+                        let chapters = isZefania ? book.querySelectorAll('CHAPTER') : book.querySelectorAll('chapter');
+                        for (let chap of chapters) {
+                            let cNum = isZefania ? chap.getAttribute('cnumber') : chap.getAttribute('number');
+                            let verses = isZefania ? chap.querySelectorAll('VERS') : chap.querySelectorAll('verse');
+                            
+                            for (let vers of verses) {
+                                let vNum = isZefania ? vers.getAttribute('vnumber') : vers.getAttribute('number');
+                                let currentVerseRef = `${bName.toUpperCase()} ${cNum}:${vNum}`;
+                                let currentVerseWords = [];
+                                let wIdx = 0;
+                                
+                                const prefix = (bNum >= 1 && bNum <= 39) ? 'H' : 'G';
+                                Array.from(vers.childNodes).forEach(n => {
+                                    if (n.nodeType === Node.TEXT_NODE) {
+                                        n.textContent.split(/(\s+)/).forEach(chunk => {
+                                            if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" });
+                                        });
+                                    } else if (n.nodeName.toLowerCase() === 'gr') {
+                                        const rawStr = n.getAttribute('str') || '';
+                                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0];
+                                        let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
+                                        const rmac = n.getAttribute('rmac') || '';
+                                        n.textContent.split(/(\s+)/).forEach(chunk => {
+                                            if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: rmac });
+                                        });
+                                    } else {
+                                        n.textContent.split(/(\s+)/).forEach(chunk => {
+                                            if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" });
+                                        });
+                                    }
+                                });
+
+                                if (currentVerseWords.length === 0) continue;
+                                
+                                const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
+                                let hasMatch = false;
+                                let highlightIndexes = new Set();
+
+                                if (!op && matchesA.length > 0) {
+                                    hasMatch = true; matchesA.forEach(w => highlightIndexes.add(w.idx));
+                                } else if (op) {
+                                    const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
+                                    if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
+                                        matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; highlightIndexes.add(a.idx); highlightIndexes.add(b.idx); } }));
+                                    }
+                                }
+
+                                if (hasMatch) {
+                                    let verseHTML = `<div class="modal-verse-text"><span class="modal-verse-ref">${currentVerseRef}</span>`;
+                                    currentVerseWords.forEach(w => {
+                                        if (highlightIndexes.has(w.idx)) {
+                                            verseHTML += `<span class="modal-search-match">${w.word}</span> `;
+                                            totalMatches++;
+                                        } else {
+                                            verseHTML += `${w.word} `;
+                                        }
+                                    });
+                                    verseHTML += `</div>`;
+                                    resultsHTML += verseHTML;
+                                }
+                            }
+                        }
+                    }
                 }
 
                 document.getElementById('modal-results-container').innerHTML = resultsHTML || `<div style="text-align:center; padding: 40px; color: #888;">No matches found in the specified scope.</div>`;
@@ -742,8 +835,7 @@
                         n.textContent.split(/(\s+)/).forEach(chunk => {
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
-                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, '') }; 
-                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
+                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, '') }; s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
                                 s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id); };
                                 container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
@@ -894,20 +986,14 @@
         if (d) {
             let parsedText = d.parsing;
             if (d.parsing) {
-                if (d.parsing.includes('-') || !/^[A-Z]$/.test(d.parsing)) {
-                     const rmacParse = parseRMAC(d.parsing);
-                     if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
-                     parsedText = rmacParse.text;
-                } else {
-                     const rmacParse = parseRMAC(d.parsing);
-                     if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
-                     parsedText = rmacParse.text;
-                }
+                const rmacParse = parseRMAC(d.parsing);
+                if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
+                parsedText = rmacParse.text;
             } else {
-                 if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`;
+                if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`;
             }
             
-            if (d.strongs && !d.def) { document.getElementById('lexDef').value = "Loading lexicon..."; d.def = await getStrongsDef(d.strongs); }
+            if (d.strongs && !d.def) { document.getElementById('lexDef').value = "Loading lexicon data..."; d.def = await getStrongsDef(d.strongs); }
             document.getElementById('lexLemma').value = d.lemma || ''; document.getElementById('lexStrongs').value = d.strongs || '';
             document.getElementById('lexParsing').value = parsedText || ''; document.getElementById('lexDef').value = d.def || '';
         }
