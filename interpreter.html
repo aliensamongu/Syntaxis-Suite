@@ -37,6 +37,9 @@
         .word.search-match, .modal-search-match { background-color: var(--oxford-gold) !important; color: var(--oxford-navy-dark) !important; border-radius: 4px; font-weight: bold; border-bottom: 2px solid var(--oxford-crimson); }
         .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
         .verse-num { color: var(--oxford-crimson); font-weight: bold; font-size: 0.6em; vertical-align: super; margin-right: 8px; }
+        .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; }
+        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
+        .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
         #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; transition: 0.3s; }
         #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
@@ -64,11 +67,11 @@
         <div style="display: flex; gap: 5px;">
             <select id="bibleModuleSelect" style="flex: 2;" onchange="updateSearchLanguageToggle()">
                 <optgroup label="Interlinear"><option value="nt_interlinear">NT Interlinear (Greek/EMTV)</option><option value="ot_interlinear">OT Interlinear (Hebrew/ESV)</option></optgroup>
-                <optgroup label="Original"><option value="tischendorf.xml">Tischendorf Greek</option><option value="srgnt.tsv">SRGNT (Bunning)</option><option value="hebrew_ot.xml">Hebrew OT</option></optgroup>
-                <optgroup label="English"><option value="kjv_strongs.xml">KJV</option><option value="emtv.xml">EMTV</option><option value="esv.xml">ESV</option></optgroup>
-                <optgroup label="Library"><option value="mhc_sync">Matthew Henry</option></optgroup>
+                <optgroup label="Original"><option value="tischendorf.xml">Tischendorf Greek NT</option><option value="srgnt.tsv">Statistical Restoration GNT (SRGNT)</option><option value="hebrew_ot.xml">Hebrew OT</option></optgroup>
+                <optgroup label="English Translations"><option value="kjv_strongs.xml">KJV with Strong's</option><option value="emtv.xml">English Majority Text (EMTV)</option><option value="esv.xml">English Standard Version (ESV)</option></optgroup>
+                <optgroup label="Theological Library"><option value="mhc_sync">Matthew Henry (Auto-Sync)</option><option value="luther_tt.xml">Luther's Table Talk</option></optgroup>
             </select>
-            <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1;">Load</button>
+            <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1; padding: 10px 5px;">Load</button>
         </div>
         <div style="border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
             <h3 style="padding-bottom: 5px;">2. Lexicon & Morphology</h3>
@@ -76,53 +79,55 @@
                 <div id="lex-target-word" style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;">No Word</div>
                 <div style="display: flex; gap: 5px;"><input type="text" id="lexLemma" placeholder="Lemma" readonly><input type="text" id="lexStrongs" placeholder="Strong's" style="width: 80px;" readonly></div>
                 <input type="text" id="lexParsing" placeholder="Morphology" readonly>
-                <textarea id="lexDef" placeholder="Definition..." style="height: 80px;" oninput="syncPastedDef()"></textarea>
-                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width: 100%; background: #c0392b; color: white;" disabled>+ Add Card</button>
+                <textarea id="lexDef" placeholder="Lexicon Definition..." style="height: 100px;" oninput="syncPastedDef()"></textarea>
+                <button class="std-btn" id="addCardBtn" onclick="addSelectedWordToDeck()" style="width: 100%; margin-top: 5px; background: #c0392b; color: white;" disabled>+ Add to Flashcard</button>
+                <div id="cardStatusMsg" style="font-size: 10px; color: #2ecc71; text-align: center; display: none;">Card Added!</div>
             </div>
         </div>
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 10px;">
             <h3 style="padding-bottom: 5px;">3. Advanced Search</h3>
-            <div style="display: flex; gap: 5px;">
-                <select id="searchScopeSelect" style="flex: 1; padding: 5px; font-size: 11px;" onchange="toggleCustomSearchScope()">
+            <div style="display: flex; gap: 5px; margin-top: 5px;">
+                <select id="searchScopeSelect" style="flex: 1; padding: 8px; font-size: 11px;" onchange="toggleCustomSearchScope()">
                     <option value="chapter">Current View</option><option value="book">Current Book</option><option value="nt">Entire Text</option><option value="custom">Custom Range</option>
                 </select>
-                <select id="searchLangSelect" style="display: none; flex: 1; padding: 5px; font-size: 11px;">
+                <select id="searchLangSelect" style="display: none; flex: 1; padding: 8px; font-size: 11px;">
                     <option value="orig">Target: Root</option><option value="eng">Target: English</option>
                 </select>
             </div>
-            <input type="text" id="customSearchRange" placeholder="e.g. Rom-Heb" style="display:none; padding: 8px; font-size: 11px; box-sizing: border-box;">
-            <input type="text" id="advancedSearchInput" placeholder="e.g. God or lov*..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
+            <input type="text" id="customSearchRange" placeholder="e.g. Rom-Heb" style="display:none; width: 100%; padding: 8px; font-size: 11px; margin-bottom: 5px; box-sizing: border-box;">
+            <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. God or lov*)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
             <div style="display: flex; gap: 5px;"><button class="std-btn" onclick="executeAdvancedSearch()" style="flex: 2;">Run Search</button><button class="std-btn secondary" onclick="clearAdvancedSearch()" style="flex: 1;">Clear</button></div>
-            <div id="searchResultMsg" style="font-size: 11px; color: var(--oxford-gold); text-align: center; font-weight: bold;"></div>
+            <div id="searchResultMsg" style="font-size: 11px; color: var(--oxford-gold); text-align: center; font-weight: bold; margin-top: 2px;"></div>
         </div>
     </div>
 </div>
 <div id="workspace">
     <div class="workspace-panel">
-        <div class="panel-title"><span>Passage <span style="font-size: 11px; color: #888;">INTERPRETATION</span></span>
+        <div class="panel-title"><span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
             <div class="header-controls">
-                <div class="toggle-wrapper" id="sync-ui" style="display: none;"><span style="color: var(--oxford-gold); font-size:9px;">SYNC</span><label class="switch"><input type="checkbox" id="syncToggle" onchange="runCommentarySync()"><span class="slider"></span></label></div>
-                <div class="toggle-wrapper" id="original-toggle-container" style="display: none;"><span id="orig-toggle-label" style="font-size:9px;">ORIGINAL</span><label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label></div>
+                <div class="toggle-wrapper" id="sync-ui" style="display: none; border: 1px solid var(--oxford-gold);"><span class="toggle-label" style="color: var(--oxford-gold); font-size:9px;">Sync Commentary</span><label class="switch"><input type="checkbox" id="syncToggle" onchange="runCommentarySync()"><span class="slider"></span></label></div>
+                <div class="toggle-wrapper" id="original-toggle-container" style="display: none;"><span class="toggle-label" id="orig-toggle-label" style="font-size:10px;">Show Original</span><label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label></div>
                 <div class="font-sizer"><span>Size</span><input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';"></div>
-                <button class="std-btn secondary" onclick="toggleNotebook()">📓 Notebook</button>
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;">📓 Notebook</button>
             </div>
         </div>
-        <div id="passage-container"><span style="color: #aaa; font-style: italic;">Enter a reference to begin...</span></div>
+        <div id="passage-container"><span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a module and type a reference to begin...</span></div>
     </div>
 </div>
 <div id="notebook-sidebar">
     <div class="notebook-inner">
-        <div style="display: flex; justify-content: space-between; align-items: center;"><h2 style="font-size: 20px;">Notebook</h2><button onclick="toggleNotebook()" style="background: none; border: none; color: white; cursor: pointer; font-size: 20px;">&times;</button></div>
-        <div id="research-notebook" contenteditable="true" oninput="autoSaveNotebook()"></div>
-        <button class="std-btn" onclick="exportNotebook()" style="background: #27ae60; color: white;">⬇ Export .txt</button>
+        <div style="display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 10px;"><h2 style="font-size: 20px;">Research <span style="color: var(--oxford-gold);">Notebook</span></h2><button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button></div>
+        <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
+        <div id="research-notebook" contenteditable="true" data-placeholder="Start typing your notes..." oninput="autoSaveNotebook()"></div>
+        <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
     </div>
 </div>
 <div id="context-menu">
-    <div id="cm-grp-orig"><div class="context-menu-item" id="cm-search-lemma">Search Root <span id="cm-lemma-val"></span></div><div class="context-menu-item" id="cm-search-morph">Search Morph <span id="cm-morph-val"></span></div><div class="context-menu-item" id="cm-search-exact">Exact Match</div></div>
+    <div id="cm-grp-orig"><div class="context-menu-item" id="cm-search-lemma">Search Root <span id="cm-lemma-val"></span></div><div class="context-menu-item" id="cm-search-morph">Search Morph <span id="cm-morph-val"></span></div><div class="context-menu-item" id="cm-search-exact">Exact Match (Lemma + Morph)</div></div>
     <div id="cm-grp-eng" style="display:none;"><div class="context-menu-item" id="cm-search-english">Search Word <span id="cm-eng-val"></span></div></div>
 </div>
 <div id="search-modal-overlay" onclick="closeSearchModal()"></div>
-<div id="search-modal"><div class="modal-header"><div><h2 style="margin: 0; font-size: 22px;">Analysis</h2><div id="modal-subtitle" style="font-size: 11px; opacity: 0.8;"></div></div><button onclick="closeSearchModal()" style="background: none; border: none; color: white; font-size: 28px;">&times;</button></div><div class="modal-body" id="modal-results-container"></div><div class="modal-footer"><div id="modal-match-count" style="font-weight: bold; font-size: 14px;"></div><button class="std-btn" onclick="copyResultsToNotebook()">📓 Send to Notebook</button></div></div>
+<div id="search-modal"><div class="modal-header"><div><h2 style="margin: 0; font-size: 22px;">Analysis Results</h2><div id="modal-subtitle" style="font-size: 12px; opacity: 0.8; margin-top: 5px;"></div></div><button onclick="closeSearchModal()" style="background: none; border: none; color: white; font-size: 28px; cursor: pointer;">&times;</button></div><div class="modal-body" id="modal-results-container"></div><div class="modal-footer"><div id="modal-match-count" style="font-weight: bold; font-size: 14px; color: var(--oxford-navy);"></div><button class="std-btn" onclick="copyResultsToNotebook()" style="background: var(--oxford-navy); color: white;">📓 Send to Notebook</button></div></div>
 <script>
     const passageContainer = document.getElementById('passage-container'); const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container'); const originalToggleLabel = document.getElementById('orig-toggle-label');
@@ -139,25 +144,24 @@
     function parseRMAC(rmac) { if (!rmac) return { text: rmac, color: "#7f8c8d" }; const parts = rmac.toLowerCase().split('-'); const pos = parts[0]; let color = "#7f8c8d", text = "", details = []; const cases = {'n':'Nom', 'g':'Gen', 'd':'Dat', 'a':'Acc', 'v':'Voc'}; const numbers = {'s':'Sing', 'p':'Plur'}, genders = {'m':'Masc', 'f':'Fem', 'n':'Neut'}, person = {'1':'1st', '2':'2nd', '3':'3rd'}; const tenses = {'p':'Pres', 'i':'Imp', 'f':'Fut', 'a':'Aor', 'r':'Perf', 'x':'Perf', 'l':'Plup', 'y':'Plup'}, voices = {'a':'Act', 'm':'Mid', 'p':'Pass', 'e':'M/P', 'd':'Dep', 'o':'P.Dep', 'n':'M/P.Dep'}, moods = {'i':'Ind', 'm':'Imp', 's':'Subj', 'o':'Opt', 'n':'Inf', 'p':'Ptc'}; switch(pos) { case 'n': text = "Noun"; color = "#2980b9"; break; case 'a': text = "Adj"; color = "#27ae60"; break; case 'v': text = "Verb"; if (parts.length > 1) { const tvm = parts[1].replace(/^[0-9]+/, ''); if (tvm.length >= 3) { if (tvm[2] === 'i') color = "#c0392b"; else if (tvm[2] === 'p') color = "#8e44ad"; let s = []; if (parts[1].match(/^[0-9]/)) s.push(person[parts[1][0]]||""); if (tenses[tvm[0]]) s.push(tenses[tvm[0]]); if (voices[tvm[1]]) s.push(voices[tvm[1]]); if (moods[tvm[2]]) s.push(moods[tvm[2]]); if (s.length > 0) details.push(s.join(' ')); } } break; default: text = pos.toUpperCase(); break; } if (['n','a','t','p'].includes(pos) && parts.length > 1) { const cng = parts[1]; if (cng.length >= 3) details.push(`${cases[cng[0]]||""} ${numbers[cng[1]]||""} ${genders[cng[2]]||""}`); } return { text: text + (details.length > 0 ? ": " + details.join(' ') : ""), color: color }; }
     function srgntToRmac(role, morph) { if (!morph || morph.length < 7) return morph; let pos = role; if (role === 'E') pos = 'T'; if (role === 'R') pos = 'P'; if (role === 'C') pos = 'CONJ'; if (role === 'D') pos = 'ADV'; const mood = morph[0] !== '.' ? morph[0] : '', tense = morph[1] !== '.' ? morph[1] : '', voice = morph[2] !== '.' ? morph[2] : '', p = morph[3] !== '.' ? morph[3] : '', c = morph[4] !== '.' ? morph[4] : '', g = morph[5] !== '.' ? morph[5] : '', n = morph[6] !== '.' ? morph[6] : ''; let rt = tense === 'X' ? 'R' : (tense === 'Y' ? 'L' : tense); if (pos === 'V') { if (mood === 'P') return `V-${rt}${voice}P-${c}${n}${g}`; else if (mood === 'N') return `V-${rt}${voice}N`; else return `V-${rt}${voice}${mood}-${p}${n}`; } else if (['N', 'A', 'T', 'P'].includes(pos)) { if (c || n || g) return `${pos}-${c}${n}${g}`; return pos; } return pos; }
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
-    function matchTerm(term, wordData) { term = term.trim(); if (!term) return false; if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase(); let isMatch = false; if (term.includes('-') && /^[A-Za-z0-9\-*]+$/.test(term)) { if (new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "")) isMatch = true; } if (!isMatch) { let ct = stripPunctuationAndAccents(term); let et = ct.replace(/[.+?^${}()|[\]\\]/g, '\\$&'); let wr = new RegExp("^" + et.replace(/\*/g, '.*') + "$", "i"); if (wr.test(stripPunctuationAndAccents(wordData.word || "")) || wr.test(stripPunctuationAndAccents(wordData.lemma || ""))) isMatch = true; } return isMatch; }
+    function matchTerm(term, wordData) { term = term.trim(); if (!term) return false; if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase(); let isM = false; if (term.includes('-') && /^[A-Za-z0-9\-*]+$/.test(term)) { if (new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "")) isM = true; } if (!isM) { let ct = stripPunctuationAndAccents(term); let et = ct.replace(/[.+?^${}()|[\]\\]/g, '\\$&'); let wr = new RegExp("^" + et.replace(/\*/g, '.*') + "$", "i"); if (wr.test(stripPunctuationAndAccents(wordData.word || "")) || wr.test(stripPunctuationAndAccents(wordData.lemma || ""))) isM = true; } return isM; }
     function toggleCustomSearchScope() { const s = document.getElementById('searchScopeSelect').value; document.getElementById('customSearchRange').style.display = s === 'custom' ? 'block' : 'none'; }
     function openSearchModal(title) { document.getElementById('modal-subtitle').innerText = title; document.getElementById('search-modal-overlay').style.display = 'block'; document.getElementById('search-modal').style.display = 'flex'; document.getElementById('modal-results-container').innerHTML = '<div style="text-align:center; padding: 40px; color: #888;">Analyzing...</div>'; }
     function closeSearchModal() { document.getElementById('search-modal-overlay').style.display = 'none'; document.getElementById('search-modal').style.display = 'none'; }
-    async function handleModalWordClick(el) { document.querySelectorAll('.modal-search-match, #research-notebook .modal-search-match').forEach(e => e.style.outline = 'none'); el.style.outline = '2px dashed var(--oxford-navy)'; if(lexEditor) { lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto'; } const d = { w: el.getAttribute('data-w'), l: el.getAttribute('data-l'), s: el.getAttribute('data-s'), p: el.getAttribute('data-p') }; document.getElementById('lex-target-word').innerText = d.w; let rp = parseRMAC(d.p); if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rp.color}`; document.getElementById('lexLemma').value = d.l; document.getElementById('lexStrongs').value = d.s; document.getElementById('lexParsing').value = rp.text; document.getElementById('lexDef').value = d.s ? "Loading..." : ""; if(d.s) document.getElementById('lexDef').value = await getStrongsDef(d.s); document.getElementById('addCardBtn').disabled = false; }
+    async function handleModalWordClick(el) { document.querySelectorAll('.modal-search-match, #research-notebook .modal-search-match').forEach(e => e.style.outline = 'none'); el.style.outline = '2px dashed var(--oxford-navy)'; lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto'; const d = { w: el.getAttribute('data-w'), l: el.getAttribute('data-l'), s: el.getAttribute('data-s'), p: el.getAttribute('data-p') }; document.getElementById('lex-target-word').innerText = d.w; let rp = parseRMAC(d.p); lexEditor.style.borderLeft = `4px solid ${rp.color}`; document.getElementById('lexLemma').value = d.l; document.getElementById('lexStrongs').value = d.s; document.getElementById('lexParsing').value = rp.text; document.getElementById('lexDef').value = d.s ? "Loading..." : ""; if(d.s) document.getElementById('lexDef').value = await getStrongsDef(d.s); document.getElementById('addCardBtn').disabled = false; }
     async function executeAdvancedSearch() {
         const q = document.getElementById('advancedSearchInput').value.trim(); const s = document.getElementById('searchScopeSelect').value; const mod = document.getElementById('bibleModuleSelect').value; clearAdvancedSearch(); if (!q) return;
         let tl = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
-        if (mod.includes('interlinear')) { const hasG = /[\u0370-\u03FF]/.test(q), hasS = /\b[GH]\d+\b/i.test(q), hasM = /[A-Za-z0-9*]+-[A-Za-z0-9*]+/i.test(q); if (hasG || hasS || hasM) { tl = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; } else { tl = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; } }
+        if (mod.includes('interlinear')) { if (!q.includes('-') && !/\b[GH]\d+\b/i.test(q) && !/[\u0370-\u03FF]/.test(q)) { tl = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; } else { tl = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; } }
         const om = q.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i); let tA = q, tB = null, op = null, dist = 5; if (om) { op = om[1].toUpperCase(); tA = q.substring(0, om.index).trim(); tB = q.substring(om.index + om[0].length).trim(); if (op.startsWith('WITHIN')) { const dM = op.match(/\d+/); dist = dM ? parseInt(dM[0]) : 5; op = 'WITHIN'; } }
         let cB = new Set(); if (s === 'custom') { const r = document.getElementById('customSearchRange').value.toLowerCase().trim(); const p = r.split('-'); if (p.length === 2) { const n1 = bnumberMap[abbrevs[p[0].trim()]||p[0].trim()], n2 = bnumberMap[abbrevs[p[1].trim()]||p[1].trim()]; if (n1 && n2) for (let i = Math.min(n1,n2); i <= Math.max(n1,n2); i++) cB.add(i); } }
         if (s === 'chapter') {
             let matches = 0, hlSet = new Set(), vs = []; document.querySelectorAll('.verse-block').forEach(vb => { let vw = []; vb.querySelectorAll('.word').forEach(wn => { const d = lexiconData[wn.id]; if (d) { if (tl === 'eng' && !d.isEnglish) return; if (tl === 'orig' && d.isEnglish) return; vw.push({ id: wn.id, data: d }); } }); if (vw.length) vs.push(vw); });
             vs.forEach(v => { const mA = v.filter(w => matchTerm(tA, w.data)), mB = tB ? v.filter(w => matchTerm(tB, w.data)) : []; if (!op && mA.length) mA.forEach(w => hlSet.add(w.id)); else if (op === 'AND' && mA.length && mB.length) { mA.forEach(w=>hlSet.add(w.id)); mB.forEach(w=>hlSet.add(w.id)); } else if (op === 'WITHIN' && mA.length && mB.length) { mA.forEach(a => mB.forEach(b => { if (Math.abs(parseInt(a.id.split('-')[1]) - parseInt(b.id.split('-')[1])) <= dist) { hlSet.add(a.id); hlSet.add(b.id); } })); } });
-            hlSet.forEach(id => { const el = document.getElementById(id); if (el) { el.classList.add('search-match'); matches++; } }); document.getElementById('searchResultMsg').innerText = `${matches} in view`;
+            hlSet.forEach(id => { const el = document.getElementById(id); if (el) { el.classList.add('search-match'); matches++; } }); document.getElementById('searchResultMsg').innerText = `${matches} found`;
         } else {
             let fM = mod; if (mod === 'nt_interlinear') fM = tl === 'eng' ? 'emtv.xml' : 'tischendorf.xml'; if (mod === 'ot_interlinear') fM = tl === 'eng' ? 'esv.xml' : 'hebrew_ot.xml';
-            let dMod = fM.replace('.xml', '').toUpperCase(); if(dMod === 'EMT') dMod = 'EMTV ENGLISH';
-            openSearchModal(`Query: [${q}] via ${dMod}`);
+            openSearchModal(`Query: [${q}] via ${fM.toUpperCase()}`);
             try { const res = await fetch(fM); const ft = await res.text(); const xd = new DOMParser().parseFromString(ft, "text/xml"); let html = "", total = 0; const isE = fM.includes('esv')||fM.includes('emtv');
                 xd.querySelectorAll('CHAPTER, chapter').forEach(ch => {
                     let bN = ch.getAttribute('number') || ch.closest('BIBLEBOOK, book')?.getAttribute('bnumber') || ch.closest('book')?.getAttribute('number') || ch.getAttribute('osisID')?.split('.')[0];
@@ -168,7 +172,7 @@
                         if (has) { html += `<div class="modal-verse-text"><strong>${bn.toUpperCase()}</strong> `; words.forEach(w => { const isH = matchTerm(tA, w); if(isH) total++; html += `<span class="${isH?'modal-search-match':''}" data-w="${w.word.replace(/'/g, "&apos;")}" data-l="" data-s="${w.strongs}" data-p="${w.parsing}" onclick="handleModalWordClick(this)">${w.word}</span> `; }); html += `</div>`; }
                     });
                 });
-                document.getElementById('modal-results-container').innerHTML = html || "No matches."; document.getElementById('modal-match-count').innerText = `${total} matching words`;
+                document.getElementById('modal-results-container').innerHTML = html || "No matches."; document.getElementById('modal-match-count').innerText = `${total} found`;
             } catch (e) { document.getElementById('modal-results-container').innerHTML = "Error: " + e.message; }
         }
     }
@@ -190,7 +194,9 @@
         passageContainer.innerHTML = "Loading..."; try {
             if (f.includes('interlinear')) { originalToggleContainer.style.display = 'flex'; const isH = f.includes('ot'); originalToggleLabel.innerText = isH ? "HEBREW" : "GREEK"; const bN = bnumberMap[currentLoadedBook], os = osisMap[currentLoadedBook]; const [r1, r2] = await Promise.all([fetch(isH?'hebrew_ot.xml':'tischendorf.xml'), fetch(isH?'esv.xml':'emtv.xml')]); const d1 = new DOMParser().parseFromString(await r1.text(),"text/xml"), d2 = new DOMParser().parseFromString(await r2.text(),"text/xml");
                 let html = ""; const v1 = d1.querySelectorAll(`BIBLEBOOK[bnumber="${bN}"] CHAPTER[cnumber="${currentLoadedChapter}"] VERS`); const v2 = isH ? d2.querySelectorAll(`book[number="${bN}"] chapter[number="${currentLoadedChapter}"] verse`) : d2.querySelectorAll(`chapter[osisID="${os}.${currentLoadedChapter}"] verse`);
-                for (let i=0; i<v1.length; i++) { let vn = i+1; if (sV && (vn < sV || vn > eV)) continue; html += `<div class="verse-block"><span class="verse-num">${vn}</span><div class="original-line">`; v1[i].childNodes.forEach(n => { if (n.nodeType === 3) n.textContent.split(/\s+/).forEach(w => { if (w) html += `<span class="word">${w} </span>`; }); }); html += `</div><div class="english-line">${v2[i]?v2[i].textContent:""}</div></div>`; }
+                for (let i=0; i<v1.length; i++) { let vn = i+1; if (sV && (vn < sV || vn > eV)) continue; html += `<div class="verse-block"><span class="verse-num">${vn}</span><div class="original-line">`; 
+                v1[i].childNodes.forEach(n => { if (n.nodeType === 1 && n.nodeName.toLowerCase() === 'gr') { const id = `w-${i}-${n.getAttribute('str')}`; lexiconData[id] = { word: n.textContent, lemma: "", strongs: n.getAttribute('str'), parsing: n.getAttribute('rmac'), isEnglish: false }; html += `<span class="word" id="${id}" onclick="handleWordClick('${id}')">${n.textContent} </span>`; } else if (n.nodeType === 3) n.textContent.split(/\s+/).forEach(w => { if (w) html += `<span>${w} </span>`; }); });
+                html += `</div><div class="english-line">`; if(v2[i]) v2[i].textContent.split(/\s+/).forEach(w => { const id = `e-${i}-${w}`; lexiconData[id] = { word: w, isEnglish: true }; html += `<span class="word" id="${id}" onclick="handleWordClick('${id}')" oncontextmenu="handleRightClick(event,'${id}',true)">${w} </span>`; }); html += `</div></div>`; }
                 passageContainer.innerHTML = html; syncUi.style.display = 'flex'; return;
             }
             const res = await fetch(f); const xd = new DOMParser().parseFromString(await res.text(),"text/xml"); let html = ""; xd.querySelectorAll('VERS, verse').forEach(v => { let vn = parseInt(v.getAttribute('vnumber')||v.getAttribute('number')); if(sV && (vn < sV || vn > eV)) return; html += `<span class="verse-num">${vn}</span> ` + v.textContent + " "; }); passageContainer.innerHTML = html;
