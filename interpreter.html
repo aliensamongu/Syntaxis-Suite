@@ -69,6 +69,7 @@
         .word:hover { background: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197,160,89,0.1); font-weight: bold; color: var(--oxford-navy); }
         
+        /* SEARCH MATCH HIGHLIGHTING */
         .word.search-match, .modal-search-match { background-color: var(--oxford-gold); color: var(--oxford-navy-dark); border-radius: 4px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-bottom: 2px solid var(--oxford-crimson); padding: 2px 4px; margin: 0 2px; }
 
         .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
@@ -78,6 +79,8 @@
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
         #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; transition: 0.3s; }
+        
+        /* Right Sidebar: Content-Editable Research Notebook */
         #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
         .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: hidden;}
@@ -85,12 +88,14 @@
         #research-notebook:empty:before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
         #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
+        /* CUSTOM CONTEXT MENU */
         #context-menu { display: none; position: absolute; background-color: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-radius: var(--radius-small); z-index: 10000; min-width: 180px; overflow: hidden; font-family: -apple-system, sans-serif; }
         .context-menu-item { padding: 10px 15px; font-size: 12px; color: var(--oxford-navy-dark); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .context-menu-item:last-child { border-bottom: none; }
         .context-menu-item:hover { background-color: var(--oxford-gold); color: var(--oxford-navy); }
         .context-menu-item span { font-weight: normal; font-size: 10px; opacity: 0.7; font-family: monospace;}
 
+        /* DOCKED ANALYSIS MODAL */
         #search-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 10001; backdrop-filter: blur(2px); }
         #search-modal { display: none; position: fixed; top: 20px; bottom: 20px; left: calc(var(--sidebar-width) + 20px); right: 20px; width: auto; height: auto; max-width: 1200px; background: var(--oxford-cream); z-index: 10002; border-radius: var(--radius-medium); box-shadow: 0 15px 40px rgba(0,0,0,0.4); flex-direction: column; overflow: hidden; border: 1px solid var(--oxford-gold); }
         .modal-header { background: var(--oxford-navy); color: var(--oxford-cream); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--oxford-gold); }
@@ -165,7 +170,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>.
+                Find Words, Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any text to auto-search!
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -308,11 +313,44 @@
     // ---------------------------------------------------------
     // MASTER BIBLE INDEXES
     // ---------------------------------------------------------
-    const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
-    const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
+    const abbrevs = {
+        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
+        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
+        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
+        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
+        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
+        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
+        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
+        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
+        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
+        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
+        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
+        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
+        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
+        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
+        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
+        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
+        "heb": "hebrews", "jas": "james", "rev": "revelation"
+    };
+
+    const bnumberMap = {
+        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
+        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
+    };
     const bnumberToName = Object.keys(bnumberMap).reduce((acc, key) => { acc[bnumberMap[key]] = key; return acc; }, {});
-    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
-    const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
+
+    const osisMap = {
+        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut",
+        "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
+        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song",
+        "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
+        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
+    };
+
+    const mhcVolumeMap = {
+        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
+        "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
+    };
 
     window.addEventListener('DOMContentLoaded', () => {
         loadNotebook(); 
@@ -341,7 +379,8 @@
             if (!hebrewLexiconDoc) {
                 try {
                     const res = await fetch('strongs_hebrew.xml'); if (!res.ok) throw new Error();
-                    hebrewLexiconDoc = new DOMParser().parseFromString(await res.text(), "text/xml");
+                    const xmlText = await res.text();
+                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
                 } catch (e) { return "Error loading Hebrew lexicon."; }
             }
             const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
@@ -423,6 +462,9 @@
         return pos;
     }
 
+    // ---------------------------------------------------------
+    // ADVANCED SEARCH ENGINE
+    // ---------------------------------------------------------
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
     function matchTerm(term, wordData) {
@@ -490,7 +532,6 @@
             const hasGreek = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(query);
             const hasStrongs = /\b[GH]\d+\b/i.test(query);
             const hasMorphMatch = /[A-Za-z0-9*]+-[A-Za-z0-9*]+/i.test(query);
-            
             if (hasGreek || hasStrongs || hasMorphMatch) { targetLang = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; } 
             else { targetLang = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; }
         }
@@ -544,6 +585,7 @@
             
             let displayModName = fetchMod.replace('.xml', '').replace('.tsv', '').toUpperCase();
             if (displayModName === 'TISCHENDORF') displayModName = 'TISCHENDORF GREEK';
+            if (displayModName === 'EMTV') displayModName = 'EMTV ENGLISH';
             
             openSearchModal(`Query: [${query}] in ${scopeLabel} via ${displayModName}`);
             
@@ -600,7 +642,6 @@
                         const vRef = `${bName.toUpperCase()} ${parseInt(idStr.substring(2, 5))}:${parseInt(idStr.substring(5, 8))}`;
                         if (vRef !== currentVerseRef) { processVerse(); currentVerseRef = vRef; wIdx = 0; }
                         
-                        // Strip trailing numbers from lemma so it matches
                         currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3].replace(/\d+$/, ''), strongs: "G" + cols[4].slice(0, -1), parsing: srgntToRmac(cols[5], cols[6]) });
                     }
                     processVerse(); 
@@ -633,7 +674,7 @@
 
                         if (scope === 'book' && bName.toLowerCase() !== currentLoadedBook.toLowerCase()) continue;
                         
-                        let verses = chap.querySelectorAll('VERS, verse');
+                        let verses = isZefania ? chap.querySelectorAll('VERS') : chap.querySelectorAll('verse');
                         for (let vers of verses) {
                             let vNum = "0";
                             if (isZefania) vNum = vers.getAttribute('vnumber');
@@ -644,11 +685,12 @@
                             let currentVerseWords = []; let wIdx = 0;
                             
                             if (isEnglishFile) {
-                                vers.textContent.split(/(\s+)/).forEach(chunk => {
+                                const rawVerseText = vers.textContent;
+                                rawVerseText.split(/(\s+)/).forEach(chunk => {
                                     if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "", isEnglish: true });
                                 });
                             } else {
-                                const prefix = 'G'; 
+                                const prefix = (bNum >= 1 && bNum <= 39) ? 'H' : 'G'; 
                                 Array.from(vers.childNodes).forEach(n => {
                                     if (n.nodeType === Node.TEXT_NODE) {
                                         n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
