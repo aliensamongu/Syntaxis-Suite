@@ -155,7 +155,7 @@
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
             
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)">
+                <input type="text" id="bibleRefInput" placeholder="e.g. John 1 or John 1:1-5">
                 <div style="display: flex; gap: 5px;">
                     <select id="bibleModuleSelect" style="flex: 2;">
                         <optgroup label="Interlinear">
@@ -434,7 +434,7 @@
     }
 
     // ---------------------------------------------------------
-    // THE BILINGUAL BIBLE ENGINE & SRGNT TSV PARSER
+    // THE BILINGUAL BIBLE ENGINE
     // ---------------------------------------------------------
     
     function toggleOriginalText() {
@@ -456,11 +456,14 @@
             const tsvText = await response.text();
 
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
-            if (!match) throw new Error("Please enter a valid Book and Chapter (e.g., Matthew 1).");
+            const match = formattedQuery.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            if (!match) throw new Error("Please enter a valid reference (e.g., Matthew 1 or Matthew 1:1-5).");
 
             const searchBook = match[1].trim().toLowerCase();
             const chapNum = match[2];
+            const startVerse = match[3] ? parseInt(match[3]) : null;
+            const endVerse = match[4] ? parseInt(match[4]) : startVerse;
+            
             const fullBookName = abbrevs[searchBook] || searchBook;
             const bNum = bnumberMap[fullBookName];
 
@@ -483,12 +486,17 @@
                 if (!line) continue;
 
                 const cols = line.split('\t');
-                const id = cols[0]; // e.g., 40001001
+                const id = cols[0];
 
-                // If the ID starts with our target (e.g., 40001), it belongs to our chapter
                 if (id.startsWith(targetPrefix)) {
                     chapterFound = true;
-                    const verseNum = parseInt(id.substring(5, 8), 10).toString();
+                    const verseNum = id.substring(5, 8).replace(/^0+/, '');
+                    const verseNumInt = parseInt(verseNum, 10);
+                    
+                    // The Verse Filter Lock
+                    if (startVerse !== null && (verseNumInt < startVerse || verseNumInt > endVerse)) {
+                        continue;
+                    }
 
                     if (verseNum !== currentVerse) {
                         currentVerse = verseNum;
@@ -506,7 +514,7 @@
                     // Columns: 0:ID, 1:Modern, 2:Koine, 3:Lemma, 4:ESN (Strongs), 5:Role, 6:Morph
                     const modernWord = cols[1];
                     const lemma = cols[3];
-                    const strongs = "G" + cols[4].slice(0, -1); // Trim the extra 0 and add G
+                    const strongs = "G" + cols[4].slice(0, -1);
                     const rawMorph = cols[6]; 
 
                     const span = document.createElement('span');
@@ -518,14 +526,13 @@
                         word: modernWord.replace(/[.,;!?¶]/g, ''),
                         lemma: lemma,
                         strongs: strongs,
-                        parsing: rawMorph, // Passing raw code because SRGNT uses custom non-RMAC codes
+                        parsing: rawMorph,
                         def: ""
                     };
                     
                     span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); };
                     currentBlock.appendChild(span);
                 } else if (chapterFound) {
-                    // We hit the end of the chapter, stop reading the file
                     break;
                 }
             }
@@ -540,7 +547,6 @@
     async function loadNativeBible(query, fileName) {
         if (!query.trim()) return;
         
-        // Intercept SRGNT requests and route to the new TSV parser
         if (fileName === 'srgnt.tsv') {
             return renderSRGNT(query);
         }
@@ -551,14 +557,17 @@
 
         try {
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
+            const match = formattedQuery.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             if (!match) {
-                passageContainer.innerHTML = "<span style='color:var(--oxford-crimson);'>Please enter a valid Book and Chapter (e.g., Matthew 1).</span>";
+                passageContainer.innerHTML = "<span style='color:var(--oxford-crimson);'>Please enter a valid reference (e.g., Matthew 1 or Matthew 1:1-5).</span>";
                 return;
             }
 
             const searchBook = match[1].trim().toLowerCase();
             const chapNum = match[2];
+            const startVerse = match[3] ? parseInt(match[3]) : null;
+            const endVerse = match[4] ? parseInt(match[4]) : startVerse;
+            
             const fullBookName = abbrevs[searchBook] || searchBook;
             
             passageContainer.innerHTML = ''; 
@@ -674,12 +683,17 @@
                 const maxVerses = Math.max(grkVerses.length, engVerses.length);
 
                 for (let i = 0; i < maxVerses; i++) {
+                    const vNumInt = i + 1;
+                    
+                    // The Verse Filter Lock
+                    if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
+
                     const block = document.createElement('div');
                     block.className = 'verse-block';
 
                     const vNumSpan = document.createElement('span');
                     vNumSpan.className = 'verse-num';
-                    vNumSpan.innerText = i + 1;
+                    vNumSpan.innerText = vNumInt;
                     block.appendChild(vNumSpan);
 
                     const origLine = document.createElement('div');
@@ -724,9 +738,14 @@
 
                 const verses = chapNode.querySelectorAll('VERS');
                 verses.forEach(vers => {
+                    const vNumInt = parseInt(vers.getAttribute('vnumber'));
+                    
+                    // The Verse Filter Lock
+                    if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) return;
+
                     const vSpan = document.createElement('sup');
                     vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
-                    vSpan.innerText = vers.getAttribute('vnumber');
+                    vSpan.innerText = vNumInt;
                     passageContainer.appendChild(vSpan);
 
                     processZefaniaNodes(vers, passageContainer, bNum);
@@ -742,6 +761,10 @@
                 verses.forEach(vers => {
                     const osisVerseId = vers.getAttribute('osisID');
                     const vNumMatch = osisVerseId.match(/\.(\d+)$/);
+                    const vNumInt = vNumMatch ? parseInt(vNumMatch[1]) : 0;
+                    
+                    // The Verse Filter Lock
+                    if (startVerse !== null && vNumInt > 0 && (vNumInt < startVerse || vNumInt > endVerse)) return;
                     
                     const vSpan = document.createElement('sup');
                     vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
@@ -773,9 +796,14 @@
 
                 const verses = chapNode.querySelectorAll('verse');
                 verses.forEach(vers => {
+                    const vNumInt = parseInt(vers.getAttribute('number'));
+                    
+                    // The Verse Filter Lock
+                    if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) return;
+
                     const vSpan = document.createElement('sup');
                     vSpan.style.cssText = "color: var(--rustic-orange); font-weight: bold; margin-right: 4px; font-size: 14px;";
-                    vSpan.innerText = vers.getAttribute('number');
+                    vSpan.innerText = vNumInt;
                     passageContainer.appendChild(vSpan);
 
                     const words = vers.textContent.split(/(\s+)/);
