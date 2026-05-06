@@ -47,6 +47,16 @@
         .app-nav a { flex: 1; text-align: center; padding: 8px 2px; font-size: 8px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
+        .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
+        .custom-select-btn { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-size: 12px; background: var(--oxford-cream); cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--oxford-navy); font-weight: bold; }
+        .dropdown-menu { position: absolute; top: 100%; left: 0; width: 100%; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); margin-top: 4px; padding: 0; list-style: none; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
+        .custom-select-wrapper.open .dropdown-menu { display: block; }
+        .group-label { padding: 10px 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: var(--oxford-navy); cursor: pointer; }
+        .submenu { position: absolute; top: -1px; left: 100%; width: 200px; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); display: none; list-style: none; padding: 0; box-shadow: 4px 4px 12px rgba(0,0,0,0.2); }
+        .dropdown-menu > li:hover .submenu { display: block; }
+        .option-item { padding: 10px 15px; font-size: 11px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
+        .option-item:hover { background: var(--oxford-gold); }
+
         #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; align-items: center; transition: 0.3s; position: relative; }
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative;}
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -72,12 +82,8 @@
         /* SEARCH MATCH HIGHLIGHTING */
         .word.search-match, .modal-search-match { background-color: var(--oxford-gold); color: var(--oxford-navy-dark); border-radius: 4px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-bottom: 2px solid var(--oxford-crimson); padding: 2px 4px; margin: 0 2px; }
 
-        .rtl-text { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
-
-        /* INTERLINEAR STYLES */
-        .verse-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
-        .verse-block:last-child { border-bottom: none; }
-        .verse-num { color: var(--rustic-orange); font-weight: bold; margin-right: 8px; font-size: 0.6em; vertical-align: super; }
+        .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
+        .verse-num { color: var(--oxford-crimson); font-weight: bold; font-size: 0.6em; vertical-align: super; margin-right: 8px; }
         .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; transition: opacity 0.3s, height 0.3s; }
         .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
@@ -91,11 +97,13 @@
         /* Sidebar Dynamic Info Card */
         #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; transition: 0.3s; }
 
-        /* Right Sidebar: Research Notebook */
+        /* Right Sidebar: Content-Editable Research Notebook */
         #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
-        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: auto;}
-        #research-notebook { flex-grow: 1; resize: none; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: none; padding: 15px; border-radius: var(--radius-small); font-family: Georgia, serif; font-size: 14px; line-height: 1.6; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); }
+        .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: hidden;}
+        
+        #research-notebook { flex-grow: 1; overflow-y: auto; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: none; padding: 15px; border-radius: var(--radius-small); font-family: Georgia, serif; font-size: 14px; line-height: 1.6; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); cursor: text; }
+        #research-notebook:empty:before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
         #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
         /* CUSTOM CONTEXT MENU */
@@ -139,7 +147,7 @@
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)" onkeypress="if(event.key === 'Enter') triggerLoadModule()">
                 <div style="display: flex; gap: 5px;">
-                    <select id="bibleModuleSelect" style="flex: 2;">
+                    <select id="bibleModuleSelect" style="flex: 2;" onchange="updateSearchLanguageToggle()">
                         <optgroup label="Interlinear">
                             <option value="nt_interlinear">NT Interlinear (Greek/EMT)</option>
                             <option value="ot_interlinear">OT Interlinear (Hebrew/ESV)</option>
@@ -162,7 +170,10 @@
                     <button class="std-btn" onclick="triggerLoadModule()" style="flex: 1; padding: 10px 5px;">Load Text</button>
                 </div>
             </div>
-            <textarea id="rawTextInput" placeholder="Or paste text here..." style="height: 40px; font-size:11px;"></textarea>
+            
+            <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
+            
+            <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
             <button class="std-btn secondary" onclick="renderText()">Render Pasted Text</button>
         </div>
 
@@ -170,7 +181,7 @@
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">2. Lexicon & Morphology</h3>
             <div style="font-size: 11px; opacity: 0.7; margin-bottom: 5px;">Click a word in the passage to view data.</div>
             <div id="lexicon-editor">
-                <div id="lex-target-word" style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;">No Word</div>
+                <div id="lex-target-word" style="font-weight: bold; color: var(--oxford-gold); font-size: 18px; font-family: Georgia, serif;">No Word Selected</div>
                 <div style="display: flex; gap: 5px;">
                     <input type="text" id="lexLemma" placeholder="Root Lemma" style="flex: 2;" readonly>
                     <input type="text" id="lexStrongs" placeholder="Strong's" style="flex: 1;" readonly>
@@ -185,20 +196,26 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>.<br>
-                <i>Right-click any word to auto-search!</i>
+                Find Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any Greek or English word to auto-search!<br>
             </div>
+            
             <div style="display: flex; gap: 5px; margin-top: 5px;">
                 <select id="searchScopeSelect" style="flex: 1; padding: 8px; font-size: 11px;" onchange="toggleCustomSearchScope()">
                     <option value="chapter">Current Chapter View</option>
                     <option value="book">Current Book</option>
-                    <option value="nt">Entire NT / OT</option>
+                    <option value="nt">Entire Text (NT/OT)</option>
                     <option value="custom">Custom Range</option>
                 </select>
-                <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; flex: 1; padding: 8px; font-size: 11px;">
+                <select id="searchLangSelect" style="display: none; flex: 1; padding: 8px; font-size: 11px;">
+                    <option value="orig">Target: Root Text</option>
+                    <option value="eng">Target: English Text</option>
+                </select>
             </div>
+            
+            <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; width: 100%; padding: 8px; font-size: 11px; margin-bottom: 5px; box-sizing: border-box;">
+            
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="advancedSearchInput" placeholder="e.g. αγαπαω AND V-P*" onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
+                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. V-P*I***)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
                 <div style="display: flex; gap: 5px;">
                     <button class="std-btn" onclick="executeAdvancedSearch()" style="flex: 2;">Run Search</button>
                     <button class="std-btn secondary" onclick="clearAdvancedSearch()" style="flex: 1;">Clear</button>
@@ -211,8 +228,8 @@
             <h3>4. Flashcard Deck</h3>
             <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
             <div style="display: flex; gap: 5px; margin-top: 5px;">
-                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki</button>
-                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel</button>
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
             </div>
         </div>
     </div>
@@ -222,22 +239,33 @@
     <div class="workspace-panel">
         <div class="panel-title">
             <span>Base Text <span style="font-size: 11px; color: #888; text-transform: uppercase;">Interpretation</span></span>
+            
             <div class="header-controls">
                 <div class="toggle-wrapper" id="sync-ui" style="display: none; border-color: var(--oxford-gold);">
                     <span class="toggle-label" style="color: var(--oxford-gold);">Sync Commentary</span>
-                    <label class="switch"><input type="checkbox" id="syncToggle" onchange="runCommentarySync()"><span class="slider"></span></label>
+                    <label class="switch">
+                        <input type="checkbox" id="syncToggle" onchange="runCommentarySync()">
+                        <span class="slider"></span>
+                    </label>
                 </div>
+            
                 <div class="toggle-wrapper" id="original-toggle-container" style="display: none;">
                     <span class="toggle-label" id="orig-toggle-label">Show Original</span>
-                    <label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label>
+                    <label class="switch">
+                        <input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()">
+                        <span class="slider"></span>
+                    </label>
                 </div>
+
                 <div class="font-sizer">
                     <span>Size</span>
                     <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
                 </div>
-                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;">📓 Notebook</button>
+
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;" title="Open Research Notebook">📓 Notebook</button>
             </div>
         </div>
+        
         <div id="passage-container">
             <span style="color: #aaa; font-style: italic; font-size: 18px; pointer-events: none;">Select a module and type a reference to begin...</span>
         </div>
@@ -251,7 +279,9 @@
             <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
         </div>
         <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
-        <textarea id="research-notebook" placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></textarea>
+        
+        <div id="research-notebook" contenteditable="true" data-placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></div>
+        
         <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
     </div>
 </div>
@@ -304,7 +334,10 @@
     let currentLoadedBook = ""; 
     let currentLoadedChapter = "";
 
-    document.addEventListener('click', () => { if (contextMenu) contextMenu.style.display = 'none'; });
+    // Global Click Listener to dismiss context menu
+    document.addEventListener('click', (e) => { 
+        if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; 
+    });
 
     // ---------------------------------------------------------
     // MASTER BIBLE INDEXES
@@ -348,9 +381,23 @@
         "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
     };
 
+    // Init
     window.addEventListener('DOMContentLoaded', () => {
-        loadNotebook(); loadAnkiDeck();
+        loadNotebook(); 
+        loadAnkiDeck();
+        updateSearchLanguageToggle();
     });
+
+    function updateSearchLanguageToggle() {
+        const mod = document.getElementById('bibleModuleSelect').value;
+        const langSelect = document.getElementById('searchLangSelect');
+        if (mod === 'nt_interlinear' || mod === 'ot_interlinear') {
+            langSelect.style.display = 'block';
+        } else {
+            langSelect.style.display = 'none';
+            langSelect.value = 'orig'; 
+        }
+    }
 
     // ---------------------------------------------------------
     // LEXICAL ENGINES
@@ -367,16 +414,20 @@
                 try {
                     const res = await fetch('strongs_hebrew.xml');
                     if (!res.ok) throw new Error();
-                    hebrewLexiconDoc = new DOMParser().parseFromString(await res.text(), "text/xml");
+                    const xmlText = await res.text();
+                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
                 } catch (e) { return "Error: Could not load strongs_hebrew.xml file."; }
             }
             const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
             if (entryNode) {
                 const lemmaNode = entryNode.querySelector('w');
+                const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
                 const meaningNode = entryNode.querySelector('meaning');
+                const meaning = meaningNode ? meaningNode.textContent : "";
                 const bdbNode = entryNode.querySelector('bdb');
-                let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${lemmaNode ? lemmaNode.getAttribute('pron') : ""}\n\nDefinition: ${meaningNode ? meaningNode.textContent : ""}`;
-                if (bdbNode && bdbNode.textContent) result += `\n\nBDB Lexicon:\n${bdbNode.textContent}`;
+                const bdb = bdbNode ? bdbNode.textContent : "";
+                let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
+                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`;
                 return result;
             }
         }
@@ -436,9 +487,12 @@
         if (!morph || morph.length < 7) return morph;
         let pos = role;
         if (role === 'E') pos = 'T'; if (role === 'R') pos = 'P'; if (role === 'C') pos = 'CONJ'; if (role === 'D') pos = 'ADV';
-        const mood = morph[0] !== '.' ? morph[0] : ''; const tense = morph[1] !== '.' ? morph[1] : '';
-        const voice = morph[2] !== '.' ? morph[2] : ''; const person = morph[3] !== '.' ? morph[3] : '';
-        const cas = morph[4] !== '.' ? morph[4] : ''; const gender = morph[5] !== '.' ? morph[5] : '';
+        const mood = morph[0] !== '.' ? morph[0] : '';
+        const tense = morph[1] !== '.' ? morph[1] : '';
+        const voice = morph[2] !== '.' ? morph[2] : '';
+        const person = morph[3] !== '.' ? morph[3] : '';
+        const cas = morph[4] !== '.' ? morph[4] : '';
+        const gender = morph[5] !== '.' ? morph[5] : '';
         const num = morph[6] !== '.' ? morph[6] : '';
         let rmacTense = tense; if (tense === 'X') rmacTense = 'R'; if (tense === 'Y') rmacTense = 'L';
         if (pos === 'V') {
@@ -453,18 +507,26 @@
     }
 
     // ---------------------------------------------------------
-    // ADVANCED SEARCH ENGINE
+    // ADVANCED MORPHOLOGICAL, LEMMA & ENGLISH SEARCH ENGINE
     // ---------------------------------------------------------
-    const stripAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
     function matchTerm(term, wordData) {
-        term = term.trim(); if (!term) return false;
+        term = term.trim();
+        if (!term) return false;
+        
+        // Morph code search
         if (/^[A-Za-z0-9\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
-            return new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "");
+            const regexStr = "^" + term.replace(/\*/g, '.') + "$";
+            return new RegExp(regexStr, "i").test(wordData.parsing || "");
         }
+        
+        // Strongs search
         if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
-        const cleanTerm = stripAccents(term);
-        return stripAccents(wordData.word || "") === cleanTerm || stripAccents(wordData.lemma || "") === cleanTerm;
+        
+        // Lemma or Surface Word Search
+        const cleanTerm = stripPunctuationAndAccents(term);
+        return stripPunctuationAndAccents(wordData.word || "") === cleanTerm || stripPunctuationAndAccents(wordData.lemma || "") === cleanTerm;
     }
 
     function toggleCustomSearchScope() {
@@ -485,25 +547,41 @@
         document.getElementById('search-modal').style.display = 'none';
     }
 
+    // Connect Modal AND Notebook Clicks to the Lexicon Editor
     async function handleModalWordClick(el) {
         document.querySelectorAll('#modal-results-container .modal-search-match').forEach(e => e.style.outline = 'none');
+        document.querySelectorAll('#research-notebook .modal-search-match').forEach(e => e.style.outline = 'none');
         el.style.outline = '2px dashed var(--oxford-navy)';
         
-        const w = el.getAttribute('data-w'), l = el.getAttribute('data-l'), s = el.getAttribute('data-s'), p = el.getAttribute('data-p');
+        // Unblur the Lexicon UI
+        if(lexEditor) { lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto'; }
+        
+        const w = el.getAttribute('data-w');
+        const l = el.getAttribute('data-l');
+        const s = el.getAttribute('data-s');
+        const p = el.getAttribute('data-p');
         
         document.getElementById('lex-target-word').innerText = w.replace(/[.,;!?¶]/g, '');
+        
         let parsedText = p;
         if (p) {
             const rmacParse = parseRMAC(p);
             if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
             parsedText = rmacParse.text;
-        } else { if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`; }
+        } else { 
+            if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`; 
+        }
         
-        document.getElementById('lexLemma').value = l; document.getElementById('lexStrongs').value = s; document.getElementById('lexParsing').value = parsedText;
+        document.getElementById('lexLemma').value = l; 
+        document.getElementById('lexStrongs').value = s; 
+        document.getElementById('lexParsing').value = parsedText;
+        
         if (s) {
             document.getElementById('lexDef').value = "Loading lexicon data...";
             document.getElementById('lexDef').value = await getStrongsDef(s);
-        } else document.getElementById('lexDef').value = "";
+        } else {
+            document.getElementById('lexDef').value = "";
+        }
         
         document.getElementById('addCardBtn').disabled = false;
     }
@@ -512,39 +590,57 @@
         const query = document.getElementById('advancedSearchInput').value.trim();
         const scope = document.getElementById('searchScopeSelect').value;
         const msgBox = document.getElementById('searchResultMsg');
-        const mod = document.getElementById('bibleModuleSelect').value;
-        clearAdvancedSearch();
+        const originalMod = document.getElementById('bibleModuleSelect').value;
+        const targetLang = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
         
+        clearAdvancedSearch();
         if (!query) return;
 
+        // Parse Boolean Ops
         const opMatch = query.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i);
         let termA = query, termB = null, op = null, withinDist = 5;
         if (opMatch) {
-            op = opMatch[1].toUpperCase(); const splitIdx = opMatch.index;
-            termA = query.substring(0, splitIdx).trim(); termB = query.substring(splitIdx + opMatch[0].length).trim();
-            if (op.startsWith('WITHIN')) { const distMatch = op.match(/\d+/); if (distMatch) withinDist = parseInt(distMatch[0]); op = 'WITHIN'; }
+            op = opMatch[1].toUpperCase();
+            const splitIdx = opMatch.index;
+            termA = query.substring(0, splitIdx).trim();
+            termB = query.substring(splitIdx + opMatch[0].length).trim();
+            if (op.startsWith('WITHIN')) {
+                const distMatch = op.match(/\d+/);
+                if (distMatch) withinDist = parseInt(distMatch[0]);
+                op = 'WITHIN';
+            }
         }
 
+        // Branch: Local DOM Search vs Headless Global Search
         if (scope === 'chapter') {
-            let matchCount = 0; let wordsToHighlight = new Set(); const verses = [];
+            let matchCount = 0;
+            let wordsToHighlight = new Set();
+            const verses = [];
             
             document.querySelectorAll('.verse-block').forEach(vBlock => {
                 let verseWords = [];
                 vBlock.querySelectorAll('.word').forEach(wNode => {
-                    if (lexiconData[wNode.id]) verseWords.push({ id: wNode.id, index: parseInt(wNode.id.split('-')[1]), data: lexiconData[wNode.id] });
+                    const data = lexiconData[wNode.id];
+                    if (data) {
+                        if (targetLang === 'eng' && !data.isEnglish) return;
+                        if (targetLang === 'orig' && data.isEnglish) return;
+                        verseWords.push({ id: wNode.id, index: parseInt(wNode.id.split('-')[1]), data: data });
+                    }
                 });
                 if (verseWords.length > 0) verses.push(verseWords);
             });
 
-            if (!op) { verses.forEach(v => v.forEach(w => { if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id); })); } 
-            else {
+            if (!op) {
+                verses.forEach(v => v.forEach(w => { if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id); }));
+            } else {
                 verses.forEach(v => {
-                    const mA = v.filter(w => matchTerm(termA, w.data)), mB = v.filter(w => matchTerm(termB, w.data));
-                    if (op === 'AND' && mA.length > 0 && mB.length > 0) { mA.forEach(w => wordsToHighlight.add(w.id)); mB.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'OR') { mA.forEach(w => wordsToHighlight.add(w.id)); mB.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'NOT' && mB.length === 0) { mA.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
-                        mA.forEach(a => { mB.forEach(b => { if (Math.abs(a.index - b.index) <= withinDist) { wordsToHighlight.add(a.id); wordsToHighlight.add(b.id); } }); });
+                    const matchesA = v.filter(w => matchTerm(termA, w.data));
+                    const matchesB = v.filter(w => matchTerm(termB, w.data));
+                    if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'OR') { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'NOT' && matchesB.length === 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
+                        matchesA.forEach(a => { matchesB.forEach(b => { if (Math.abs(a.index - b.index) <= withinDist) { wordsToHighlight.add(a.id); wordsToHighlight.add(b.id); } }); });
                     }
                 });
             }
@@ -553,14 +649,20 @@
             msgBox.innerText = `${matchCount} matches in current view`;
             
         } else {
-            if (mod === 'mhc_sync' || mod === 'luther_tt.xml') { alert("Advanced search requires a primary biblical text module (e.g. SRGNT or Tischendorf)."); return; }
+            // HEADLESS BACKGROUND SEARCH
+            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') {
+                alert("Advanced search requires a primary biblical text module.");
+                return;
+            }
             
-            let fetchMod = mod;
-            if (mod === 'nt_interlinear') fetchMod = 'tischendorf.xml';
-            if (mod === 'ot_interlinear') fetchMod = 'hebrew_ot.xml';
+            // Intelligent Routing based on English vs Original
+            let fetchMod = originalMod;
+            if (originalMod === 'nt_interlinear') fetchMod = (targetLang === 'eng') ? 'emt.xml' : 'tischendorf.xml';
+            if (originalMod === 'ot_interlinear') fetchMod = (targetLang === 'eng') ? 'esv.xml' : 'hebrew_ot.xml';
 
             let scopeLabel = scope === 'book' ? (currentLoadedBook || "Current Book").toUpperCase() : "ENTIRE TEXT";
             if (scope === 'custom') scopeLabel = document.getElementById('customSearchRange').value || "CUSTOM RANGE";
+            
             openSearchModal(`Query: [${query}] in ${scopeLabel} via ${fetchMod}`);
             
             try {
@@ -568,40 +670,45 @@
                 if (!res.ok) throw new Error(`Could not fetch ${fetchMod} for background search.`);
                 const fileText = await res.text();
                 
-                let resultsHTML = ""; let totalMatches = 0;
+                let resultsHTML = "";
+                let totalMatches = 0;
                 
                 if (fetchMod === 'srgnt.tsv') {
                     const lines = fileText.split('\n');
-                    let currentVerseRef = ""; let currentVerseWords = [];
+                    let currentVerseRef = "";
+                    let currentVerseWords = [];
                     
                     const processVerse = () => {
                         if (currentVerseWords.length === 0) return;
-                        const mA = currentVerseWords.filter(w => matchTerm(termA, w));
-                        let hasMatch = false, hlSet = new Set();
+                        const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
+                        let hasMatch = false;
+                        let highlightIndexes = new Set();
 
-                        if (!op && mA.length > 0) { hasMatch = true; mA.forEach(w => hlSet.add(w.idx)); } 
-                        else if (op) {
-                            const mB = currentVerseWords.filter(w => matchTerm(termB, w));
-                            if (op === 'AND' && mA.length > 0 && mB.length > 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'OR' && (mA.length > 0 || mB.length > 0)) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'NOT' && mA.length > 0 && mB.length === 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
-                                mA.forEach(a => mB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
+                        if (!op && matchesA.length > 0) {
+                            hasMatch = true; matchesA.forEach(w => highlightIndexes.add(w.idx));
+                        } else if (op) {
+                            const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
+                            if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                            else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                            else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); }
+                            else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
+                                matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; highlightIndexes.add(a.idx); highlightIndexes.add(b.idx); } }));
                             }
                         }
 
                         if (hasMatch) {
                             let verseHTML = `<div class="modal-verse-text"><span class="modal-verse-ref">${currentVerseRef}</span>`;
                             currentVerseWords.forEach(w => {
-                                const hClass = hlSet.has(w.idx) ? 'modal-search-match' : '';
+                                const hClass = highlightIndexes.has(w.idx) ? 'modal-search-match' : '';
                                 const sw = w.word.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const sl = (w.lemma||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const ss = (w.strongs||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const sp = (w.parsing||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 verseHTML += `<span class="${hClass}" style="cursor:pointer;" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
-                                if(hlSet.has(w.idx)) totalMatches++;
+                                if(highlightIndexes.has(w.idx)) totalMatches++;
                             });
-                            verseHTML += `</div>`; resultsHTML += verseHTML;
+                            verseHTML += `</div>`;
+                            resultsHTML += verseHTML;
                         }
                         currentVerseWords = [];
                     };
@@ -609,20 +716,26 @@
                     let wIdx = 0;
                     for (let line of lines) {
                         if (!line.trim()) continue;
-                        const cols = line.split('\t'); const idStr = cols[0];
-                        let bNum = parseInt(idStr.substring(0, 2)); let bName = bnumberToName[bNum] || "Unknown";
+                        const cols = line.split('\t');
+                        const idStr = cols[0];
+                        
+                        let bNum = parseInt(idStr.substring(0, 2));
+                        let bName = bnumberToName[bNum] || "Unknown";
                         if (scope === 'book' && bName !== currentLoadedBook.toLowerCase()) continue;
 
                         const vRef = `${bName.toUpperCase()} ${parseInt(idStr.substring(2, 5))}:${parseInt(idStr.substring(5, 8))}`;
                         if (vRef !== currentVerseRef) { processVerse(); currentVerseRef = vRef; wIdx = 0; }
                         
-                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: srgntToRmac(cols[5], cols[6]) });
+                        const rmacMorph = srgntToRmac(cols[5], cols[6]);
+                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph });
                     }
                     processVerse(); 
 
                 } else {
+                    // XML BACKGROUND SCANNER (Tischendorf / Hebrew / English)
                     const xmlDoc = new DOMParser().parseFromString(fileText, "text/xml");
                     const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+                    
                     let books = isZefania ? xmlDoc.querySelectorAll('BIBLEBOOK') : xmlDoc.querySelectorAll('book');
                     
                     for (let book of books) {
@@ -646,7 +759,8 @@
                                         n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
                                     } else if (n.nodeName.toLowerCase() === 'gr') {
                                         const rawStr = n.getAttribute('str') || '';
-                                        let finalStrongs = rawStr ? (/^[GH]/i.test(rawStr) ? rawStr : prefix + rawStr) : "";
+                                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0];
+                                        let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
                                         const rmac = n.getAttribute('rmac') || '';
                                         n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: rmac }); });
                                     } else {
@@ -655,32 +769,37 @@
                                 });
 
                                 if (currentVerseWords.length === 0) continue;
-                                const mA = currentVerseWords.filter(w => matchTerm(termA, w));
-                                let hasMatch = false, hlSet = new Set();
+                                
+                                const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
+                                let hasMatch = false;
+                                let highlightIndexes = new Set();
 
-                                if (!op && mA.length > 0) { hasMatch = true; mA.forEach(w => hlSet.add(w.idx)); } 
-                                else if (op) {
-                                    const mB = currentVerseWords.filter(w => matchTerm(termB, w));
-                                    if (op === 'AND' && mA.length > 0 && mB.length > 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
-                                    else if (op === 'OR' && (mA.length > 0 || mB.length > 0)) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
-                                    else if (op === 'NOT' && mA.length > 0 && mB.length === 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); }
-                                    else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
-                                        mA.forEach(a => mB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
+                                if (!op && matchesA.length > 0) {
+                                    hasMatch = true; matchesA.forEach(w => highlightIndexes.add(w.idx));
+                                } else if (op) {
+                                    const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
+                                    if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); }
+                                    else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
+                                        matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; highlightIndexes.add(a.idx); highlightIndexes.add(b.idx); } }));
                                     }
                                 }
 
                                 if (hasMatch) {
                                     let verseHTML = `<div class="modal-verse-text"><span class="modal-verse-ref">${currentVerseRef}</span>`;
                                     currentVerseWords.forEach(w => {
-                                        const hClass = hlSet.has(w.idx) ? 'modal-search-match' : '';
+                                        const hClass = highlightIndexes.has(w.idx) ? 'modal-search-match' : '';
                                         const sw = w.word.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                         const sl = (w.lemma||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                         const ss = (w.strongs||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                         const sp = (w.parsing||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-                                        verseHTML += `<span class="${hClass}" style="cursor:pointer;" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
-                                        if(hlSet.has(w.idx)) totalMatches++;
+                                        const fFam = (fetchMod === 'esv.xml' || fetchMod === 'emt.xml') ? '-apple-system, sans-serif' : 'Georgia, serif';
+                                        verseHTML += `<span class="${hClass}" style="cursor:pointer; font-family:${fFam};" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
+                                        if(highlightIndexes.has(w.idx)) totalMatches++;
                                     });
-                                    verseHTML += `</div>`; resultsHTML += verseHTML;
+                                    verseHTML += `</div>`;
+                                    resultsHTML += verseHTML;
                                 }
                             }
                         }
@@ -704,13 +823,16 @@
     function copyResultsToNotebook() {
         const nb = document.getElementById('research-notebook');
         const query = document.getElementById('modal-subtitle').innerText;
-        let dumpText = `\n\n--- SEARCH: ${query} ---\n`;
+        
+        let dumpHTML = `<div style="margin-top: 15px; padding-top: 10px; border-top: 2px dashed rgba(0,0,0,0.1);"><strong>--- SEARCH: ${query} ---</strong><br><br>`;
         
         document.getElementById('modal-results-container').querySelectorAll('.modal-verse-text').forEach(v => {
-            dumpText += v.innerText.replace(/\n/g, ' - ') + "\n";
+            let clonedVerse = v.cloneNode(true);
+            dumpHTML += clonedVerse.outerHTML + "<br><br>";
         });
+        dumpHTML += `</div>`;
         
-        nb.value = nb.value + dumpText;
+        nb.innerHTML += dumpHTML;
         autoSaveNotebook();
         
         if (notebookSidebar && !notebookSidebar.classList.contains('open')) toggleNotebook();
@@ -723,6 +845,8 @@
     function triggerLoadModule() {
         const ref = document.getElementById('bibleRefInput').value;
         const mod = document.getElementById('bibleModuleSelect').value;
+        updateSearchLanguageToggle();
+        
         if (!ref.trim() && mod !== 'mhc_sync' && mod !== 'luther_tt.xml') return;
         if(syncToggle) syncToggle.checked = false;
         if(syncUi) syncUi.style.display = 'none';
@@ -784,10 +908,10 @@
                     const rmacMorph = srgntToRmac(cols[5], rawMorph);
                     const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex++}`; s.innerText = cols[1] + " ";
                     
-                    lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "" };
+                    lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "", isEnglish: false };
                     
                     s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                    s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id); };
+                    s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, false); };
                     
                     curBlock.appendChild(s);
                 } else if (chapFound) break;
@@ -801,7 +925,7 @@
         passageContainer.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module...</span>`;
         clearSelection(); clearAdvancedSearch();
 
-        const isEnglishText = fileName.includes('esv') || fileName.includes('emt') || fileName.includes('kjv');
+        const isEnglishTranslation = fileName === 'esv.xml' || fileName === 'emt.xml' || fileName === 'kjv_strongs.xml';
 
         try {
             let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
@@ -825,9 +949,9 @@
                         n.textContent.split(/(\s+)/).forEach(chunk => {
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
-                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishText }; 
+                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
                                 s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishText); };
+                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); };
                                 container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
@@ -838,9 +962,9 @@
                         n.textContent.split(/(\s+)/).forEach(chunk => {
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word has-data'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
-                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||'', def: "" };
+                                lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||'', def: "", isEnglish: isEnglishTranslation };
                                 s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id); };
+                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); };
                                 container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
@@ -850,9 +974,9 @@
                             if (chunk.trim() !== '') {
                                 const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`;
                                 span.style.fontStyle = 'italic'; span.style.color = '#888'; span.innerText = chunk;
-                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishText };
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation };
                                 span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                                span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishText); };
+                                span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
                                 container.appendChild(span);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
@@ -919,7 +1043,7 @@
             }
 
             if(syncUi) syncUi.style.display = 'flex';
-            if (isEnglishText) passageContainer.style.fontFamily = "-apple-system, sans-serif";
+            if (isEnglishTranslation) passageContainer.style.fontFamily = "-apple-system, sans-serif";
             else passageContainer.style.fontFamily = "Georgia, serif";
             
             const isHebrew = fileName === 'hebrew_ot.xml'; if (isHebrew) passageContainer.className = 'rtl-text';
@@ -947,9 +1071,9 @@
                     vers.textContent.split(/(\s+)/).forEach(chunk => {
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
-                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishText }; 
+                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishText); };
+                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
                             passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
@@ -966,9 +1090,9 @@
                     vers.textContent.split(/(\s+)/).forEach(chunk => {
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
-                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishText }; 
+                            lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishText); };
+                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
                             passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
@@ -1020,12 +1144,14 @@
             document.getElementById('cm-grp-orig').style.display = 'none';
             document.getElementById('cm-grp-eng').style.display = 'block';
             document.getElementById('cm-eng-val').innerText = `(${rightClickedData.word})`;
+            document.getElementById('searchLangSelect').value = 'eng';
         } else {
             document.getElementById('cm-grp-orig').style.display = 'block';
             document.getElementById('cm-grp-eng').style.display = 'none';
             const rootTerm = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
             document.getElementById('cm-lemma-val').innerText = rootTerm ? `(${rootTerm})` : "";
             document.getElementById('cm-morph-val').innerText = rightClickedData.parsing ? `(${rightClickedData.parsing})` : "";
+            document.getElementById('searchLangSelect').value = 'orig';
         }
         
         if (contextMenu) {
@@ -1160,9 +1286,9 @@
         });
     }
     function toggleNotebook() { if(notebookSidebar) notebookSidebar.classList.toggle('open'); }
-    function autoSaveNotebook() { localStorage.setItem('syntaxis_notebook', document.getElementById('research-notebook').value); }
-    function loadNotebook() { document.getElementById('research-notebook').value = localStorage.getItem('syntaxis_notebook') || ""; }
-    function exportNotebook() { const blob = new Blob([document.getElementById('research-notebook').value], { type: "text/plain" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Notebook.txt"; a.click(); }
+    function autoSaveNotebook() { localStorage.setItem('syntaxis_notebook', document.getElementById('research-notebook').innerHTML); }
+    function loadNotebook() { document.getElementById('research-notebook').innerHTML = localStorage.getItem('syntaxis_notebook') || ""; }
+    function exportNotebook() { const blob = new Blob([document.getElementById('research-notebook').innerText], { type: "text/plain" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Notebook.txt"; a.click(); }
     
     let ankiDeck = [];
     function loadAnkiDeck() { ankiDeck = JSON.parse(localStorage.getItem('anki_deck') || '[]'); document.getElementById('deckCount').innerText = ankiDeck.length; }
