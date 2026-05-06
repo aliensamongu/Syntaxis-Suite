@@ -56,8 +56,10 @@
         .proj-card:hover { border-color: var(--oxford-gold); }
 
         #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-        #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 500px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
-        #block-input { height: 250px; font-family: monospace; white-space: pre; font-size: 14px; }
+        #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 80%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
+        
+        /* The FIX for the Text Box Wrapping! */
+        #block-input { min-height: 200px; font-family: monospace; white-space: pre-wrap; font-size: 16px; resize: vertical; overflow-y: auto; padding: 15px;}
     </style>
 </head>
 <body>
@@ -144,7 +146,7 @@
             <select id="dbModuleSelect">
                 <optgroup label="Original Languages">
                     <option value="tischendorf.xml">Tischendorf Greek NT</option>
-                    <option value="srgnt.tsv">SRGNT (Bunning)</option>
+                    <option value="srgnt.tsv">Statistical Restoration GNT (SRGNT)</option>
                     <option value="hebrew_ot.xml">Hebrew OT</option>
                 </optgroup>
                 <optgroup label="English Translations">
@@ -153,10 +155,12 @@
                     <option value="esv.xml">English Standard Version (ESV)</option>
                 </optgroup>
             </select>
-            <button class="std-btn" onclick="loadNativeBibleTextOnly()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
-            <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center;"></div>
+            <button class="std-btn" onclick="loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
+            <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center; margin-top: 5px;"></div>
         </div>
-        <textarea id="passageInput" placeholder="Or paste text..." oninput="updateWordBank(); autoSave();"></textarea>
+        
+        <div style="text-align: center; font-size: 10px; color: #888; margin: 5px 0;">— OR PASTE TEXT —</div>
+        <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank(); autoSave();"></textarea>
         <div id="word-bank"></div>
     </div>
 </div>
@@ -201,35 +205,102 @@
         document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
     }
 
-    async function loadNativeBibleTextOnly() {
-        const q = document.getElementById('dbRefInput').value, f = document.getElementById('dbModuleSelect').value, status = document.getElementById('dbStatus');
-        if (!q.trim()) return; status.innerText = "Extracting text...";
+    async function loadNativeBibleTextOnly(query, fileName) {
+        if (!query.trim()) return;
+        const status = document.getElementById('dbStatus');
+        status.innerText = "Extracting text...";
+        
         try {
-            let fQ = q.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2"); const m = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
-            if (!m) { status.innerText = "Error: Invalid Ref."; return; }
-            const bName = abbrevs[m[1].trim().toLowerCase()] || m[1].trim().toLowerCase(); const chapNum = m[2]; const sV = m[3] ? parseInt(m[3]) : null, eV = m[4] ? parseInt(m[4]) : sV;
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            if (!match) { status.innerText = "Error: Invalid Ref."; return; }
+
+            const searchBook = match[1].trim().toLowerCase();
+            const chapNum = match[2];
+            const startVerse = match[3] ? parseInt(match[3]) : null;
+            const endVerse = match[4] ? parseInt(match[4]) : startVerse;
+            const fullBookName = abbrevs[searchBook] || searchBook;
             
-            if (f === 'srgnt.tsv') {
-                const res = await fetch('srgnt.tsv'); const tsvText = await res.text();
-                const bNum = bnumberMap[bName]; const pre = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
-                let txt = ""; tsvText.split('\n').forEach(l => { if (l.startsWith(pre)) { const c = l.split('\t'), vNumInt = parseInt(c[0].substring(5, 8)); if (!sV || (vNumInt >= sV && vNumInt <= eV)) txt += c[1] + " "; } });
-                document.getElementById('passageInput').value = txt.trim(); updateWordBank(); autoSave(); status.innerText = "Loaded successfully!"; setTimeout(() => status.innerText = "", 3000); return;
+            if (fileName === 'srgnt.tsv') {
+                const res = await fetch('srgnt.tsv');
+                if (!res.ok) throw new Error("Could not find srgnt.tsv");
+                const tsvText = await res.text();
+                
+                const bNum = bnumberMap[fullBookName];
+                if (!bNum) throw new Error(`Book mapping not found.`);
+
+                const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
+                const lines = tsvText.split('\n');
+                let extractedText = "";
+
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const cols = line.split('\t');
+                    const id = cols[0];
+
+                    if (id.startsWith(targetPrefix)) {
+                        const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
+                        if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
+                        extractedText += cols[1] + " ";
+                    }
+                }
+                document.getElementById('passageInput').value = extractedText.replace(/\s+/g, ' ').trim();
+                updateWordBank();
+                autoSave();
+                status.innerText = "Loaded successfully!";
+                setTimeout(() => status.innerText = "", 3000);
+                return;
             }
 
-            const res = await fetch(f); const xmlDoc = new DOMParser().parseFromString(await res.text(), "text/xml");
-            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null; let txt = "";
-            let chapNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bnumberMap[bName]}"] CHAPTER[cnumber="${chapNum}"]`) || xmlDoc.querySelector(`chapter[osisID="${osisMap[bName]}.${chapNum}"]`) || xmlDoc.querySelector(`book[number="${bnumberMap[bName]}"] chapter[number="${chapNum}"]`);
-            if (!chapNode) throw new Error("Chapter not found.");
+            const response = await fetch(fileName);
+            if (!response.ok) throw new Error(`File ${fileName} missing`);
+            const xmlText = await response.text();
+
+            const parser = new DOMParser();
+            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+            let extractedText = "";
+            const bNum = bnumberMap[fullBookName];
+            const osisId = osisMap[fullBookName];
             
+            let chapNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chapNum}"]`);
+            if (!chapNode) chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+            if (!chapNode) {
+                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chapNum}"]`);
+            }
+            if (!chapNode) throw new Error(`Chapter ${chapNum} not found.`);
+
             let verses = isZefania ? chapNode.querySelectorAll('VERS') : chapNode.querySelectorAll('verse');
+            
             verses.forEach(vers => {
-                let vNumInt = parseInt(vers.getAttribute('vnumber') || vers.getAttribute('number') || vers.getAttribute('osisID')?.split('.').pop() || "0");
-                if (sV && (vNumInt < sV || vNumInt > eV)) return;
-                if (isZefania) Array.from(vers.childNodes).forEach(n => { if (n.nodeType === Node.TEXT_NODE) txt += n.textContent + " "; else if (n.nodeName.toLowerCase() === 'gr') txt += n.textContent + " "; });
-                else txt += vers.textContent + " ";
+                let vNumStr = vers.getAttribute('vnumber') || vers.getAttribute('number') || vers.getAttribute('osisID')?.split('.').pop() || "0";
+                let vNumInt = parseInt(vNumStr);
+                if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) return;
+
+                if (isZefania) {
+                    Array.from(vers.childNodes).forEach(node => {
+                        if (node.nodeType === Node.TEXT_NODE) extractedText += node.textContent + " ";
+                        else if (node.nodeName.toLowerCase() === 'gr' || node.nodeName.toLowerCase() === 'style') {
+                            extractedText += node.textContent + " ";
+                        }
+                    });
+                } else {
+                    extractedText += vers.textContent + " ";
+                }
             });
-            document.getElementById('passageInput').value = txt.trim(); updateWordBank(); autoSave(); status.innerText = "Loaded successfully!"; setTimeout(() => status.innerText = "", 3000);
-        } catch (error) { status.innerText = error.message; }
+
+            document.getElementById('passageInput').value = extractedText.replace(/\s+/g, ' ').trim();
+            updateWordBank();
+            autoSave();
+            status.innerText = "Loaded successfully!";
+            setTimeout(() => status.innerText = "", 3000);
+
+        } catch (error) {
+            status.innerText = error.message;
+        }
     }
 
     // --- TAB INTERCEPTOR FOR MODAL ---
@@ -277,6 +348,7 @@
         draw(); autoSave();
     }
 
+    // --- HIT PRIORITY ALGORITHM ---
     function getHitElement(mx, my) {
         let hitHandle = null, targetPoint = null;
         let hitLine = null, hitText = null, hitBlock = null;
@@ -306,10 +378,6 @@
                     if (Math.hypot(el.type === 'pred_nom' ? el.x - (25*f) : el.x, (el.y - el.h) - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'height'; } 
                     else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'width'; } 
                 }
-                else if (el.type === 'block_text') {
-                    if (Math.hypot((el.x + el.w) - mx, (el.y + el.h) - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'default'; }
-                }
-                else if (el.type !== 'text' && el.type !== 'x_line' && Math.hypot(el.x + (el.w * f) - mx, el.y + el.h - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'default'; }
             }
 
             // 2. Check Bodies (Z-Index Ordered Priority)
@@ -322,16 +390,15 @@
                     const ex = el.x + el.w * f, ey = el.y + el.h;
                     let d1, d2;
                     if (el.flip === 1) { // Vert then Horiz
-                        d1 = (my >= Math.min(el.y, ey)-10 && my <= Math.max(el.y, ey)+10 && Math.abs(mx - el.x) < 15) ? Math.abs(mx - el.x) : Infinity;
-                        d2 = (mx >= Math.min(el.x, ex)-10 && mx <= Math.max(el.x, ex)+10 && Math.abs(my - ey) < 15) ? Math.abs(my - ey) : Infinity;
+                        d1 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - el.x) < 15) ? Math.abs(mx - el.x) : Infinity;
+                        d2 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - ey) < 15) ? Math.abs(my - ey) : Infinity;
                     } else { // Horiz then Vert
-                        d1 = (mx >= Math.min(el.x, ex)-10 && mx <= Math.max(el.x, ex)+10 && Math.abs(my - el.y) < 15) ? Math.abs(my - el.y) : Infinity;
-                        d2 = (my >= Math.min(el.y, ey)-10 && my <= Math.max(el.y, ey)+10 && Math.abs(mx - ex) < 15) ? Math.abs(mx - ex) : Infinity;
+                        d1 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - el.y) < 15) ? Math.abs(my - el.y) : Infinity;
+                        d2 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - ex) < 15) ? Math.abs(mx - ex) : Infinity;
                     }
                     if (d1 < 15 || d2 < 15) hitLine = el;
                 }
             } else {
-                // Catch-all for standard lines
                 if (!hitLine && Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*f)) - 20 && mx < Math.max(el.x, el.x + (el.w*f)) + 20) hitLine = el;
             }
         });
@@ -394,19 +461,20 @@
         
         if (hit.hitHandle) { 
             isResizing = true; selectedElements = [hit.hitHandle]; currentResizePoint = hit.targetPoint; 
-        } else if (hit.body) { 
+            document.getElementById('styleColor').value = hit.hitHandle.color || '#000000';
+            document.getElementById('styleWeight').value = hit.hitHandle.thickness || 2.5;
+            draw(); return;
+        } 
+        
+        if (hit.body) { 
             const clicked = hit.body;
             if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
             isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
+            document.getElementById('styleColor').value = clicked.color || '#000000';
+            document.getElementById('styleWeight').value = clicked.thickness || 2.5;
         } else { 
             isMarquee = true; marqueeStart = {x: mx, y: my}; selectedElements = []; 
         }
-        
-        if (selectedElements.length > 0) {
-            document.getElementById('styleColor').value = selectedElements[0].color || '#000000';
-            document.getElementById('styleWeight').value = selectedElements[0].thickness || 2.5;
-        }
-        
         draw();
     };
     
@@ -511,14 +579,14 @@
                 else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
                 else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
                 else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
-                else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + el.w, el.y + el.h); }
+                else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
                 
                 ctx.stroke(); ctx.setLineDash([]);
                 
                 if (isSel) {
                     ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db'; const hR = 6 / Math.sqrt(zoomLevel);
                     if (el.type === 'x_line') { ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.strokeRect(el.x - 35, el.y - 35, 70, 70); ctx.setLineDash([]); }
-                    else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + el.w, el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
+                    else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
                     else if (el.type === 'subject_baseline') { ctx.beginPath(); ctx.arc(el.x - (el.dx_left*f), el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                     else if (el.type === 'modifier') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top*f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
                     else if (el.type === 'prep_shelf') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top * f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
@@ -541,7 +609,7 @@
                     ctx.setLineDash([]);
                 }
             } else if (el.type === 'labeled_arrow') {
-                const ex = el.x + el.w * f, ey = el.y + el.h;
+                const ex = el.x + (el.w * f), ey = el.y + el.h;
                 
                 ctx.beginPath(); ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = el.thickness || 2.5;
                 if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
@@ -595,7 +663,8 @@
         let minX=4000, minY=4000, maxX=0, maxY=0; 
         elements.forEach(el => { 
             const f=el.flip||1; let x1,x2,y1,y2; 
-            if(el.type==='prep_shelf' || el.type==='modifier'){ x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); y1=Math.min(el.y,el.y+el.dy_top); y2=Math.max(el.y,el.y+el.dy_top); 
+            if(el.type==='prep_shelf' || el.type==='modifier'){ 
+                x1=Math.min(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); x2=Math.max(el.x,el.x+(el.w*f),el.x+(el.dx_top*f)); y1=Math.min(el.y,el.y+el.dy_top); y2=Math.max(el.y,el.y+el.dy_top); 
             } else if (el.type==='subject_baseline') { x1=Math.min(el.x - (el.dx_left*f), el.x+(el.w*f)); x2=Math.max(el.x - (el.dx_left*f), el.x+(el.w*f)); y1=el.y-30; y2=el.y+30;
             } else if (el.type==='pred_nom') { x1=Math.min(el.x-(25*f), el.x+(el.w*f)); x2=Math.max(el.x-(25*f), el.x+(el.w*f)); y1=el.y-el.h; y2=el.y;
             } else if (el.type==='block_text' || el.type==='labeled_arrow') { x1=Math.min(el.x, el.x+(el.w*f)); x2=Math.max(el.x, el.x+(el.w*f)); y1=Math.min(el.y, el.y+el.h); y2=Math.max(el.y, el.y+el.h);
