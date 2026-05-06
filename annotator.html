@@ -6,45 +6,28 @@
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root { --sidebar-width: 320px; --gutter-width: 350px; --bg-main: #e4e7ea; --oxford-navy: #1B263B; --oxford-navy-dark: #121A2A; --oxford-cream: #F8F5EE; --oxford-gold: #C5A059; --oxford-crimson: #8C1C13; --rustic-orange: #C86428; --radius-small: 8px; --radius-medium: 12px; }
-        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; overflow: hidden; background: var(--bg-main); }
-        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; color: var(--oxford-cream); }
+        body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, sans-serif; overflow: hidden; background: var(--bg-main); }
+        #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 20px;}
-        .sidebar-inner::-webkit-scrollbar { width: 6px; }
-        .sidebar-inner::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
         h3 { margin: 0; font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         input[type="text"], textarea, select { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); outline: none; }
         .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); width: 100%; }
-        .std-btn.secondary { background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); }
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; }
+        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
         .app-nav { display: flex; gap: 5px; margin-bottom: 5px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); }
-        .saved-item { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 12px; cursor: pointer; margin-top: 5px; display: flex; justify-content: space-between; }
-        #context-menu { position: absolute; display: none; background: var(--oxford-navy); border: 1px solid var(--oxford-gold); border-radius: var(--radius-small); padding: 5px 0; z-index: 10000; color: var(--oxford-cream); min-width: 160px; }
-        .menu-item { padding: 8px 15px; cursor: pointer; font-size: 13px; }
-        .menu-item:hover { background: var(--oxford-navy-dark); color: var(--oxford-gold); }
-        #workspace { flex-grow: 1; position: relative; display: flex; flex-direction: column; overflow-y: auto; background: var(--bg-main); padding: 40px; box-sizing: border-box; gap: 20px; }
-        .header-controls { display: flex; align-items: center; justify-content: flex-end; width: 100%; max-width: 880px; gap: 20px; }
-        .toggle-wrapper { display: flex; align-items: center; gap: 10px; background: rgba(0,0,0,0.05); padding: 5px 12px; border-radius: 20px; }
-        .toggle-label { font-size: 10px; text-transform: uppercase; font-weight: bold; color: var(--oxford-navy); }
-        .switch { position: relative; display: inline-block; width: 34px; height: 18px; }
-        .switch input { opacity: 0; width: 0; height: 0; }
-        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #ccc; transition: .4s; border-radius: 20px; }
-        .slider:before { position: absolute; content: ""; height: 12px; width: 12px; left: 3px; bottom: 3px; background-color: white; transition: .4s; border-radius: 50%; }
-        input:checked + .slider { background-color: var(--oxford-gold); }
-        input:checked + .slider:before { transform: translateX(16px); }
-        #editor-container { display: flex; width: 100%; gap: 40px; }
         #text-canvas { flex-grow: 1; max-width: 800px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); font-family: Georgia, serif; font-size: 22px; line-height: 1.8; position: relative; min-height: 50vh; }
         .word { display: inline-block; padding: 2px 4px; margin: 0 2px; border-radius: 4px; cursor: pointer; position: relative; }
         .word.selected { outline: 2px dashed var(--oxford-gold); background-color: rgba(197, 160, 89, 0.1); }
-        .verse-block { margin-bottom: 25px; padding-bottom: 15px; border-bottom: 1px dashed rgba(0,0,0,0.1); }
-        .verse-num { color: var(--rustic-orange); font-weight: bold; margin-right: 8px; font-size: 0.6em; vertical-align: super; }
-        .original-line { color: var(--oxford-navy); font-size: 1.1em; margin-bottom: 8px; }
-        .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
-        .grammar-tag { position: absolute; top: -8px; left: 50%; transform: translateX(-50%); font-size: 10px; color: white; padding: 2px 5px; border-radius: 4px; pointer-events: none; }
         #svg-layer { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; z-index: 20; }
         #gutter { width: var(--gutter-width); flex-shrink: 0; display: flex; flex-direction: column; gap: 15px; }
         .margin-note { background: white; padding: 15px; border-radius: var(--radius-small); border-left: 4px solid var(--oxford-navy); box-shadow: 0 2px 10px rgba(0,0,0,0.05); }
+        #context-menu { position: absolute; display: none; background: var(--oxford-navy); border: 1px solid var(--oxford-gold); border-radius: var(--radius-small); padding: 5px 0; z-index: 10000; color: var(--oxford-cream); min-width: 160px; }
+        .menu-item { padding: 8px 15px; cursor: pointer; font-size: 13px; }
+        .menu-item:hover { background: var(--oxford-navy-dark); color: var(--oxford-gold); }
     </style>
 </head>
 <body>
@@ -52,53 +35,48 @@
     <div class="sidebar-inner">
         <h2>Σyntaxis <span style="font-weight: 300;">Markup</span></h2>
         <div class="app-nav"><a href="annotator.html" class="active">Annotate</a><a href="app.html">Diagram</a><a href="interpreter.html">Interpret</a><a href="outliner.html">Outline</a></div>
-        <div style="display: flex; flex-direction: column; gap: 8px;"><input type="text" id="projectName" placeholder="Project Name"><div class="btn-group"><button class="std-btn" onclick="saveLocalApp()">Save</button><button class="std-btn secondary" onclick="downloadJSON()">JSON</button><button class="std-btn secondary" onclick="document.getElementById('fileInput').click()">Load</button><input type="file" id="fileInput" style="display: none;" onchange="loadJSON(event)"></div><div id="saved-list"></div></div>
-        <div style="display: flex; flex-direction: column; gap: 8px;"><h3>1. Load Text</h3>
-            <div style="display: flex; flex-direction: column; gap: 5px;"><input type="text" id="bibleRefInput" placeholder="Matt 1:1-5"><div style="display: flex; gap: 5px;"><select id="bibleModuleSelect" style="flex: 2;"><optgroup label="Interlinear"><option value="nt_interlinear">NT Interlinear</option><option value="ot_interlinear">OT Interlinear</option></optgroup><optgroup label="Original"><option value="tischendorf.xml">Tischendorf Greek</option><option value="srgnt.tsv">SRGNT (Bunning)</option><option value="hebrew_ot.xml">Hebrew OT</option></optgroup><optgroup label="English"><option value="kjv_strongs.xml">KJV</option><option value="emtv.xml">EMTV</option><option value="esv.xml">ESV</option></optgroup></select><button class="std-btn" onclick="loadNativeBible(document.getElementById('bibleRefInput').value, document.getElementById('bibleModuleSelect').value)" style="flex: 1;">Load</button></div></div>
-        </div>
-        <div style="display: flex; flex-direction: column; gap: 8px;"><h3>2. Palette</h3><div style="display: flex; gap: 10px;"><input type="color" id="color-picker" value="#C5A059" oninput="activeColor = this.value"></div><button class="std-btn secondary" onclick="addLabel()">+ Add Label</button><div id="label-container"></div></div>
+        <input type="text" id="projectName" placeholder="Project Name">
+        <div class="btn-group"><button class="std-btn" onclick="saveLocalApp()">Save</button><button class="std-btn secondary" onclick="downloadJSON()">JSON</button></div>
+        <h3>1. Load Text</h3>
+        <input type="text" id="bibleRefInput" placeholder="Matt 1:1-5">
+        <select id="bibleModuleSelect">
+            <optgroup label="Original"><option value="tischendorf.xml">Tischendorf Greek</option><option value="srgnt.tsv">SRGNT (Bunning)</option><option value="hebrew_ot.xml">Hebrew OT</option></optgroup>
+            <optgroup label="English"><option value="emtv.xml">EMTV</option><option value="esv.xml">ESV</option></optgroup>
+        </select>
+        <button class="std-btn" onclick="loadNativeBible()">Load</button>
         <div style="margin-top: auto;"><button class="std-btn" style="background: #27ae60; color: white;" onclick="exportSnapshot()">📸 Snapshot</button></div>
     </div>
 </div>
-<div id="workspace">
-    <div class="header-controls">
-        <div class="toggle-wrapper" id="original-toggle-container" style="display: none;"><span class="toggle-label" id="orig-toggle-label">Show Original</span><label class="switch"><input type="checkbox" id="originalToggle" checked onchange="toggleOriginalText()"><span class="slider"></span></label></div>
-        <div class="font-sizer"><span>Size</span><input type="range" min="16" max="48" value="22" oninput="document.getElementById('text-canvas').style.fontSize = this.value + 'px';"></div>
-    </div>
-    <div id="editor-container"><div id="text-canvas"></div><div id="gutter"></div></div>
+<div id="workspace" style="flex-grow: 1; overflow-y: auto; padding: 40px; position: relative; display: flex; gap: 40px;">
+    <div id="text-canvas"></div><div id="gutter"></div>
     <svg id="svg-layer"><defs id="svg-defs"></defs><g id="arrow-paths"></g></svg>
 </div>
-<div id="context-menu"><div class="menu-item" onclick="applyMarkup('highlight')">✨ Highlight</div><div class="menu-item" onclick="applyMarkup('underline')"><u>U</u> Underline</div><div class="menu-item" onclick="applyArrow()">➔ Arrow</div><div class="menu-item" onclick="promptGrammarTag()">🏷 Tag</div><div class="menu-item" onclick="addMarginNote()">📝 Note</div></div>
+<div id="context-menu"><div class="menu-item" onclick="applyMarkup('highlight')">✨ Highlight</div><div class="menu-item" onclick="applyMarkup('underline')"><u>U</u> Underline</div><div class="menu-item" onclick="addMarginNote()">📝 Note</div></div>
 <script>
-    const canvas = document.getElementById('text-canvas'); const gutter = document.getElementById('gutter'); const svgPaths = document.getElementById('arrow-paths');
-    const menu = document.getElementById('context-menu'); const colorPicker = document.getElementById('color-picker'); 
-    const originalToggleContainer = document.getElementById('original-toggle-container'); const originalToggleLabel = document.getElementById('orig-toggle-label');
-    const originalToggle = document.getElementById('originalToggle');
-    let selectedWords = [], connections = [], notes = [], activeColor = "#C5A059", currentBook = "", currentChapter = "";
-    const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
-    const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
-    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
-    function toggleOriginalText() { const c = originalToggle.checked; document.querySelectorAll('.original-line').forEach(l => l.style.display = c ? 'block' : 'none'); }
-    async function loadNativeBible(q, f) {
-        canvas.innerHTML = "Loading..."; let m = q.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2").match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+    const canvas = document.getElementById('text-canvas'); const gutter = document.getElementById('gutter'); const menu = document.getElementById('context-menu');
+    const colorPicker = document.getElementById('color-picker'); let selectedWords = [], notes = [], activeColor = "#C5A059";
+    const bMap = { "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45 }; // Add remaining
+    const abbrevs = { "matt": "matthew", "mrk": "mark", "luk": "luke", "jhn": "john", "act": "acts", "rom": "romans" };
+
+    async function loadNativeBible() {
+        const q = document.getElementById('bibleRefInput').value; const f = document.getElementById('bibleModuleSelect').value; canvas.innerHTML = "Loading...";
+        const m = q.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2").match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
         if (!m) { canvas.innerHTML = "Invalid Ref."; return; }
-        currentBook = abbrevs[m[1].trim().toLowerCase()] || m[1].trim().toLowerCase(); currentChapter = m[2];
-        let sV = m[3] ? parseInt(m[3]) : null, eV = m[4] ? parseInt(m[4]) : sV;
-        if (f === 'srgnt.tsv') { await renderSRGNT(sV, eV); return; }
-        try {
-            if (f.includes('interlinear')) { originalToggleContainer.style.display = 'flex'; const isH = f.includes('ot'); if(originalToggleLabel) originalToggleLabel.innerText = isH ? "HEBREW" : "GREEK"; const bN = bnumberMap[currentBook], os = osisMap[currentBook]; const [r1, r2] = await Promise.all([fetch(isH?'hebrew_ot.xml':'tischendorf.xml'), fetch(isH?'esv.xml':'emtv.xml')]); const d1 = new DOMParser().parseFromString(await r1.text(),"text/xml"), d2 = new DOMParser().parseFromString(await r2.text(),"text/xml");
-                let html = ""; const v1 = d1.querySelectorAll(`BIBLEBOOK[bnumber="${bN}"] CHAPTER[cnumber="${currentChapter}"] VERS`); const v2 = isH ? d2.querySelectorAll(`book[number="${bN}"] chapter[number="${currentChapter}"] verse`) : d2.querySelectorAll(`chapter[osisID="${os}.${currentChapter}"] verse`);
-                for (let i=0; i<v1.length; i++) { let vn = i+1; if (sV && (vn < sV || vn > eV)) continue; html += `<div class="verse-block"><span class="verse-num">${vn}</span><div class="original-line">`; v1[i].childNodes.forEach(n => { if (n.nodeType === 3) n.textContent.split(/\s+/).forEach(w => { if (w) html += `<span class="word">${w} </span>`; }); }); html += `</div><div class="english-line">${v2[i]?v2[i].textContent:""}</div></div>`; }
-                canvas.innerHTML = html; return;
-            }
-            const res = await fetch(f); const xd = new DOMParser().parseFromString(await res.text(),"text/xml"); let html = ""; xd.querySelectorAll('VERS, verse').forEach(v => { let vn = parseInt(v.getAttribute('vnumber')||v.getAttribute('number')); if(sV && (vn < sV || vn > eV)) return; html += `<span class="verse-num">${vn}</span> ` + v.textContent + " "; }); canvas.innerHTML = html;
-        } catch(e) { canvas.innerHTML = e.message; }
+        const book = abbrevs[m[1].trim().toLowerCase()] || m[1].trim().toLowerCase(); const chap = m[2];
+        const sV = m[3] ? parseInt(m[3]) : null, eV = m[4] ? parseInt(m[4]) : sV;
+        if (f === 'srgnt.tsv') {
+            const res = await fetch('srgnt.tsv'); const t = await res.text(); const bNum = bMap[book]; const pre = bNum.toString().padStart(2, '0') + chap.toString().padStart(3, '0');
+            let html = "", idx = 0; t.split('\n').forEach(l => { if (l.startsWith(pre)) { const c = l.split('\t'), vn = parseInt(c[0].substring(5, 8)); if (!sV || (vn >= sV && vn <= eV)) html += `<span class="word" id="w-${idx++}" onclick="hWClick(event, 'w-${idx-1}')">${c[1]} </span>`; } });
+            canvas.innerHTML = html; return;
+        }
+        const res = await fetch(f); const xd = new DOMParser().parseFromString(await res.text(), "text/xml"); let html = "", idx = 0;
+        xd.querySelectorAll('VERS, verse').forEach(v => { let vn = parseInt(v.getAttribute('vnumber')||v.getAttribute('number')); if(!sV || (vn >= sV && vn <= eV)) html += `<span class="word" id="w-${idx++}" onclick="hWClick(event, 'w-${idx-1}')">${v.textContent} </span>`; });
+        canvas.innerHTML = html;
     }
-    async function renderSRGNT(sV, eV) {
-        try { const res = await fetch('srgnt.tsv'); const t = await res.text(); const bNum = bnumberMap[currentBook]; const pre = bNum.toString().padStart(2, '0') + currentChapter.toString().padStart(3, '0');
-            let html = "", curV = "", lines = t.split('\n'); lines.forEach(l => { if (l.startsWith(pre)) { const c = l.split('\t'), vn = parseInt(c[0].substring(5, 8).replace(/^0+/, ''), 10); if (sV && (vn < sV || vn > eV)) return; if (vn.toString() !== curV) { curV = vn.toString(); html += `<div class="verse-block"><span class="verse-num">${vn}</span> `; } html += `<span class="word">${c[1]} </span>`; } });
-            canvas.innerHTML = html; } catch(e) { canvas.innerHTML = e.message; }
-    }
+    function hWClick(e, id) { const el = document.getElementById(id); el.classList.toggle('selected'); if (el.classList.contains('selected')) selectedWords.push(id); else selectedWords = selectedWords.filter(w => w !== id); }
+    function applyMarkup(type) { selectedWords.forEach(id => { const el = document.getElementById(id); if (type === 'highlight') el.style.backgroundColor = activeColor + "80"; else el.style.textDecoration = "underline"; }); }
+    document.addEventListener('contextmenu', e => { if (e.target.closest('#text-canvas')) { e.preventDefault(); menu.style.display = 'block'; menu.style.left = e.pageX + 'px'; menu.style.top = e.pageY + 'px'; } });
+    document.addEventListener('click', () => menu.style.display = 'none');
 </script>
 </body>
 </html>
