@@ -11,15 +11,12 @@
             --sidebar-width: 360px;
             --notebook-width: 340px;
             --bg-main: #e4e7ea;
-            
-            /* Oxford Scholar Palette */
             --oxford-navy: #1B263B;
             --oxford-navy-dark: #121A2A;
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
             --rustic-orange: #C86428;
-            
             --radius-small: 8px;
             --radius-medium: 12px;
         }
@@ -47,16 +44,6 @@
         .app-nav a { flex: 1; text-align: center; padding: 8px 2px; font-size: 8px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; transition: 0.2s; border: 1px solid rgba(255,255,255,0.05); }
         .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
 
-        .custom-select-wrapper { position: relative; flex: 2; user-select: none; }
-        .custom-select-btn { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-size: 12px; background: var(--oxford-cream); cursor: pointer; display: flex; justify-content: space-between; align-items: center; color: var(--oxford-navy); font-weight: bold; }
-        .dropdown-menu { position: absolute; top: 100%; left: 0; width: 100%; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-small); margin-top: 4px; padding: 0; list-style: none; display: none; z-index: 9999; box-shadow: 0 4px 12px rgba(0,0,0,0.2); }
-        .custom-select-wrapper.open .dropdown-menu { display: block; }
-        .group-label { padding: 10px 15px; display: flex; justify-content: space-between; font-weight: bold; font-size: 11px; color: var(--oxford-navy); cursor: pointer; }
-        .submenu { position: absolute; top: -1px; left: 100%; width: 200px; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); display: none; list-style: none; padding: 0; box-shadow: 4px 4px 12px rgba(0,0,0,0.2); }
-        .dropdown-menu > li:hover .submenu { display: block; }
-        .option-item { padding: 10px 15px; font-size: 11px; cursor: pointer; color: var(--oxford-navy-dark); border-bottom: 1px solid rgba(0,0,0,0.05); }
-        .option-item:hover { background: var(--oxford-gold); }
-
         #workspace { flex-grow: 1; display: flex; flex-direction: column; overflow-y: auto; padding: 40px; align-items: center; transition: 0.3s; position: relative; }
         .workspace-panel { width: 100%; max-width: 900px; background: white; padding: 40px; border-radius: var(--radius-medium); box-shadow: 0 5px 20px rgba(0,0,0,0.05); position: relative;}
         .panel-title { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-navy); margin-top: 0; margin-bottom: 20px; border-bottom: 2px solid var(--oxford-gold); padding-bottom: 10px; display: flex; justify-content: space-between; align-items: center; }
@@ -79,7 +66,6 @@
         .word:hover { background: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197,160,89,0.1); font-weight: bold; color: var(--oxford-navy); }
         
-        /* SEARCH MATCH HIGHLIGHTING */
         .word.search-match, .modal-search-match { background-color: var(--oxford-gold); color: var(--oxford-navy-dark); border-radius: 4px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-bottom: 2px solid var(--oxford-crimson); padding: 2px 4px; margin: 0 2px; }
 
         .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
@@ -88,41 +74,22 @@
         .original-line.hebrew { direction: rtl; text-align: right; font-size: 1.3em; font-family: "SBL Hebrew", "Ezra SIL", serif; }
         .english-line { color: #555; font-size: 0.9em; font-family: -apple-system, sans-serif; line-height: 1.6; }
 
-        /* UNIVERSAL APP NAV */
-        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
-        .app-nav a:hover { border-color: #C5A059; }
-        .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
-        
-        /* Sidebar Dynamic Info Card */
         #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; transition: 0.3s; }
-
-        /* Right Sidebar: Content-Editable Research Notebook */
         #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
         .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: hidden;}
-        
         #research-notebook { flex-grow: 1; overflow-y: auto; background: var(--oxford-cream); color: var(--oxford-navy-dark); border: none; padding: 15px; border-radius: var(--radius-small); font-family: Georgia, serif; font-size: 14px; line-height: 1.6; outline: none; box-shadow: inset 0 2px 5px rgba(0,0,0,0.1); cursor: text; }
         #research-notebook:empty:before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
         #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
-        /* CUSTOM CONTEXT MENU */
         #context-menu { display: none; position: absolute; background-color: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-radius: var(--radius-small); z-index: 10000; min-width: 180px; overflow: hidden; font-family: -apple-system, sans-serif; }
         .context-menu-item { padding: 10px 15px; font-size: 12px; color: var(--oxford-navy-dark); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .context-menu-item:last-child { border-bottom: none; }
         .context-menu-item:hover { background-color: var(--oxford-gold); color: var(--oxford-navy); }
         .context-menu-item span { font-weight: normal; font-size: 10px; opacity: 0.7; font-family: monospace;}
 
-        /* DOCKED ANALYSIS MODAL */
         #search-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 10001; backdrop-filter: blur(2px); }
-        #search-modal { 
-            display: none; position: fixed; top: 20px; bottom: 20px; 
-            left: calc(var(--sidebar-width) + 20px); right: 20px;
-            width: auto; height: auto; max-width: 1200px;
-            background: var(--oxford-cream); z-index: 10002; 
-            border-radius: var(--radius-medium); box-shadow: 0 15px 40px rgba(0,0,0,0.4); 
-            flex-direction: column; overflow: hidden; border: 1px solid var(--oxford-gold); 
-        }
+        #search-modal { display: none; position: fixed; top: 20px; bottom: 20px; left: calc(var(--sidebar-width) + 20px); right: 20px; width: auto; height: auto; max-width: 1200px; background: var(--oxford-cream); z-index: 10002; border-radius: var(--radius-medium); box-shadow: 0 15px 40px rgba(0,0,0,0.4); flex-direction: column; overflow: hidden; border: 1px solid var(--oxford-gold); }
         .modal-header { background: var(--oxford-navy); color: var(--oxford-cream); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--oxford-gold); }
         .modal-body { flex-grow: 1; overflow-y: auto; padding: 30px; font-family: Georgia, serif; font-size: 20px; color: var(--oxford-navy-dark); line-height: 1.8; }
         .modal-footer { background: rgba(0,0,0,0.05); padding: 15px 30px; display: flex; justify-content: space-between; align-items: center; border-top: 1px solid rgba(0,0,0,0.1); }
@@ -172,7 +139,6 @@
             </div>
             
             <div style="text-align: center; font-size: 10px; opacity: 0.5; margin: 5px 0;">— OR PASTE PLAIN TEXT —</div>
-            
             <textarea id="rawTextInput" placeholder="Paste your base text here..." style="height: 60px;"></textarea>
             <button class="std-btn secondary" onclick="renderText()">Render Pasted Text</button>
         </div>
@@ -196,7 +162,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any Greek or English word to auto-search!<br>
+                Find Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any text to auto-search!
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -215,7 +181,7 @@
             <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; width: 100%; padding: 8px; font-size: 11px; margin-bottom: 5px; box-sizing: border-box;">
             
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. V-P*I***)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
+                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. God)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
                 <div style="display: flex; gap: 5px;">
                     <button class="std-btn" onclick="executeAdvancedSearch()" style="flex: 2;">Run Search</button>
                     <button class="std-btn secondary" onclick="clearAdvancedSearch()" style="flex: 1;">Clear</button>
@@ -228,8 +194,8 @@
             <h3>4. Flashcard Deck</h3>
             <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
             <div style="display: flex; gap: 5px; margin-top: 5px;">
-                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
-                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;">⬇ Excel (.tsv)</button>
             </div>
         </div>
     </div>
@@ -262,7 +228,7 @@
                     <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
                 </div>
 
-                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;" title="Open Research Notebook">📓 Notebook</button>
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;">📓 Notebook</button>
             </div>
         </div>
         
@@ -279,9 +245,7 @@
             <button onclick="toggleNotebook()" style="background: none; border: none; color: var(--oxford-cream); cursor: pointer; font-size: 20px; font-weight: bold; line-height: 1;">&times;</button>
         </div>
         <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Auto-saves locally to your browser</div>
-        
-        <div id="research-notebook" contenteditable="true" data-placeholder="Start typing your exegesis notes, ideas, and observations here..." oninput="autoSaveNotebook()"></div>
-        
+        <div id="research-notebook" contenteditable="true" data-placeholder="Start typing your notes..." oninput="autoSaveNotebook()"></div>
         <button class="std-btn" onclick="exportNotebook()" style="width: 100%; background: #27ae60; color: white;">⬇ Export Text (.txt)</button>
     </div>
 </div>
@@ -315,12 +279,11 @@
 
 <script>
     // ---------------------------------------------------------
-    // DOM ELEMENTS & GLOBAL STATE
+    // GLOBALS
     // ---------------------------------------------------------
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container');
-    const originalToggleLabel = document.getElementById('orig-toggle-label');
     const originalToggle = document.getElementById('originalToggle');
     const notebookSidebar = document.getElementById('notebook-sidebar');
     const syncUi = document.getElementById('sync-ui');
@@ -334,54 +297,16 @@
     let currentLoadedBook = ""; 
     let currentLoadedChapter = "";
 
-    // Global Click Listener to dismiss context menu
     document.addEventListener('click', (e) => { 
         if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; 
     });
 
-    // ---------------------------------------------------------
-    // MASTER BIBLE INDEXES
-    // ---------------------------------------------------------
-    const abbrevs = {
-        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
-        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
-        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
-        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
-        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
-        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
-        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
-        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
-        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
-        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
-        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
-        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
-        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
-        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
-        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
-        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
-        "heb": "hebrews", "jas": "james", "rev": "revelation"
-    };
-
-    const bnumberMap = {
-        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
-        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
-    };
+    const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
+    const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const bnumberToName = Object.keys(bnumberMap).reduce((acc, key) => { acc[bnumberMap[key]] = key; return acc; }, {});
+    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+    const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
 
-    const osisMap = {
-        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut",
-        "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
-        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song",
-        "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
-        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
-    };
-
-    const mhcVolumeMap = {
-        "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4,
-        "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6
-    };
-
-    // Init
     window.addEventListener('DOMContentLoaded', () => {
         loadNotebook(); 
         loadAnkiDeck();
@@ -391,17 +316,10 @@
     function updateSearchLanguageToggle() {
         const mod = document.getElementById('bibleModuleSelect').value;
         const langSelect = document.getElementById('searchLangSelect');
-        if (mod === 'nt_interlinear' || mod === 'ot_interlinear') {
-            langSelect.style.display = 'block';
-        } else {
-            langSelect.style.display = 'none';
-            langSelect.value = 'orig'; 
-        }
+        if (mod === 'nt_interlinear' || mod === 'ot_interlinear') { langSelect.style.display = 'block'; } 
+        else { langSelect.style.display = 'none'; langSelect.value = 'orig'; }
     }
 
-    // ---------------------------------------------------------
-    // LEXICAL ENGINES
-    // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
     async function getStrongsDef(key) {
         if (!key) return "";
@@ -412,23 +330,17 @@
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
-                    const res = await fetch('strongs_hebrew.xml');
-                    if (!res.ok) throw new Error();
-                    const xmlText = await res.text();
-                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
-                } catch (e) { return "Error: Could not load strongs_hebrew.xml file."; }
+                    const res = await fetch('strongs_hebrew.xml'); if (!res.ok) throw new Error();
+                    hebrewLexiconDoc = new DOMParser().parseFromString(await res.text(), "text/xml");
+                } catch (e) { return "Error loading Hebrew lexicon."; }
             }
             const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
             if (entryNode) {
-                const lemmaNode = entryNode.querySelector('w');
-                const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
-                const meaningNode = entryNode.querySelector('meaning');
-                const meaning = meaningNode ? meaningNode.textContent : "";
-                const bdbNode = entryNode.querySelector('bdb');
-                const bdb = bdbNode ? bdbNode.textContent : "";
+                const lemmaNode = entryNode.querySelector('w'); const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
+                const meaningNode = entryNode.querySelector('meaning'); const meaning = meaningNode ? meaningNode.textContent : "";
+                const bdbNode = entryNode.querySelector('bdb'); const bdb = bdbNode ? bdbNode.textContent : "";
                 let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
-                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`;
-                return result;
+                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`; return result;
             }
         }
         return "Definition not found.";
@@ -460,8 +372,7 @@
                     const tvm = parts[1].replace(/^[0-9]+/, ''); 
                     if (tvm.length >= 3) {
                         if (tvm[2] === 'i') color = "#c0392b"; else if (tvm[2] === 'p') color = "#8e44ad"; else if (tvm[2] === 'n') color = "#800000"; 
-                        let tvmStr = [];
-                        const nMatch = parts[1].match(/^[0-9]+/);
+                        let tvmStr = []; const nMatch = parts[1].match(/^[0-9]+/);
                         if (nMatch) tvmStr.push(persons[nMatch[0]]||"");
                         if (tenses[tvm[0]]) tvmStr.push(tenses[tvm[0]]);
                         if (voices[tvm[1]]) tvmStr.push(voices[tvm[1]]);
@@ -487,12 +398,9 @@
         if (!morph || morph.length < 7) return morph;
         let pos = role;
         if (role === 'E') pos = 'T'; if (role === 'R') pos = 'P'; if (role === 'C') pos = 'CONJ'; if (role === 'D') pos = 'ADV';
-        const mood = morph[0] !== '.' ? morph[0] : '';
-        const tense = morph[1] !== '.' ? morph[1] : '';
-        const voice = morph[2] !== '.' ? morph[2] : '';
-        const person = morph[3] !== '.' ? morph[3] : '';
-        const cas = morph[4] !== '.' ? morph[4] : '';
-        const gender = morph[5] !== '.' ? morph[5] : '';
+        const mood = morph[0] !== '.' ? morph[0] : ''; const tense = morph[1] !== '.' ? morph[1] : '';
+        const voice = morph[2] !== '.' ? morph[2] : ''; const person = morph[3] !== '.' ? morph[3] : '';
+        const cas = morph[4] !== '.' ? morph[4] : ''; const gender = morph[5] !== '.' ? morph[5] : '';
         const num = morph[6] !== '.' ? morph[6] : '';
         let rmacTense = tense; if (tense === 'X') rmacTense = 'R'; if (tense === 'Y') rmacTense = 'L';
         if (pos === 'V') {
@@ -500,28 +408,19 @@
             else if (mood === 'N') return `V-${rmacTense}${voice}N`;
             else return `V-${rmacTense}${voice}${mood}-${person}${num}`;
         } else if (['N', 'A', 'T', 'P'].includes(pos)) {
-            if (cas || num || gender) return `${pos}-${cas}${num}${gender}`;
-            return pos;
+            if (cas || num || gender) return `${pos}-${cas}${num}${gender}`; return pos;
         }
         return pos;
     }
 
-    // ---------------------------------------------------------
-    // ADVANCED MORPHOLOGICAL, LEMMA & ENGLISH SEARCH ENGINE
-    // ---------------------------------------------------------
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
     function matchTerm(term, wordData) {
-        term = term.trim();
-        if (!term) return false;
-        
+        term = term.trim(); if (!term) return false;
         if (/^[A-Za-z0-9\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
-            const regexStr = "^" + term.replace(/\*/g, '.') + "$";
-            return new RegExp(regexStr, "i").test(wordData.parsing || "");
+            return new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "");
         }
-        
         if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
-        
         const cleanTerm = stripPunctuationAndAccents(term);
         return stripPunctuationAndAccents(wordData.word || "") === cleanTerm || stripPunctuationAndAccents(wordData.lemma || "") === cleanTerm;
     }
@@ -545,17 +444,12 @@
     }
 
     async function handleModalWordClick(el) {
-        document.querySelectorAll('#modal-results-container .modal-search-match').forEach(e => e.style.outline = 'none');
-        document.querySelectorAll('#research-notebook .modal-search-match').forEach(e => e.style.outline = 'none');
+        document.querySelectorAll('#modal-results-container .modal-search-match, #research-notebook .modal-search-match').forEach(e => e.style.outline = 'none');
         el.style.outline = '2px dashed var(--oxford-navy)';
         
         if(lexEditor) { lexEditor.style.opacity = '1'; lexEditor.style.pointerEvents = 'auto'; }
         
-        const w = el.getAttribute('data-w');
-        const l = el.getAttribute('data-l');
-        const s = el.getAttribute('data-s');
-        const p = el.getAttribute('data-p');
-        
+        const w = el.getAttribute('data-w'), l = el.getAttribute('data-l'), s = el.getAttribute('data-s'), p = el.getAttribute('data-p');
         document.getElementById('lex-target-word').innerText = w.replace(/[.,;!?¶]/g, '');
         
         let parsedText = p;
@@ -563,20 +457,11 @@
             const rmacParse = parseRMAC(p);
             if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
             parsedText = rmacParse.text;
-        } else { 
-            if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`; 
-        }
+        } else { if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`; }
         
-        document.getElementById('lexLemma').value = l; 
-        document.getElementById('lexStrongs').value = s; 
-        document.getElementById('lexParsing').value = parsedText;
-        
-        if (s) {
-            document.getElementById('lexDef').value = "Loading lexicon data...";
-            document.getElementById('lexDef').value = await getStrongsDef(s);
-        } else {
-            document.getElementById('lexDef').value = "";
-        }
+        document.getElementById('lexLemma').value = l; document.getElementById('lexStrongs').value = s; document.getElementById('lexParsing').value = parsedText;
+        if (s) { document.getElementById('lexDef').value = "Loading lexicon data..."; document.getElementById('lexDef').value = await getStrongsDef(s); } 
+        else { document.getElementById('lexDef').value = ""; }
         
         document.getElementById('addCardBtn').disabled = false;
     }
@@ -586,30 +471,29 @@
         const scope = document.getElementById('searchScopeSelect').value;
         const msgBox = document.getElementById('searchResultMsg');
         const originalMod = document.getElementById('bibleModuleSelect').value;
-        const targetLang = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
-        
         clearAdvancedSearch();
         if (!query) return;
+
+        // Auto-Detect Language Router
+        let targetLang = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
+        if (originalMod.includes('interlinear')) {
+            const isMorph = /^[A-Za-z0-9\-*]+$/.test(query) && (query.includes('-') || query.includes('*'));
+            const isStrongs = /^[GH]\d+$/.test(query.toUpperCase());
+            const hasGreek = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(query);
+            if (!isMorph && !isStrongs && !hasGreek) { targetLang = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; } 
+            else { targetLang = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; }
+        }
 
         const opMatch = query.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i);
         let termA = query, termB = null, op = null, withinDist = 5;
         if (opMatch) {
-            op = opMatch[1].toUpperCase();
-            const splitIdx = opMatch.index;
-            termA = query.substring(0, splitIdx).trim();
-            termB = query.substring(splitIdx + opMatch[0].length).trim();
-            if (op.startsWith('WITHIN')) {
-                const distMatch = op.match(/\d+/);
-                if (distMatch) withinDist = parseInt(distMatch[0]);
-                op = 'WITHIN';
-            }
+            op = opMatch[1].toUpperCase(); const splitIdx = opMatch.index;
+            termA = query.substring(0, splitIdx).trim(); termB = query.substring(splitIdx + opMatch[0].length).trim();
+            if (op.startsWith('WITHIN')) { const distMatch = op.match(/\d+/); if (distMatch) withinDist = parseInt(distMatch[0]); op = 'WITHIN'; }
         }
 
         if (scope === 'chapter') {
-            let matchCount = 0;
-            let wordsToHighlight = new Set();
-            const verses = [];
-            
+            let matchCount = 0; let wordsToHighlight = new Set(); const verses = [];
             document.querySelectorAll('.verse-block').forEach(vBlock => {
                 let verseWords = [];
                 vBlock.querySelectorAll('.word').forEach(wNode => {
@@ -623,12 +507,10 @@
                 if (verseWords.length > 0) verses.push(verseWords);
             });
 
-            if (!op) {
-                verses.forEach(v => v.forEach(w => { if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id); }));
-            } else {
+            if (!op) { verses.forEach(v => v.forEach(w => { if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id); })); } 
+            else {
                 verses.forEach(v => {
-                    const matchesA = v.filter(w => matchTerm(termA, w.data));
-                    const matchesB = v.filter(w => matchTerm(termB, w.data));
+                    const matchesA = v.filter(w => matchTerm(termA, w.data)); const matchesB = v.filter(w => matchTerm(termB, w.data));
                     if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
                     else if (op === 'OR') { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
                     else if (op === 'NOT' && matchesB.length === 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); }
@@ -637,15 +519,10 @@
                     }
                 });
             }
-
             wordsToHighlight.forEach(id => { const el = document.getElementById(id); if (el) { el.classList.add('search-match'); matchCount++; } });
             msgBox.innerText = `${matchCount} matches in current view`;
-            
         } else {
-            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') {
-                alert("Advanced search requires a primary biblical text module.");
-                return;
-            }
+            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') { alert("Advanced search requires a primary text module."); return; }
             
             let fetchMod = originalMod;
             if (originalMod === 'nt_interlinear') fetchMod = (targetLang === 'eng') ? 'emtv.xml' : 'tischendorf.xml';
@@ -654,52 +531,50 @@
             let scopeLabel = scope === 'book' ? (currentLoadedBook || "Current Book").toUpperCase() : "ENTIRE TEXT";
             if (scope === 'custom') scopeLabel = document.getElementById('customSearchRange').value || "CUSTOM RANGE";
             
-            openSearchModal(`Query: [${query}] in ${scopeLabel} via ${fetchMod}`);
+            let displayModName = fetchMod.replace('.xml', '').replace('.tsv', '').toUpperCase();
+            if (displayModName === 'TISCHENDORF') displayModName = 'TISCHENDORF GREEK';
+            
+            openSearchModal(`Query: [${query}] in ${scopeLabel} via ${displayModName}`);
             
             try {
                 const res = await fetch(fetchMod);
-                if (!res.ok) throw new Error(`Could not fetch ${fetchMod} for background search. Ensure it is in your project directory.`);
+                if (!res.ok) throw new Error(`Could not fetch ${fetchMod}.`);
                 const fileText = await res.text();
                 
-                let resultsHTML = "";
-                let totalMatches = 0;
+                let resultsHTML = ""; let totalMatches = 0;
                 
                 if (fetchMod === 'srgnt.tsv') {
                     const lines = fileText.split('\n');
-                    let currentVerseRef = "";
-                    let currentVerseWords = [];
+                    let currentVerseRef = ""; let currentVerseWords = [];
                     
                     const processVerse = () => {
                         if (currentVerseWords.length === 0) return;
                         const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
-                        let hasMatch = false;
-                        let highlightIndexes = new Set();
+                        let hasMatch = false, hlSet = new Set();
 
-                        if (!op && matchesA.length > 0) {
-                            hasMatch = true; matchesA.forEach(w => highlightIndexes.add(w.idx));
-                        } else if (op) {
+                        if (!op && matchesA.length > 0) { hasMatch = true; matchesA.forEach(w => hlSet.add(w.idx)); } 
+                        else if (op) {
                             const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
-                            if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
-                            else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
-                            else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); }
+                            if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
+                            else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
+                            else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); }
                             else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
-                                matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; highlightIndexes.add(a.idx); highlightIndexes.add(b.idx); } }));
+                                matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
                             }
                         }
 
                         if (hasMatch) {
                             let verseHTML = `<div class="modal-verse-text"><span class="modal-verse-ref">${currentVerseRef}</span>`;
                             currentVerseWords.forEach(w => {
-                                const hClass = highlightIndexes.has(w.idx) ? 'modal-search-match' : '';
+                                const hClass = hlSet.has(w.idx) ? 'modal-search-match' : '';
                                 const sw = w.word.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const sl = (w.lemma||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const ss = (w.strongs||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 const sp = (w.parsing||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                 verseHTML += `<span class="${hClass}" style="cursor:pointer;" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
-                                if(highlightIndexes.has(w.idx)) totalMatches++;
+                                if(hlSet.has(w.idx)) totalMatches++;
                             });
-                            verseHTML += `</div>`;
-                            resultsHTML += verseHTML;
+                            verseHTML += `</div>`; resultsHTML += verseHTML;
                         }
                         currentVerseWords = [];
                     };
@@ -707,123 +582,105 @@
                     let wIdx = 0;
                     for (let line of lines) {
                         if (!line.trim()) continue;
-                        const cols = line.split('\t');
-                        const idStr = cols[0];
-                        
-                        let bNum = parseInt(idStr.substring(0, 2));
-                        let bName = bnumberToName[bNum] || "Unknown";
+                        const cols = line.split('\t'); const idStr = cols[0];
+                        let bNum = parseInt(idStr.substring(0, 2)); let bName = bnumberToName[bNum] || "Unknown";
                         if (scope === 'book' && bName !== currentLoadedBook.toLowerCase()) continue;
 
                         const vRef = `${bName.toUpperCase()} ${parseInt(idStr.substring(2, 5))}:${parseInt(idStr.substring(5, 8))}`;
                         if (vRef !== currentVerseRef) { processVerse(); currentVerseRef = vRef; wIdx = 0; }
                         
-                        const rmacMorph = srgntToRmac(cols[5], cols[6]);
-                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph });
+                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: srgntToRmac(cols[5], cols[6]) });
                     }
                     processVerse(); 
 
                 } else {
-                    // UNIVERSAL XML BACKGROUND SCANNER (Tischendorf / Hebrew / EMTV / ESV)
                     const xmlDoc = new DOMParser().parseFromString(fileText, "text/xml");
                     const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
                     const isOSIS = xmlDoc.querySelector("chapter[osisID]") !== null;
+                    const isEnglishFile = fetchMod === 'esv.xml' || fetchMod === 'emtv.xml' || fetchMod === 'kjv_strongs.xml';
                     
                     let chapters = xmlDoc.querySelectorAll('CHAPTER, chapter');
                     
                     for (let chap of chapters) {
-                        let bName = "Unknown";
-                        let cNum = "0";
+                        let bName = "Unknown"; let cNum = "0";
 
-                        // Universal Book and Chapter Extractor
                         if (isZefania) {
                             cNum = chap.getAttribute('cnumber');
                             let bookNode = chap.closest('BIBLEBOOK');
-                            if (bookNode) {
-                                let bNum = parseInt(bookNode.getAttribute('bnumber'));
-                                bName = bnumberToName[bNum] || "Unknown";
-                            }
+                            if (bookNode) bName = bnumberToName[parseInt(bookNode.getAttribute('bnumber'))] || "Unknown";
                         } else if (isOSIS) {
                             let osisId = chap.getAttribute('osisID');
                             if (!osisId) continue;
-                            let parts = osisId.split('.');
-                            let osisBook = parts[0];
-                            cNum = parts[1];
-                            bName = Object.keys(osisMap).find(k => osisMap[k] === osisBook) || "Unknown";
+                            let parts = osisId.split('.'); cNum = parts[1];
+                            bName = Object.keys(osisMap).find(k => osisMap[k] === parts[0]) || "Unknown";
                         } else {
                             cNum = chap.getAttribute('number');
                             let bookNode = chap.closest('book');
-                            if (bookNode) {
-                                let bNum = parseInt(bookNode.getAttribute('number'));
-                                bName = bnumberToName[bNum] || "Unknown";
-                            }
+                            if (bookNode) bName = bnumberToName[parseInt(bookNode.getAttribute('number'))] || "Unknown";
                         }
 
-                        // Apply Scope Filter
                         if (scope === 'book' && bName.toLowerCase() !== currentLoadedBook.toLowerCase()) continue;
                         
                         let verses = chap.querySelectorAll('VERS, verse');
                         for (let vers of verses) {
                             let vNum = "0";
                             if (isZefania) vNum = vers.getAttribute('vnumber');
-                            else if (isOSIS) {
-                                let vOsis = vers.getAttribute('osisID');
-                                vNum = vOsis ? vOsis.split('.').pop() : "?";
-                            } else vNum = vers.getAttribute('number');
+                            else if (isOSIS) { let vOsis = vers.getAttribute('osisID'); vNum = vOsis ? vOsis.split('.').pop() : "?"; } 
+                            else vNum = vers.getAttribute('number');
 
                             let currentVerseRef = `${bName.toUpperCase()} ${cNum}:${vNum}`;
-                            let currentVerseWords = []; 
-                            let wIdx = 0;
+                            let currentVerseWords = []; let wIdx = 0;
                             
-                            const prefix = 'G'; 
-                            
-                            Array.from(vers.childNodes).forEach(n => {
-                                if (n.nodeType === Node.TEXT_NODE) {
-                                    n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
-                                } else if (n.nodeName.toLowerCase() === 'gr') {
-                                    const rawStr = n.getAttribute('str') || '';
-                                    let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0];
-                                    let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
-                                    const rmac = n.getAttribute('rmac') || '';
-                                    n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: rmac }); });
-                                } else {
-                                    n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
-                                }
-                            });
+                            // BULLETPROOF TEXT EXTRACTOR
+                            if (isEnglishFile) {
+                                vers.textContent.split(/(\s+)/).forEach(chunk => {
+                                    if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "", isEnglish: true });
+                                });
+                            } else {
+                                const prefix = 'G'; 
+                                Array.from(vers.childNodes).forEach(n => {
+                                    if (n.nodeType === Node.TEXT_NODE) {
+                                        n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
+                                    } else if (n.nodeName.toLowerCase() === 'gr') {
+                                        const rawStr = n.getAttribute('str') || '';
+                                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0];
+                                        let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
+                                        n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||"" }); });
+                                    } else {
+                                        n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
+                                    }
+                                });
+                            }
 
                             if (currentVerseWords.length === 0) continue;
-                            
                             const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
-                            let hasMatch = false;
-                            let highlightIndexes = new Set();
+                            let hasMatch = false, hlSet = new Set();
 
-                            if (!op && matchesA.length > 0) {
-                                hasMatch = true; matchesA.forEach(w => highlightIndexes.add(w.idx));
-                            } else if (op) {
+                            if (!op && matchesA.length > 0) { hasMatch = true; matchesA.forEach(w => hlSet.add(w.idx)); } 
+                            else if (op) {
                                 const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
-                                if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
-                                else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); matchesB.forEach(w=>highlightIndexes.add(w.idx)); }
-                                else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>highlightIndexes.add(w.idx)); }
+                                if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
+                                else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
+                                else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); }
                                 else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
-                                    matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; highlightIndexes.add(a.idx); highlightIndexes.add(b.idx); } }));
+                                    matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
                                 }
                             }
 
                             if (hasMatch) {
                                 let verseHTML = `<div class="modal-verse-text"><span class="modal-verse-ref">${currentVerseRef}</span>`;
                                 currentVerseWords.forEach(w => {
-                                    const hClass = highlightIndexes.has(w.idx) ? 'modal-search-match' : '';
+                                    const hClass = hlSet.has(w.idx) ? 'modal-search-match' : '';
                                     const sw = w.word.replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                     const sl = (w.lemma||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                     const ss = (w.strongs||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                     const sp = (w.parsing||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
-                                    
-                                    const fFam = (fetchMod === 'esv.xml' || fetchMod === 'emtv.xml' || fetchMod === 'kjv_strongs.xml') ? '-apple-system, sans-serif' : 'Georgia, serif';
+                                    const fFam = isEnglishFile ? '-apple-system, sans-serif' : 'Georgia, serif';
                                     
                                     verseHTML += `<span class="${hClass}" style="cursor:pointer; font-family:${fFam};" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
-                                    if(highlightIndexes.has(w.idx)) totalMatches++;
+                                    if(hlSet.has(w.idx)) totalMatches++;
                                 });
-                                verseHTML += `</div>`;
-                                resultsHTML += verseHTML;
+                                verseHTML += `</div>`; resultsHTML += verseHTML;
                             }
                         }
                     }
@@ -832,9 +689,7 @@
                 document.getElementById('modal-results-container').innerHTML = resultsHTML || `<div style="text-align:center; padding: 40px; color: #888;">No matches found in the specified scope.</div>`;
                 document.getElementById('modal-match-count').innerText = `${totalMatches} matching occurrences found`;
                 
-            } catch (e) {
-                document.getElementById('modal-results-container').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`;
-            }
+            } catch (e) { document.getElementById('modal-results-container').innerHTML = `<p style="color:red;">Error: ${e.message}</p>`; }
         }
     }
 
@@ -846,18 +701,9 @@
     function copyResultsToNotebook() {
         const nb = document.getElementById('research-notebook');
         const query = document.getElementById('modal-subtitle').innerText;
-        
         let dumpHTML = `<div style="margin-top: 15px; padding-top: 10px; border-top: 2px dashed rgba(0,0,0,0.1);"><strong>--- SEARCH: ${query} ---</strong><br><br>`;
-        
-        document.getElementById('modal-results-container').querySelectorAll('.modal-verse-text').forEach(v => {
-            let clonedVerse = v.cloneNode(true);
-            dumpHTML += clonedVerse.outerHTML + "<br><br>";
-        });
-        dumpHTML += `</div>`;
-        
-        nb.innerHTML += dumpHTML;
-        autoSaveNotebook();
-        
+        document.getElementById('modal-results-container').querySelectorAll('.modal-verse-text').forEach(v => { dumpHTML += v.cloneNode(true).outerHTML + "<br><br>"; });
+        dumpHTML += `</div>`; nb.innerHTML += dumpHTML; autoSaveNotebook();
         if (notebookSidebar && !notebookSidebar.classList.contains('open')) toggleNotebook();
         closeSearchModal();
     }
@@ -866,15 +712,10 @@
     // THE BILINGUAL BIBLE ENGINE
     // ---------------------------------------------------------
     function triggerLoadModule() {
-        const ref = document.getElementById('bibleRefInput').value;
-        const mod = document.getElementById('bibleModuleSelect').value;
-        updateSearchLanguageToggle();
-        
+        const ref = document.getElementById('bibleRefInput').value; const mod = document.getElementById('bibleModuleSelect').value; updateSearchLanguageToggle();
         if (!ref.trim() && mod !== 'mhc_sync' && mod !== 'luther_tt.xml') return;
-        if(syncToggle) syncToggle.checked = false;
-        if(syncUi) syncUi.style.display = 'none';
-        if (mod === 'srgnt.tsv') renderSRGNT(ref);
-        else loadNativeBible(ref, mod);
+        if(syncToggle) syncToggle.checked = false; if(syncUi) syncUi.style.display = 'none';
+        if (mod === 'srgnt.tsv') renderSRGNT(ref); else loadNativeBible(ref, mod);
     }
 
     function toggleOriginalText() {
@@ -887,55 +728,39 @@
         clearSelection(); clearAdvancedSearch();
 
         try {
-            const res = await fetch('srgnt.tsv');
-            if (!res.ok) throw new Error("Could not find srgnt.tsv in your directory.");
+            const res = await fetch('srgnt.tsv'); if (!res.ok) throw new Error("Could not find srgnt.tsv in your directory.");
             const tsvText = await res.text();
-
-            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2"); const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             if (!match) throw new Error("Format: Matthew 1 or Matthew 1:1-5.");
 
-            const searchBook = match[1].trim().toLowerCase();
-            currentLoadedChapter = match[2];
-            const startVerse = match[3] ? parseInt(match[3]) : null;
-            const endVerse = match[4] ? parseInt(match[4]) : startVerse;
-            currentLoadedBook = abbrevs[searchBook] || searchBook;
-            const bNum = bnumberMap[currentLoadedBook];
-
+            const searchBook = match[1].trim().toLowerCase(); currentLoadedChapter = match[2];
+            const startVerse = match[3] ? parseInt(match[3]) : null; const endVerse = match[4] ? parseInt(match[4]) : startVerse;
+            currentLoadedBook = abbrevs[searchBook] || searchBook; const bNum = bnumberMap[currentLoadedBook];
             if (!bNum) throw new Error(`Book '${currentLoadedBook}' mapping not found.`);
+
             const targetPrefix = bNum.toString().padStart(2, '0') + currentLoadedChapter.toString().padStart(3, '0');
-            const lines = tsvText.split('\n');
-            let chapFound = false, curVerse = "", curBlock = null;
+            const lines = tsvText.split('\n'); let chapFound = false, curVerse = "", curBlock = null;
 
             passageContainer.innerHTML = ''; lexiconData = {}; let refIndex = 0;
-            if(syncUi) syncUi.style.display = 'flex';
-            if(originalToggleContainer) originalToggleContainer.style.display = 'none';
+            if(syncUi) syncUi.style.display = 'flex'; if(originalToggleContainer) originalToggleContainer.style.display = 'none';
 
             for (let i = 0; i < lines.length; i++) {
                 const line = lines[i].trim(); if (!line) continue;
                 const cols = line.split('\t'); const id = cols[0];
 
                 if (id.startsWith(targetPrefix)) {
-                    chapFound = true;
-                    const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
+                    chapFound = true; const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
                     if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
 
                     if (vNumInt.toString() !== curVerse) {
-                        curVerse = vNumInt.toString();
-                        curBlock = document.createElement('div'); curBlock.className = 'verse-block';
+                        curVerse = vNumInt.toString(); curBlock = document.createElement('div'); curBlock.className = 'verse-block';
                         const vNumSpan = document.createElement('span'); vNumSpan.className = 'verse-num'; vNumSpan.innerText = curVerse;
                         curBlock.appendChild(vNumSpan); passageContainer.appendChild(curBlock);
                     }
-
-                    const rawMorph = cols[6]; 
-                    const rmacMorph = srgntToRmac(cols[5], rawMorph);
+                    const rmacMorph = srgntToRmac(cols[5], cols[6]);
                     const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex++}`; s.innerText = cols[1] + " ";
-                    
                     lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "", isEnglish: false };
-                    
-                    s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                    s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, false); };
-                    
+                    s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, false); };
                     curBlock.appendChild(s);
                 } else if (chapFound) break;
             }
@@ -951,15 +776,12 @@
         const isEnglishTranslation = fileName === 'esv.xml' || fileName === 'emtv.xml' || fileName === 'kjv_strongs.xml';
 
         try {
-            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2"); const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             let startVerse = null, endVerse = null;
             
             if (match) {
-                const searchBook = match[1].trim().toLowerCase();
-                currentLoadedChapter = match[2];
-                startVerse = match[3] ? parseInt(match[3]) : null;
-                endVerse = match[4] ? parseInt(match[4]) : startVerse;
+                const searchBook = match[1].trim().toLowerCase(); currentLoadedChapter = match[2];
+                startVerse = match[3] ? parseInt(match[3]) : null; endVerse = match[4] ? parseInt(match[4]) : startVerse;
                 currentLoadedBook = abbrevs[searchBook] || searchBook;
             }
 
@@ -973,34 +795,26 @@
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
                                 lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); };
-                                container.appendChild(s);
+                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     } else if (n.nodeName.toLowerCase() === 'gr') {
-                        const rawStr = n.getAttribute('str') || '';
-                        let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0]; 
+                        const rawStr = n.getAttribute('str') || ''; let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0]; 
                         let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
                         n.textContent.split(/(\s+)/).forEach(chunk => {
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word has-data'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
                                 lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||'', def: "", isEnglish: isEnglishTranslation };
-                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; 
-                                s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); };
-                                container.appendChild(s);
+                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     } else if (n.nodeName.toLowerCase() === 'style') {
                         const words = n.textContent.split(/(\s+)/);
                         words.forEach(chunk => {
                             if (chunk.trim() !== '') {
-                                const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`;
-                                span.style.fontStyle = 'italic'; span.style.color = '#888'; span.innerText = chunk;
+                                const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.style.fontStyle = 'italic'; span.style.color = '#888'; span.innerText = chunk;
                                 lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation };
-                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                                span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
-                                container.appendChild(span);
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; container.appendChild(span);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     }
@@ -1038,9 +852,7 @@
                             if (chunk.trim() !== '') {
                                 const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                                 lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: true };
-                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                                span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, true); };
-                                engLine.appendChild(span);
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, true); }; engLine.appendChild(span);
                             } else { engLine.appendChild(document.createTextNode(chunk)); }
                         });
                     }
@@ -1066,8 +878,7 @@
             }
 
             if(syncUi) syncUi.style.display = 'flex';
-            if (isEnglishTranslation) passageContainer.style.fontFamily = "-apple-system, sans-serif";
-            else passageContainer.style.fontFamily = "Georgia, serif";
+            passageContainer.style.fontFamily = isEnglishTranslation ? "-apple-system, sans-serif" : "Georgia, serif";
             
             const isHebrew = fileName === 'hebrew_ot.xml'; if (isHebrew) passageContainer.className = 'rtl-text';
             const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
@@ -1095,9 +906,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
-                            passageContainer.appendChild(span);
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
                     passageContainer.appendChild(document.createTextNode(" "));
@@ -1114,9 +923,7 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
-                            passageContainer.appendChild(span);
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
                     passageContainer.appendChild(document.createTextNode(" "));
@@ -1139,11 +946,17 @@
         if (d) {
             let parsedText = d.parsing;
             if (d.parsing) {
-                const rmacParse = parseRMAC(d.parsing);
-                if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
-                parsedText = rmacParse.text;
+                if (d.parsing.includes('-') || !/^[A-Z]$/.test(d.parsing)) {
+                     const rmacParse = parseRMAC(d.parsing);
+                     if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
+                     parsedText = rmacParse.text;
+                } else {
+                     const rmacParse = parseRMAC(d.parsing);
+                     if(lexEditor) lexEditor.style.borderLeft = `4px solid ${rmacParse.color}`;
+                     parsedText = rmacParse.text;
+                }
             } else {
-                if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`;
+                 if(lexEditor) lexEditor.style.borderLeft = `4px solid var(--rustic-orange)`;
             }
             
             if (d.strongs && !d.def) { document.getElementById('lexDef').value = "Loading lexicon data..."; d.def = await getStrongsDef(d.strongs); }
@@ -1178,25 +991,18 @@
         }
     }
 
-    // Shielded Context Menu Buttons
     document.getElementById('cm-search-lemma').addEventListener('click', (e) => {
         e.stopPropagation();
         if (rightClickedData) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) {
-                document.getElementById('advancedSearchInput').value = term;
-                executeAdvancedSearch();
-            }
+            if (term) { document.getElementById('advancedSearchInput').value = term; executeAdvancedSearch(); }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
     document.getElementById('cm-search-morph').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.parsing) {
-            document.getElementById('advancedSearchInput').value = rightClickedData.parsing;
-            executeAdvancedSearch();
-        }
+        if (rightClickedData && rightClickedData.parsing) { document.getElementById('advancedSearchInput').value = rightClickedData.parsing; executeAdvancedSearch(); }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
@@ -1204,20 +1010,14 @@
         e.stopPropagation();
         if (rightClickedData && rightClickedData.parsing) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) {
-                document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`;
-                executeAdvancedSearch();
-            }
+            if (term) { document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`; executeAdvancedSearch(); }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
     
     document.getElementById('cm-search-english').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.word) {
-            document.getElementById('advancedSearchInput').value = rightClickedData.word;
-            executeAdvancedSearch();
-        }
+        if (rightClickedData && rightClickedData.word) { document.getElementById('advancedSearchInput').value = rightClickedData.word; executeAdvancedSearch(); }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
