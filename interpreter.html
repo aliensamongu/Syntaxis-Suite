@@ -11,12 +11,15 @@
             --sidebar-width: 360px;
             --notebook-width: 340px;
             --bg-main: #e4e7ea;
+            
+            /* Oxford Scholar Palette */
             --oxford-navy: #1B263B;
             --oxford-navy-dark: #121A2A;
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
             --rustic-orange: #C86428;
+            
             --radius-small: 8px;
             --radius-medium: 12px;
         }
@@ -162,7 +165,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any text to auto-search!
+                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>.
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -194,8 +197,8 @@
             <h3>4. Flashcard Deck</h3>
             <div style="font-size: 10px; color: #aaa; text-transform: uppercase; letter-spacing: 1px;">Cards saved locally: <span id="deckCount">0</span></div>
             <div style="display: flex; gap: 5px; margin-top: 5px;">
-                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;">⬇ Anki (.txt)</button>
-                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;">⬇ Excel (.tsv)</button>
+                <button class="std-btn" onclick="exportAnki()" style="flex: 1; background: #c0392b; color: white;" title="Formatted with HTML for Anki Import">⬇ Anki (.txt)</button>
+                <button class="std-btn" onclick="exportSpreadsheet()" style="flex: 1; background: #27ae60; color: white;" title="Clean columns for Numbers/Excel">⬇ Excel (.tsv)</button>
             </div>
         </div>
     </div>
@@ -228,7 +231,7 @@
                     <input type="range" min="16" max="48" value="22" oninput="document.getElementById('passage-container').style.fontSize = this.value + 'px';">
                 </div>
 
-                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;">📓 Notebook</button>
+                <button class="std-btn secondary" onclick="toggleNotebook()" style="padding: 5px 12px; margin-left: 5px;" title="Open Research Notebook">📓 Notebook</button>
             </div>
         </div>
         
@@ -279,11 +282,12 @@
 
 <script>
     // ---------------------------------------------------------
-    // GLOBALS
+    // DOM ELEMENTS & GLOBAL STATE
     // ---------------------------------------------------------
     const passageContainer = document.getElementById('passage-container');
     const lexEditor = document.getElementById('lexicon-editor');
     const originalToggleContainer = document.getElementById('original-toggle-container');
+    const originalToggleLabel = document.getElementById('orig-toggle-label');
     const originalToggle = document.getElementById('originalToggle');
     const notebookSidebar = document.getElementById('notebook-sidebar');
     const syncUi = document.getElementById('sync-ui');
@@ -301,6 +305,9 @@
         if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; 
     });
 
+    // ---------------------------------------------------------
+    // MASTER BIBLE INDEXES
+    // ---------------------------------------------------------
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const bnumberToName = Object.keys(bnumberMap).reduce((acc, key) => { acc[bnumberMap[key]] = key; return acc; }, {});
@@ -320,6 +327,9 @@
         else { langSelect.style.display = 'none'; langSelect.value = 'orig'; }
     }
 
+    // ---------------------------------------------------------
+    // LEXICAL ENGINES
+    // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
     async function getStrongsDef(key) {
         if (!key) return "";
@@ -477,11 +487,12 @@
         // Auto-Detect Language Router
         let targetLang = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
         if (originalMod.includes('interlinear')) {
-            const isMorph = /^[A-Za-z0-9\-*]+$/.test(query) && (query.includes('-') || query.includes('*'));
-            const isStrongs = /^[GH]\d+$/.test(query.toUpperCase());
             const hasGreek = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(query);
-            if (!isMorph && !isStrongs && !hasGreek) { targetLang = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; } 
-            else { targetLang = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; }
+            const hasStrongs = /\b[GH]\d+\b/i.test(query);
+            const hasMorphMatch = /[A-Za-z0-9*]+-[A-Za-z0-9*]+/i.test(query);
+            
+            if (hasGreek || hasStrongs || hasMorphMatch) { targetLang = 'orig'; document.getElementById('searchLangSelect').value = 'orig'; } 
+            else { targetLang = 'eng'; document.getElementById('searchLangSelect').value = 'eng'; }
         }
 
         const opMatch = query.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i);
@@ -510,19 +521,19 @@
             if (!op) { verses.forEach(v => v.forEach(w => { if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id); })); } 
             else {
                 verses.forEach(v => {
-                    const matchesA = v.filter(w => matchTerm(termA, w.data)); const matchesB = v.filter(w => matchTerm(termB, w.data));
-                    if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'OR') { matchesA.forEach(w => wordsToHighlight.add(w.id)); matchesB.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'NOT' && matchesB.length === 0) { matchesA.forEach(w => wordsToHighlight.add(w.id)); }
-                    else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
-                        matchesA.forEach(a => { matchesB.forEach(b => { if (Math.abs(a.index - b.index) <= withinDist) { wordsToHighlight.add(a.id); wordsToHighlight.add(b.id); } }); });
+                    const mA = v.filter(w => matchTerm(termA, w.data)), mB = v.filter(w => matchTerm(termB, w.data));
+                    if (op === 'AND' && mA.length > 0 && mB.length > 0) { mA.forEach(w => wordsToHighlight.add(w.id)); mB.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'OR') { mA.forEach(w => wordsToHighlight.add(w.id)); mB.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'NOT' && mB.length === 0) { mA.forEach(w => wordsToHighlight.add(w.id)); }
+                    else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
+                        mA.forEach(a => { mB.forEach(b => { if (Math.abs(a.index - b.index) <= withinDist) { wordsToHighlight.add(a.id); wordsToHighlight.add(b.id); } }); });
                     }
                 });
             }
             wordsToHighlight.forEach(id => { const el = document.getElementById(id); if (el) { el.classList.add('search-match'); matchCount++; } });
             msgBox.innerText = `${matchCount} matches in current view`;
         } else {
-            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') { alert("Advanced search requires a primary text module."); return; }
+            if (originalMod === 'mhc_sync' || originalMod === 'luther_tt.xml') { alert("Advanced search requires a primary biblical text module."); return; }
             
             let fetchMod = originalMod;
             if (originalMod === 'nt_interlinear') fetchMod = (targetLang === 'eng') ? 'emtv.xml' : 'tischendorf.xml';
@@ -538,7 +549,7 @@
             
             try {
                 const res = await fetch(fetchMod);
-                if (!res.ok) throw new Error(`Could not fetch ${fetchMod}.`);
+                if (!res.ok) throw new Error(`Could not fetch ${fetchMod}. Ensure it is in your project directory.`);
                 const fileText = await res.text();
                 
                 let resultsHTML = ""; let totalMatches = 0;
@@ -549,17 +560,17 @@
                     
                     const processVerse = () => {
                         if (currentVerseWords.length === 0) return;
-                        const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
+                        const mA = currentVerseWords.filter(w => matchTerm(termA, w));
                         let hasMatch = false, hlSet = new Set();
 
-                        if (!op && matchesA.length > 0) { hasMatch = true; matchesA.forEach(w => hlSet.add(w.idx)); } 
+                        if (!op && mA.length > 0) { hasMatch = true; mA.forEach(w => hlSet.add(w.idx)); } 
                         else if (op) {
-                            const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
-                            if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); }
-                            else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
-                                matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
+                            const mB = currentVerseWords.filter(w => matchTerm(termB, w));
+                            if (op === 'AND' && mA.length > 0 && mB.length > 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
+                            else if (op === 'OR' && (mA.length > 0 || mB.length > 0)) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
+                            else if (op === 'NOT' && mA.length > 0 && mB.length === 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); }
+                            else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
+                                mA.forEach(a => mB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
                             }
                         }
 
@@ -589,7 +600,8 @@
                         const vRef = `${bName.toUpperCase()} ${parseInt(idStr.substring(2, 5))}:${parseInt(idStr.substring(5, 8))}`;
                         if (vRef !== currentVerseRef) { processVerse(); currentVerseRef = vRef; wIdx = 0; }
                         
-                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: srgntToRmac(cols[5], cols[6]) });
+                        // Strip trailing numbers from lemma so it matches
+                        currentVerseWords.push({ idx: wIdx++, word: cols[1], lemma: cols[3].replace(/\d+$/, ''), strongs: "G" + cols[4].slice(0, -1), parsing: srgntToRmac(cols[5], cols[6]) });
                     }
                     processVerse(); 
 
@@ -631,7 +643,6 @@
                             let currentVerseRef = `${bName.toUpperCase()} ${cNum}:${vNum}`;
                             let currentVerseWords = []; let wIdx = 0;
                             
-                            // BULLETPROOF TEXT EXTRACTOR
                             if (isEnglishFile) {
                                 vers.textContent.split(/(\s+)/).forEach(chunk => {
                                     if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "", isEnglish: true });
@@ -645,7 +656,8 @@
                                         const rawStr = n.getAttribute('str') || '';
                                         let cleanStr = rawStr.replace(/\*/g, '').trim().split(' ')[0];
                                         let finalStrongs = cleanStr ? (/^[GH]/i.test(cleanStr) ? cleanStr : prefix + cleanStr) : "";
-                                        n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||"" }); });
+                                        const rmac = n.getAttribute('rmac') || '';
+                                        n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, lemma: "", strongs: finalStrongs, parsing: rmac }); });
                                     } else {
                                         n.textContent.split(/(\s+)/).forEach(chunk => { if (chunk.trim()) currentVerseWords.push({ idx: wIdx++, word: chunk, parsing: "" }); });
                                     }
@@ -653,17 +665,17 @@
                             }
 
                             if (currentVerseWords.length === 0) continue;
-                            const matchesA = currentVerseWords.filter(w => matchTerm(termA, w));
+                            const mA = currentVerseWords.filter(w => matchTerm(termA, w));
                             let hasMatch = false, hlSet = new Set();
 
-                            if (!op && matchesA.length > 0) { hasMatch = true; matchesA.forEach(w => hlSet.add(w.idx)); } 
+                            if (!op && mA.length > 0) { hasMatch = true; mA.forEach(w => hlSet.add(w.idx)); } 
                             else if (op) {
-                                const matchesB = currentVerseWords.filter(w => matchTerm(termB, w));
-                                if (op === 'AND' && matchesA.length > 0 && matchesB.length > 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
-                                else if (op === 'OR' && (matchesA.length > 0 || matchesB.length > 0)) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); matchesB.forEach(w=>hlSet.add(w.idx)); }
-                                else if (op === 'NOT' && matchesA.length > 0 && matchesB.length === 0) { hasMatch = true; matchesA.forEach(w=>hlSet.add(w.idx)); }
-                                else if (op === 'WITHIN' && matchesA.length > 0 && matchesB.length > 0) {
-                                    matchesA.forEach(a => matchesB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
+                                const mB = currentVerseWords.filter(w => matchTerm(termB, w));
+                                if (op === 'AND' && mA.length > 0 && mB.length > 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
+                                else if (op === 'OR' && (mA.length > 0 || mB.length > 0)) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); mB.forEach(w=>hlSet.add(w.idx)); }
+                                else if (op === 'NOT' && mA.length > 0 && mB.length === 0) { hasMatch = true; mA.forEach(w=>hlSet.add(w.idx)); }
+                                else if (op === 'WITHIN' && mA.length > 0 && mB.length > 0) {
+                                    mA.forEach(a => mB.forEach(b => { if (Math.abs(a.idx - b.idx) <= withinDist) { hasMatch = true; hlSet.add(a.idx); hlSet.add(b.idx); } }));
                                 }
                             }
 
@@ -676,7 +688,6 @@
                                     const ss = (w.strongs||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                     const sp = (w.parsing||'').replace(/'/g, "&apos;").replace(/"/g, "&quot;");
                                     const fFam = isEnglishFile ? '-apple-system, sans-serif' : 'Georgia, serif';
-                                    
                                     verseHTML += `<span class="${hClass}" style="cursor:pointer; font-family:${fFam};" onclick="handleModalWordClick(this)" data-w="${sw}" data-l="${sl}" data-s="${ss}" data-p="${sp}">${w.word}</span> `;
                                     if(hlSet.has(w.idx)) totalMatches++;
                                 });
@@ -759,7 +770,7 @@
                     }
                     const rmacMorph = srgntToRmac(cols[5], cols[6]);
                     const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex++}`; s.innerText = cols[1] + " ";
-                    lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3], strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "", isEnglish: false };
+                    lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3].replace(/\d+$/, ''), strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "", isEnglish: false };
                     s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, false); };
                     curBlock.appendChild(s);
                 } else if (chapFound) break;
@@ -841,11 +852,9 @@
                     if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
                     const block = document.createElement('div'); block.className = 'verse-block';
                     const num = document.createElement('span'); num.className = 'verse-num'; num.innerText = vNumInt; block.appendChild(num);
-                    
                     const origLine = document.createElement('div'); origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     if (v1[i]) processZefaniaNodes(v1[i], origLine, bNum);
                     block.appendChild(origLine);
-                    
                     const engLine = document.createElement('div'); engLine.className = 'english-line';
                     if (v2[i]) {
                         v2[i].textContent.split(/(\s+)/).forEach(chunk => {
@@ -906,7 +915,9 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; passageContainer.appendChild(span);
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
+                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
+                            passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
                     passageContainer.appendChild(document.createTextNode(" "));
@@ -923,7 +934,9 @@
                         if (chunk.trim() !== '') {
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; passageContainer.appendChild(span);
+                            span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
+                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
+                            passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
                     passageContainer.appendChild(document.createTextNode(" "));
@@ -995,14 +1008,20 @@
         e.stopPropagation();
         if (rightClickedData) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) { document.getElementById('advancedSearchInput').value = term; executeAdvancedSearch(); }
+            if (term) {
+                document.getElementById('advancedSearchInput').value = term;
+                executeAdvancedSearch();
+            }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
     document.getElementById('cm-search-morph').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.parsing) { document.getElementById('advancedSearchInput').value = rightClickedData.parsing; executeAdvancedSearch(); }
+        if (rightClickedData && rightClickedData.parsing) {
+            document.getElementById('advancedSearchInput').value = rightClickedData.parsing;
+            executeAdvancedSearch();
+        }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
@@ -1010,14 +1029,20 @@
         e.stopPropagation();
         if (rightClickedData && rightClickedData.parsing) {
             const term = rightClickedData.lemma || rightClickedData.strongs || rightClickedData.word;
-            if (term) { document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`; executeAdvancedSearch(); }
+            if (term) {
+                document.getElementById('advancedSearchInput').value = `${term} AND ${rightClickedData.parsing}`;
+                executeAdvancedSearch();
+            }
         }
         if (contextMenu) contextMenu.style.display = 'none';
     });
     
     document.getElementById('cm-search-english').addEventListener('click', (e) => {
         e.stopPropagation();
-        if (rightClickedData && rightClickedData.word) { document.getElementById('advancedSearchInput').value = rightClickedData.word; executeAdvancedSearch(); }
+        if (rightClickedData && rightClickedData.word) {
+            document.getElementById('advancedSearchInput').value = rightClickedData.word;
+            executeAdvancedSearch();
+        }
         if (contextMenu) contextMenu.style.display = 'none';
     });
 
