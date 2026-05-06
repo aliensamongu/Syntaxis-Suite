@@ -105,8 +105,8 @@
             <div style="display: flex; flex-direction: column; gap: 5px;">
                 <input type="text" id="bibleRefInput" placeholder="e.g. John 1 or John 1:1-5">
                 <div style="display: flex; gap: 5px; align-items: stretch;">
-                    <div class="custom-select-wrapper" id="modWrapper">
-                        <div class="custom-select-btn" id="modBtn">NT Interlinear (Greek/EMT)</div>
+                    <div class="custom-select-wrapper" id="moduleSelectWrapper">
+                        <div class="custom-select-btn" id="moduleSelectBtn">NT Interlinear (Greek/EMT)</div>
                         <ul class="dropdown-menu">
                             <li><div class="group-label">Interlinear</div>
                                 <ul class="submenu">
@@ -238,13 +238,25 @@
     const mhcVolumeMap = { "genesis": 1, "exodus": 1, "leviticus": 1, "numbers": 1, "deuteronomy": 1, "joshua": 2, "judges": 2, "ruth": 2, "1 samuel": 2, "2 samuel": 2, "1 kings": 2, "2 kings": 2, "1 chronicles": 2, "2 chronicles": 2, "ezra": 2, "nehemiah": 2, "esther": 2, "job": 3, "psalms": 3, "proverbs": 3, "ecclesiastes": 3, "song of solomon": 3, "isaiah": 4, "jeremiah": 4, "lamentations": 4, "ezekiel": 4, "daniel": 4, "hosea": 4, "joel": 4, "amos": 4, "obadiah": 4, "jonah": 4, "micah": 4, "nahum": 4, "habakkuk": 4, "zephaniah": 4, "haggai": 4, "zechariah": 4, "malachi": 4, "matthew": 5, "mark": 5, "luke": 5, "john": 5, "acts": 6, "romans": 6, "1 corinthians": 6, "2 corinthians": 6, "galatians": 6, "ephesians": 6, "philippians": 6, "colossians": 6, "1 thessalonians": 6, "2 thessalonians": 6, "1 timothy": 6, "2 timothy": 6, "titus": 6, "philemon": 6, "hebrews": 6, "james": 6, "1 peter": 6, "2 peter": 6, "1 john": 6, "2 john": 6, "3 john": 6, "jude": 6, "revelation": 6 };
 
     window.addEventListener('DOMContentLoaded', () => {
-        const btn = document.getElementById('moduleSelectBtn'), wrap = document.getElementById('moduleSelectWrapper');
+        const btn = document.getElementById('moduleSelectBtn');
+        const wrap = document.getElementById('moduleSelectWrapper');
+        
         btn.onclick = (e) => { e.stopPropagation(); wrap.classList.toggle('open'); };
+        
         document.querySelectorAll('.option-item').forEach(opt => {
-            opt.onclick = () => { selectedModuleValue = opt.dataset.val; btn.innerText = opt.innerText; wrap.classList.remove('open'); };
+            opt.onclick = () => { 
+                selectedModuleValue = opt.dataset.val; 
+                btn.innerText = opt.innerText; 
+                wrap.classList.remove('open'); 
+            };
         });
-        document.addEventListener('click', (e) => { if (!wrap.contains(e.target)) wrap.classList.remove('open'); });
-        loadNotebook(); loadAnkiDeck();
+        
+        document.addEventListener('click', (e) => { 
+            if (wrap && !wrap.contains(e.target)) wrap.classList.remove('open'); 
+        });
+        
+        loadNotebook(); 
+        loadAnkiDeck();
     });
 
     // ---------------------------------------------------------
@@ -341,19 +353,16 @@
         term = term.trim();
         if (!term) return false;
         
-        // Is it a morph code search? (Latin chars, hyphens, asterisks)
         if (/^[A-Za-z\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
             const regexStr = "^" + term.replace(/\*/g, '.') + "$";
             const regex = new RegExp(regexStr, "i");
             return regex.test(wordData.parsing || "");
         }
         
-        // Is it a Strongs search?
         if (/^[GH]\d+$/.test(term.toUpperCase())) {
             return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
         }
         
-        // Otherwise, it's a Greek Lemma/Word search (Accents ignored!)
         const cleanTerm = stripAccents(term);
         const cleanWord = stripAccents(wordData.word || "");
         const cleanLemma = stripAccents(wordData.lemma || "");
@@ -367,7 +376,6 @@
         clearAdvancedSearch();
         if (!query) return;
 
-        // Parse Operators
         const opMatch = query.match(/\s+(AND|OR|NOT|WITHIN(?:\s+\d+)?)\s+/i);
         let termA = query, termB = null, op = null, withinDist = 5;
         
@@ -386,7 +394,6 @@
         let matchCount = 0;
         let wordsToHighlight = new Set();
 
-        // Group words by Verse Block to execute logical operators locally
         const verses = [];
         document.querySelectorAll('.verse-block').forEach(vBlock => {
             let verseWords = [];
@@ -399,14 +406,12 @@
         });
 
         if (!op) {
-            // Standard Single Term Search
             verses.forEach(v => {
                 v.forEach(w => {
                     if (matchTerm(termA, w.data)) wordsToHighlight.add(w.id);
                 });
             });
         } else {
-            // Complex Boolean Logic Search
             verses.forEach(v => {
                 const matchesA = v.filter(w => matchTerm(termA, w.data));
                 const matchesB = v.filter(w => matchTerm(termB, w.data));
@@ -432,7 +437,6 @@
             });
         }
 
-        // Apply Highlights
         wordsToHighlight.forEach(id => {
             const el = document.getElementById(id);
             if (el) { el.classList.add('search-match'); matchCount++; }
@@ -557,6 +561,16 @@
                                 const s = document.createElement('span'); s.className = 'word has-data'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
                                 lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||'', def: "" };
                                 s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; container.appendChild(s);
+                            } else container.appendChild(document.createTextNode(chunk));
+                        });
+                    } else if (n.nodeName.toLowerCase() === 'style') {
+                        const words = n.textContent.split(/(\s+)/);
+                        words.forEach(chunk => {
+                            if (chunk.trim() !== '') {
+                                const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`;
+                                span.style.fontStyle = 'italic'; span.style.color = '#888'; span.innerText = chunk;
+                                lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, '') };
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; container.appendChild(span);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     }
