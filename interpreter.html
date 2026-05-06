@@ -69,7 +69,6 @@
         .word:hover { background: rgba(0,0,0,0.05); }
         .word.selected { outline: 2px dashed var(--oxford-gold); background: rgba(197,160,89,0.1); font-weight: bold; color: var(--oxford-navy); }
         
-        /* SEARCH MATCH HIGHLIGHTING */
         .word.search-match, .modal-search-match { background-color: var(--oxford-gold); color: var(--oxford-navy-dark); border-radius: 4px; font-weight: bold; box-shadow: 0 2px 5px rgba(0,0,0,0.2); border-bottom: 2px solid var(--oxford-crimson); padding: 2px 4px; margin: 0 2px; }
 
         .verse-block { margin-bottom: 25px; border-bottom: 1px dashed rgba(0,0,0,0.1); padding-bottom: 15px; }
@@ -80,7 +79,6 @@
 
         #lexicon-editor { opacity: 0.5; pointer-events: none; display: flex; flex-direction: column; gap: 8px; background: var(--oxford-navy-dark); padding: 15px; border-radius: var(--radius-small); border-left: 4px solid #7f8c8d; transition: 0.3s; }
         
-        /* Right Sidebar: Content-Editable Research Notebook */
         #notebook-sidebar { width: var(--notebook-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: none; flex-direction: column; z-index: 100; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         #notebook-sidebar.open { display: flex; }
         .notebook-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; gap: 15px; overflow-y: hidden;}
@@ -88,14 +86,12 @@
         #research-notebook:empty:before { content: attr(data-placeholder); color: #aaa; pointer-events: none; }
         #research-notebook:focus { box-shadow: inset 0 2px 5px rgba(0,0,0,0.1), 0 0 0 2px var(--oxford-gold); }
 
-        /* CUSTOM CONTEXT MENU */
         #context-menu { display: none; position: absolute; background-color: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark); box-shadow: 0 4px 12px rgba(0,0,0,0.2); border-radius: var(--radius-small); z-index: 10000; min-width: 180px; overflow: hidden; font-family: -apple-system, sans-serif; }
         .context-menu-item { padding: 10px 15px; font-size: 12px; color: var(--oxford-navy-dark); cursor: pointer; border-bottom: 1px solid rgba(0,0,0,0.05); font-weight: bold; display: flex; justify-content: space-between; align-items: center; }
         .context-menu-item:last-child { border-bottom: none; }
         .context-menu-item:hover { background-color: var(--oxford-gold); color: var(--oxford-navy); }
         .context-menu-item span { font-weight: normal; font-size: 10px; opacity: 0.7; font-family: monospace;}
 
-        /* DOCKED ANALYSIS MODAL */
         #search-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.4); z-index: 10001; backdrop-filter: blur(2px); }
         #search-modal { display: none; position: fixed; top: 20px; bottom: 20px; left: calc(var(--sidebar-width) + 20px); right: 20px; width: auto; height: auto; max-width: 1200px; background: var(--oxford-cream); z-index: 10002; border-radius: var(--radius-medium); box-shadow: 0 15px 40px rgba(0,0,0,0.4); flex-direction: column; overflow: hidden; border: 1px solid var(--oxford-gold); }
         .modal-header { background: var(--oxford-navy); color: var(--oxford-cream); padding: 20px; display: flex; justify-content: space-between; align-items: center; border-bottom: 4px solid var(--oxford-gold); }
@@ -170,7 +166,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">3. Advanced Search</h3>
             <div style="font-size: 10px; opacity: 0.7; line-height: 1.4;">
-                Find Words, Lemmas & Morph (RMAC). Operators: <b>AND, OR, NOT, WITHIN x</b>. Right-click any text to auto-search!
+                Find Words, Lemmas & Morph. Operators: <b>AND, OR, NOT, WITHIN x</b>. Wildcard <b>*</b> supported.
             </div>
             
             <div style="display: flex; gap: 5px; margin-top: 5px;">
@@ -189,7 +185,7 @@
             <input type="text" id="customSearchRange" placeholder="e.g. Rom 1-8" style="display:none; width: 100%; padding: 8px; font-size: 11px; margin-bottom: 5px; box-sizing: border-box;">
             
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. God)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
+                <input type="text" id="advancedSearchInput" placeholder="Enter query (e.g. lov* or αγαπ*)..." onkeypress="if(event.key === 'Enter') executeAdvancedSearch()">
                 <div style="display: flex; gap: 5px;">
                     <button class="std-btn" onclick="executeAdvancedSearch()" style="flex: 2;">Run Search</button>
                     <button class="std-btn secondary" onclick="clearAdvancedSearch()" style="flex: 1;">Clear</button>
@@ -310,9 +306,6 @@
         if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; 
     });
 
-    // ---------------------------------------------------------
-    // MASTER BIBLE INDEXES
-    // ---------------------------------------------------------
     const abbrevs = {
         "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
         "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
@@ -365,9 +358,6 @@
         else { langSelect.style.display = 'none'; langSelect.value = 'orig'; }
     }
 
-    // ---------------------------------------------------------
-    // LEXICAL ENGINES
-    // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
     async function getStrongsDef(key) {
         if (!key) return "";
@@ -463,18 +453,51 @@
     }
 
     // ---------------------------------------------------------
-    // ADVANCED SEARCH ENGINE
+    // DUAL-REGEX WILDCARD SEARCH ENGINE
     // ---------------------------------------------------------
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
     function matchTerm(term, wordData) {
-        term = term.trim(); if (!term) return false;
-        if (/^[A-Za-z0-9\-*]+$/.test(term) && (term.includes('-') || term.includes('*'))) {
-            return new RegExp("^" + term.replace(/\*/g, '.') + "$", "i").test(wordData.parsing || "");
+        term = term.trim(); 
+        if (!term) return false;
+
+        // 1. Strong's Number Match
+        if (/^[GH]\d+$/.test(term.toUpperCase())) {
+            return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
         }
-        if (/^[GH]\d+$/.test(term.toUpperCase())) return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
-        const cleanTerm = stripPunctuationAndAccents(term);
-        return stripPunctuationAndAccents(wordData.word || "") === cleanTerm || stripPunctuationAndAccents(wordData.lemma || "") === cleanTerm;
+
+        let isMatch = false;
+
+        // 2. Morphology Match 
+        // Triggered only if term consists of Latin letters, numbers, hyphens, and asterisks
+        if (/^[A-Za-z0-9\-*]+$/.test(term)) {
+            // Asterisk represents exactly ONE character placeholder in morph codes
+            const morphRegex = new RegExp("^" + term.replace(/\*/g, '.') + "$", "i");
+            if (morphRegex.test(wordData.parsing || "")) {
+                isMatch = true;
+            }
+        }
+
+        // 3. Lexical / Word Match
+        // Triggered if the Morph check failed (or wasn't run)
+        if (!isMatch) {
+            let cleanTerm = stripPunctuationAndAccents(term);
+            // Escape special regex characters (except the asterisk) so it doesn't crash on standard punctuation
+            let escapedTerm = cleanTerm.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
+            
+            // Asterisk represents UNLIMITED characters (expanding wildcard) in lexical searches
+            let wordRegexStr = "^" + escapedTerm.replace(/\*/g, '.*') + "$";
+            let wordRegex = new RegExp(wordRegexStr, "i");
+            
+            let cleanWord = stripPunctuationAndAccents(wordData.word || "");
+            let cleanLemma = stripPunctuationAndAccents(wordData.lemma || "");
+            
+            if (wordRegex.test(cleanWord) || wordRegex.test(cleanLemma)) {
+                isMatch = true;
+            }
+        }
+
+        return isMatch;
     }
 
     function toggleCustomSearchScope() {
@@ -524,6 +547,7 @@
         const msgBox = document.getElementById('searchResultMsg');
         const originalMod = document.getElementById('bibleModuleSelect').value;
         clearAdvancedSearch();
+        
         if (!query) return;
 
         // Auto-Detect Language Router
@@ -894,9 +918,11 @@
                     if (startVerse !== null && (vNumInt < startVerse || vNumInt > endVerse)) continue;
                     const block = document.createElement('div'); block.className = 'verse-block';
                     const num = document.createElement('span'); num.className = 'verse-num'; num.innerText = vNumInt; block.appendChild(num);
+                    
                     const origLine = document.createElement('div'); origLine.className = isHebrew ? 'original-line hebrew' : 'original-line';
                     if (v1[i]) processZefaniaNodes(v1[i], origLine, bNum);
                     block.appendChild(origLine);
+                    
                     const engLine = document.createElement('div'); engLine.className = 'english-line';
                     if (v2[i]) {
                         v2[i].textContent.split(/(\s+)/).forEach(chunk => {
@@ -1046,6 +1072,7 @@
         }
     }
 
+    // Shielded Context Menu Buttons
     document.getElementById('cm-search-lemma').addEventListener('click', (e) => {
         e.stopPropagation();
         if (rightClickedData) {
