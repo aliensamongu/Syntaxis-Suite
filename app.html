@@ -57,8 +57,6 @@
 
         #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 80%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
-        
-        /* The FIX for the Text Box Wrapping! */
         #block-input { min-height: 200px; font-family: monospace; white-space: pre-wrap; font-size: 16px; resize: vertical; overflow-y: auto; padding: 15px;}
     </style>
 </head>
@@ -187,10 +185,16 @@
 </div>
 
 <script>
-    const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d'); const bank = document.getElementById('word-bank'); const ctxMenu = document.getElementById('context-menu');
-    let elements = [], selectedElements = []; let isDragging = false, isResizing = false, isMarquee = false;
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
+    const bank = document.getElementById('word-bank');
+    const ctxMenu = document.getElementById('context-menu');
+    
+    let elements = [], selectedElements = [];
+    let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     let currentResizePoint = null, zoomLevel = 1, snapEnabled = true, rightClickedEl = null, editingBlockId = null, activeTab = 'rk';
+    
     canvas.width = 4000; canvas.height = 4000;
 
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
@@ -353,7 +357,6 @@
         let hitHandle = null, targetPoint = null;
         let hitLine = null, hitText = null, hitBlock = null;
 
-        // Search array backwards so visually top elements are grabbed first
         [...elements].reverse().forEach(el => {
             const f = el.flip || 1;
             // 1. Check Handles (Highest Priority)
@@ -377,6 +380,9 @@
                 else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
                     if (Math.hypot(el.type === 'pred_nom' ? el.x - (25*f) : el.x, (el.y - el.h) - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'height'; } 
                     else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'width'; } 
+                }
+                else if (el.type === 'block_text') {
+                    if (Math.hypot((el.x + el.w) - mx, (el.y + el.h) - my) < 30 / zoomLevel) { hitHandle = el; targetPoint = 'resize_br'; }
                 }
             }
 
@@ -494,7 +500,11 @@
             else if (el.type === 'modifier') { if (currentResizePoint === 'mod_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
             else if (el.type === 'prep_shelf') { if (currentResizePoint === 'prep_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
             else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - (snapEnabled ? Math.round(my/10)*10 : my)); } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
-            else if (el.type === 'block_text') { el.w = Math.max(50, snapEnabled ? Math.round((mx - el.x) / 10) * 10 : mx - el.x); } // Height auto-adjusts based on text wrap
+            else if (el.type === 'block_text') {
+                if (currentResizePoint === 'resize_br') {
+                    el.w = Math.max(100, snapEnabled ? Math.round((mx - el.x) / 10) * 10 : mx - el.x);
+                }
+            }
             else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); el.h = Math.max(10, snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y); }
         } else if (isDragging) { const dx = mx - dragOffset.x, dy = my - dragOffset.y; selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset.x = mx; dragOffset.y = my; }
         else if (isMarquee) { marqueeEnd = {x: mx, y: my}; const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); }
@@ -558,6 +568,12 @@
                 
                 if (selectedElements.includes(el)) { 
                     ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3498db'; ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, el.h + 8); ctx.setLineDash([]); 
+                    // Blue Resize Handle
+                    const hR = 6 / Math.sqrt(zoomLevel);
+                    ctx.fillStyle = '#3498db';
+                    ctx.beginPath();
+                    ctx.arc(el.x + el.w, el.y + el.h, hR, 0, Math.PI * 2);
+                    ctx.fill();
                 }
             }
         });
@@ -601,6 +617,7 @@
             if (el.type === 'text') { 
                 ctx.fillStyle = el.color || '#000000';
                 ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
+                // Preserve leading spaces in Canvas fillText
                 ctx.fillText(el.val, el.x, el.y); 
                 if (isSel) {
                     ctx.strokeStyle = '#3498db'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1;
