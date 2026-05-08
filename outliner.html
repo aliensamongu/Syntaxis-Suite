@@ -11,13 +11,15 @@
             --oxford-navy-dark: #121A2A;
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
+            --oxford-crimson: #8C1C13;
+            --rustic-orange: #C86428;
             --bg-main: #e4e7ea;
             --radius-small: 6px;
         }
 
         body {
             margin: 0; display: flex; height: 100vh;
-            font-family: -apple-system, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
             background: var(--bg-main); overflow: hidden;
         }
 
@@ -31,15 +33,16 @@
         #sidebar::-webkit-scrollbar { width: 6px; }
         #sidebar::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.2); border-radius: 10px; }
 
-        /* UNIVERSAL APP NAV Styling */
-        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
-        .app-nav a:hover { border-color: var(--oxford-gold); }
-        .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
-
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; color: var(--oxford-cream); }
+        .ix { font-size: 14px; text-decoration: overline; margin-left: 4px; font-weight: bold; color: var(--oxford-gold); }
         h3 { font-size: 11px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1.5px; margin: 25px 0 10px 0; border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px; }
         
+        /* UNIVERSAL APP NAV Styling */
+        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: #C5A059; }
+        .app-nav a.active { background: #C5A059; color: #121A2A; border-color: #C5A059; }
+
         .ui-input, select {
             width: 100%; box-sizing: border-box; padding: 12px; border-radius: var(--radius-small);
             border: 1px solid var(--oxford-navy-dark); background: var(--oxford-cream); font-family: inherit; font-size: 14px;
@@ -101,7 +104,7 @@
 <body>
 
 <div id="sidebar">
-    <h2>Σyntaxis</h2>
+    <h2>Σyntaxis<span class="ix">IX</span></h2>
 
     <div class="app-nav">
         <a href="annotator.html">Annotate</a>
@@ -131,12 +134,13 @@
             <select id="dbModuleSelect" style="flex: 2; margin-bottom:0;">
                 <optgroup label="Original Languages">
                     <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                    <option value="srgnt.tsv">Statistical Restoration GNT (SRGNT)</option>
                     <option value="hebrew_ot.xml">Hebrew OT</option>
                 </optgroup>
                 <optgroup label="English Translations">
                     <option value="kjv_strongs.xml">KJV with Strong's</option>
-                    <option value="emt.xml">English Majority Text</option>
-                    <option value="esv.xml">English Standard Version</option>
+                    <option value="emtv.xml">English Majority Text (EMTV)</option>
+                    <option value="esv.xml">English Standard Version (ESV)</option>
                 </optgroup>
             </select>
             <button class="btn" onclick="loadNativeBibleToEditor(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="flex: 1; padding: 10px 5px;" title="Injects directly into document">Inject Text</button>
@@ -238,59 +242,87 @@
             const chapNum = match[2];
             const fullBookName = abbrevs[searchBook] || searchBook;
             
-            const response = await fetch(fileName);
-            if (!response.ok) throw new Error(`File ${fileName} missing`);
-            const xmlText = await response.text();
-
-            const parser = new DOMParser();
-            const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
-            const isHebrew = fileName === 'hebrew_ot.xml';
-            const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
-            const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
-            const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
-
             let htmlOut = `
                 <hr style="margin: 30px 0; border: none; border-top: 1px dashed #ccc;">
                 <h3 style="color: var(--oxford-navy); text-transform: capitalize; margin-bottom: 10px;">${fullBookName} ${chapNum}</h3>
-                <p ${isHebrew ? 'dir="rtl" style="font-family: \'SBL Hebrew\', serif; font-size: 1.3em; text-align: right;"' : 'style="line-height: 1.8;"'}>
+                <p ${fileName === 'hebrew_ot.xml' ? 'dir="rtl" style="font-family: \'SBL Hebrew\', serif; font-size: 1.3em; text-align: right;"' : 'style="line-height: 1.8;"'}>
             `;
 
-            if (isZefania) {
+            // TSV Engine
+            if (fileName === 'srgnt.tsv') {
+                const res = await fetch('srgnt.tsv');
+                if (!res.ok) throw new Error("Could not find srgnt.tsv");
+                const tsvText = await res.text();
                 const bNum = bnumberMap[fullBookName];
-                const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
-                const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
-                if (!chapNode) throw new Error("Chapter not found.");
+                if (!bNum) throw new Error(`Book mapping not found.`);
+                
+                const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
+                const lines = tsvText.split('\n');
+                let currentVerse = "";
+                
+                for (let i = 0; i < lines.length; i++) {
+                    const line = lines[i].trim();
+                    if (!line) continue;
+                    const cols = line.split('\t');
+                    const id = cols[0];
+                    if (id.startsWith(targetPrefix)) {
+                        const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
+                        if (vNumInt.toString() !== currentVerse) {
+                            currentVerse = vNumInt.toString();
+                            htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${currentVerse}</sup>`;
+                        }
+                        htmlOut += cols[1] + " ";
+                    }
+                }
+            } else {
+                // XML Engine
+                const response = await fetch(fileName);
+                if (!response.ok) throw new Error(`File ${fileName} missing`);
+                const xmlText = await response.text();
 
-                const verses = chapNode.querySelectorAll('VERS');
-                verses.forEach(vers => {
-                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('vnumber')}</sup>`;
-                    Array.from(vers.childNodes).forEach(node => {
-                        if (node.nodeType === Node.TEXT_NODE) htmlOut += node.textContent + " ";
-                        else if (node.nodeName.toLowerCase() === 'gr') htmlOut += node.textContent + " ";
-                        else if (node.nodeName.toLowerCase() === 'style') htmlOut += `<span style="font-style: italic; color: #888;">${node.textContent}</span> `;
+                const parser = new DOMParser();
+                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
+
+                const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
+                const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
+                const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
+
+                if (isZefania) {
+                    const bNum = bnumberMap[fullBookName];
+                    const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
+                    const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
+                    if (!chapNode) throw new Error("Chapter not found.");
+
+                    const verses = chapNode.querySelectorAll('VERS');
+                    verses.forEach(vers => {
+                        htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('vnumber')}</sup>`;
+                        Array.from(vers.childNodes).forEach(node => {
+                            if (node.nodeType === Node.TEXT_NODE) htmlOut += node.textContent + " ";
+                            else if (node.nodeName.toLowerCase() === 'gr') htmlOut += node.textContent + " ";
+                            else if (node.nodeName.toLowerCase() === 'style') htmlOut += `<span style="font-style: italic; color: #888;">${node.textContent}</span> `;
+                        });
                     });
-                });
-            } else if (isOSIS) {
-                const osisId = osisMap[fullBookName];
-                const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
-                if (!chapNode) throw new Error("Chapter not found.");
+                } else if (isOSIS) {
+                    const osisId = osisMap[fullBookName];
+                    const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
+                    if (!chapNode) throw new Error("Chapter not found.");
 
-                const verses = chapNode.querySelectorAll('verse');
-                verses.forEach(vers => { 
-                    const vNumMatch = vers.getAttribute('osisID').match(/\.(\d+)$/);
-                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vNumMatch ? vNumMatch[1] : "?"}</sup>${vers.textContent} `; 
-                });
-            } else if (isSimpleXML) {
-                const bNum = bnumberMap[fullBookName];
-                const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
-                const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
-                if (!chapNode) throw new Error("Chapter not found.");
+                    const verses = chapNode.querySelectorAll('verse');
+                    verses.forEach(vers => { 
+                        const vNumMatch = vers.getAttribute('osisID').match(/\.(\d+)$/);
+                        htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vNumMatch ? vNumMatch[1] : "?"}</sup>${vers.textContent} `; 
+                    });
+                } else if (isSimpleXML) {
+                    const bNum = bnumberMap[fullBookName];
+                    const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
+                    const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
+                    if (!chapNode) throw new Error("Chapter not found.");
 
-                const verses = chapNode.querySelectorAll('verse');
-                verses.forEach(vers => { 
-                    htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('number')}</sup>${vers.textContent} `; 
-                });
+                    const verses = chapNode.querySelectorAll('verse');
+                    verses.forEach(vers => { 
+                        htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('number')}</sup>${vers.textContent} `; 
+                    });
+                }
             }
 
             htmlOut += `</p><br>`;
