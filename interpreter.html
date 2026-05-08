@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Ensure this file is in the same directory -->
     <script src="strongs-greek-dictionary.js"></script>
 
     <style>
@@ -113,7 +114,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <h3 style="border-bottom: 1px solid rgba(255,255,255,0.1); padding-bottom: 5px;">1. Base Passage</h3>
             <div style="display: flex; flex-direction: column; gap: 5px;">
-                <input type="text" id="bibleRefInput" placeholder="Enter Reference (e.g. Matt 1)" onkeypress="if(event.key === 'Enter') triggerLoadModule()">
+                <input type="text" id="bibleRefInput" placeholder="Enter Ref (e.g. Rom 1:1-5)" onkeypress="if(event.key === 'Enter') triggerLoadModule()">
                 <div style="display: flex; gap: 5px;">
                     <select id="bibleModuleSelect" style="flex: 2;" onchange="updateSearchLanguageToggle()">
                         <optgroup label="Interlinear">
@@ -359,30 +360,67 @@
     }
 
     // ---------------------------------------------------------
-    // LEXICAL ENGINES
+    // LEXICAL ENGINES (BULLETPROOF DICTIONARY LOOKUP)
     // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
+    
     async function getStrongsDef(key) {
         if (!key) return "";
-        if (key.startsWith('G') && typeof strongsDictionary !== 'undefined') {
-            let e = strongsDictionary[key] || strongsGreekDictionary[key];
-            if (e) return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+        
+        if (key.startsWith('G')) {
+            // Find the dictionary object no matter what variable name it was given
+            let dict = window.strongsDictionary || window.strongsGreekDictionary || window.strongs_greek_dictionary;
+            if (!dict) {
+                for (let k in window) {
+                    if (k.toLowerCase().includes('strong') && typeof window[k] === 'object' && !k.includes('Element')) {
+                        dict = window[k]; break;
+                    }
+                }
+            }
+            
+            if (!dict) return "Error: Dictionary file (strongs-greek-dictionary.js) not loaded or variable not found.";
+
+            // Strip non-numbers to get the raw root (e.g. "4102")
+            let numPart = key.replace(/[^0-9]/g, '');
+            
+            // Try every known format that Javascript dictionaries use
+            let keysToTry = [
+                key, // "G4102"
+                'G' + numPart, // "G4102"
+                'G' + numPart.padStart(4, '0'), // "G04102"
+                numPart, // "4102"
+                numPart.padStart(4, '0') // "04102"
+            ];
+            
+            for (let testKey of keysToTry) {
+                if (dict[testKey]) {
+                    let e = dict[testKey];
+                    return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+                }
+            }
+            return "Definition not found in dictionary for " + key;
         }
+        
+        // Hebrew lookup
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
-                    const res = await fetch('strongs_hebrew.xml'); if (!res.ok) throw new Error();
-                    const xmlText = await res.text();
-                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+                    const res = await fetch('strongs_hebrew.xml'); 
+                    if (res.ok) {
+                        const xmlText = await res.text();
+                        hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+                    }
                 } catch (e) { return "Error loading Hebrew lexicon."; }
             }
-            const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
-            if (entryNode) {
-                const lemmaNode = entryNode.querySelector('w'); const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
-                const meaningNode = entryNode.querySelector('meaning'); const meaning = meaningNode ? meaningNode.textContent : "";
-                const bdbNode = entryNode.querySelector('bdb'); const bdb = bdbNode ? bdbNode.textContent : "";
-                let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
-                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`; return result;
+            if (hebrewLexiconDoc) {
+                const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
+                if (entryNode) {
+                    const lemmaNode = entryNode.querySelector('w'); const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
+                    const meaningNode = entryNode.querySelector('meaning'); const meaning = meaningNode ? meaningNode.textContent : "";
+                    const bdbNode = entryNode.querySelector('bdb'); const bdb = bdbNode ? bdbNode.textContent : "";
+                    let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
+                    if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`; return result;
+                }
             }
         }
         return "Definition not found.";
@@ -456,7 +494,7 @@
     }
 
     // ---------------------------------------------------------
-    // DUAL-REGEX WILDCARD SEARCH ENGINE (RESTORED & BULLETPROOFED)
+    // DUAL-REGEX WILDCARD SEARCH ENGINE
     // ---------------------------------------------------------
     const stripPunctuationAndAccents = str => str.normalize("NFD").replace(/[\u0300-\u036f.,;!?¶"']/g, "").toLowerCase();
 
@@ -464,16 +502,12 @@
         term = term.trim(); 
         if (!term) return false;
 
-        // 1. Strong's Number Match
         if (/^[GH]\d+$/.test(term.toUpperCase())) {
             return (wordData.strongs || "").toUpperCase() === term.toUpperCase();
         }
 
         let isMatch = false;
 
-        // 2. Morphology Match 
-        // Only run this if the term contains a hyphen (which all RMAC codes have) 
-        // and consists of standard morph code characters.
         if (term.includes('-') && /^[A-Za-z0-9\-*]+$/.test(term)) {
             const morphRegex = new RegExp("^" + term.replace(/\*/g, '.') + "$", "i");
             if (morphRegex.test(wordData.parsing || "")) {
@@ -481,12 +515,9 @@
             }
         }
 
-        // 3. Lexical / Surface Word Match (The Smart Fallback)
         if (!isMatch) {
             let cleanTerm = stripPunctuationAndAccents(term);
-            // Escape special chars EXCEPT the asterisk
             let escapedTerm = cleanTerm.replace(/[.+?^${}()|[\]\\]/g, '\\$&');
-            // Convert asterisk to universal wildcard
             let wordRegexStr = "^" + escapedTerm.replace(/\*/g, '.*') + "$";
             let wordRegex = new RegExp(wordRegexStr, "i");
             
@@ -551,7 +582,6 @@
         
         if (!query) return;
 
-        // Auto-Detect Language Router
         let targetLang = document.getElementById('searchLangSelect').style.display !== 'none' ? document.getElementById('searchLangSelect').value : null;
         if (originalMod.includes('interlinear')) {
             const hasGreek = /[\u0370-\u03FF\u1F00-\u1FFF]/.test(query);
@@ -569,7 +599,6 @@
             if (op.startsWith('WITHIN')) { const distMatch = op.match(/\d+/); if (distMatch) withinDist = parseInt(distMatch[0]); op = 'WITHIN'; }
         }
 
-        // Custom Range Setup
         let customBooks = new Set();
         if (scope === 'custom') {
             const rangeStr = document.getElementById('customSearchRange').value.toLowerCase().trim();
@@ -865,7 +894,7 @@
                     const rmacMorph = srgntToRmac(cols[5], cols[6]);
                     const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex++}`; s.innerText = cols[1] + " ";
                     lexiconData[s.id] = { word: cols[1].replace(/[.,;!?¶]/g, ''), lemma: cols[3].replace(/\d+$/, ''), strongs: "G" + cols[4].slice(0, -1), parsing: rmacMorph, def: "", isEnglish: false };
-                    s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, false); };
+                    s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { handleRightClick(e, s.id, false); };
                     curBlock.appendChild(s);
                 } else if (chapFound) break;
             }
@@ -900,7 +929,7 @@
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
                                 lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
-                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
+                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     } else if (n.nodeName.toLowerCase() === 'gr') {
@@ -910,7 +939,7 @@
                             if (chunk.trim()) {
                                 const s = document.createElement('span'); s.className = 'word has-data'; s.id = `w-${refIndex.current++}`; s.innerText = chunk;
                                 lexiconData[s.id] = { word: chunk.replace(/[.,;!?]/g, ''), lemma: "", strongs: finalStrongs, parsing: n.getAttribute('rmac')||'', def: "", isEnglish: isEnglishTranslation };
-                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
+                                s.onclick = (e) => { e.stopPropagation(); handleWordClick(s.id); }; s.oncontextmenu = (e) => { handleRightClick(e, s.id, isEnglishTranslation); }; container.appendChild(s);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     } else if (n.nodeName.toLowerCase() === 'style') {
@@ -919,7 +948,7 @@
                             if (chunk.trim() !== '') {
                                 const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.style.fontStyle = 'italic'; span.style.color = '#888'; span.innerText = chunk;
                                 lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation };
-                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); }; container.appendChild(span);
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { handleRightClick(e, span.id, isEnglishTranslation); }; container.appendChild(span);
                             } else container.appendChild(document.createTextNode(chunk));
                         });
                     }
@@ -955,7 +984,7 @@
                             if (chunk.trim() !== '') {
                                 const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                                 lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: true };
-                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, true); }; engLine.appendChild(span);
+                                span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; span.oncontextmenu = (e) => { handleRightClick(e, span.id, true); }; engLine.appendChild(span);
                             } else { engLine.appendChild(document.createTextNode(chunk)); }
                         });
                     }
@@ -1010,7 +1039,7 @@
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
+                            span.oncontextmenu = (e) => { handleRightClick(e, span.id, isEnglishTranslation); };
                             passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
@@ -1029,7 +1058,7 @@
                             const span = document.createElement('span'); span.className = 'word'; span.id = `w-${refIndex.current++}`; span.innerText = chunk;
                             lexiconData[span.id] = { word: chunk.replace(/[.,;!?]/g, ''), isEnglish: isEnglishTranslation }; 
                             span.onclick = (e) => { e.stopPropagation(); handleWordClick(span.id); }; 
-                            span.oncontextmenu = (e) => { e.preventDefault(); handleRightClick(e, span.id, isEnglishTranslation); };
+                            span.oncontextmenu = (e) => { handleRightClick(e, span.id, isEnglishTranslation); };
                             passageContainer.appendChild(span);
                         } else passageContainer.appendChild(document.createTextNode(chunk));
                     });
@@ -1040,7 +1069,7 @@
     }
 
     // ---------------------------------------------------------
-    // CLICK HANDLERS (With Safe Binding)
+    // CLICK HANDLERS
     // ---------------------------------------------------------
     async function handleWordClick(id) {
         clearSelection();
@@ -1073,6 +1102,7 @@
     }
 
     function handleRightClick(e, id, isEnglish = false) {
+        e.preventDefault();
         clearSelection();
         selectedWordId = id; document.getElementById(id).classList.add('selected');
         rightClickedData = lexiconData[id];
@@ -1204,9 +1234,6 @@
         } else passageContainer.innerHTML = bibleCache;
     }
 
-    // ---------------------------------------------------------
-    // UTILS
-    // ---------------------------------------------------------
     function syncPastedDef() { if(selectedWordId && lexiconData[selectedWordId]) lexiconData[selectedWordId].def = document.getElementById('lexDef').value; }
     function renderText() {
         const raw = document.getElementById('rawTextInput').value; if(!raw.trim()) return;
