@@ -85,6 +85,7 @@
             <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
         </div>
 
+        <!-- REED-KELLOGG PALETTE -->
         <div id="palette-rk" class="palette">
             <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Baseline</div>
             <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Object</div>
@@ -100,6 +101,7 @@
             <div class="tool" onclick="addShape('text')"><strong style="font-size:20px;">Label</strong></div>
         </div>
 
+        <!-- BLOCK DIAGRAM PALETTE -->
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div class="tool" onclick="openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
             <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Orthogonal Arrow</div>
@@ -173,6 +175,7 @@
     <div class="context-item" onclick="setLineStyle('dotted')">Dotted Line</div>
 </div>
 
+<!-- THE BLOCK MODAL (Text Editor) -->
 <div id="block-modal-overlay">
     <div id="block-modal">
         <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; font-size: 16px;">Add Text Block</h3>
@@ -301,7 +304,6 @@
         }
     }
 
-    // --- TAB INTERCEPTOR FOR MODAL ---
     document.getElementById('block-input').addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -312,7 +314,6 @@
         }
     });
 
-    // --- BLOCK DIAGRAM MODAL LOGIC ---
     function openBlockModal() {
         editingBlockId = null;
         document.getElementById('block-input').value = '';
@@ -322,7 +323,7 @@
     function closeBlockModal() { document.getElementById('block-modal-overlay').style.display = 'none'; editingBlockId = null; }
     
     function submitBlock() {
-        const text = document.getElementById('block-input').value; 
+        const text = document.getElementById('block-input').value;
         if (!text.trim()) { closeBlockModal(); return; }
         if (editingBlockId) {
             const el = elements.find(e => e.id === editingBlockId);
@@ -346,41 +347,29 @@
         draw(); autoSave();
     }
 
-    // --- HIT PRIORITY ALGORITHM ---
+    // --- UNIFIED HIT PRIORITY & BOUNDING BOX ALGORITHM ---
     function getHitElement(mx, my) {
         let hitHandle = null, targetPoint = null;
         let hitLine = null, hitText = null, hitBlock = null;
 
+        const checkH = (hx, hy, tgt, el) => {
+            if (!hitHandle && Math.hypot(hx - mx, hy - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = tgt; }
+        };
+
         [...elements].reverse().forEach(el => {
             const f = el.flip || 1;
-            // 1. Check Handles (Highest Priority)
-            if (!hitHandle) {
-                if (el.type === 'single_line' || el.type === 'labeled_arrow') { 
-                    if (Math.hypot(el.x - mx, el.y - my) < 30) { hitHandle = el; targetPoint = 'line_start'; } 
-                    else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30) { hitHandle = el; targetPoint = 'line_end'; } 
-                }
-                else if (el.type === 'subject_baseline') {
-                    if (Math.hypot(el.x - (el.dx_left*f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'subj_left'; }
-                    else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'subj_right'; }
-                }
-                else if (el.type === 'modifier') {
-                    if (Math.hypot(el.x + (el.dx_top*f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'mod_top'; }
-                    else if (Math.hypot(el.x + (el.w*f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'mod_right'; }
-                }
-                else if (el.type === 'prep_shelf') { 
-                    if (Math.hypot(el.x + (el.dx_top * f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'prep_top'; } 
-                    else if (Math.hypot(el.x + (el.w * f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'prep_bottom'; } 
-                }
-                else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
-                    if (Math.hypot(el.type === 'pred_nom' ? el.x - (25*f) : el.x, (el.y - el.h) - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'height'; } 
-                    else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = 'width'; } 
-                }
-                else if (el.type === 'block_text') {
-                    if (Math.hypot((el.x + el.w) - mx, (el.y + el.h) - my) < 30 / zoomLevel) { hitHandle = el; targetPoint = 'resize_br'; }
-                }
-            }
+            
+            // 1. Handles (Highest Priority)
+            if (el.type === 'single_line' || el.type === 'labeled_arrow') { checkH(el.x, el.y, 'line_start', el); checkH(el.x + el.w * f, el.y + el.h, 'line_end', el); }
+            else if (el.type === 'subject_baseline') { checkH(el.x - el.dx_left*f, el.y, 'subj_left', el); checkH(el.x + el.w*f, el.y, 'subj_right', el); }
+            else if (el.type === 'modifier' || el.type === 'prep_shelf') { checkH(el.x + el.dx_top*f, el.y + el.dy_top, 'mod_top', el); checkH(el.x + el.w*f, el.y, 'mod_right', el); }
+            else if (el.type === 'appositive' || el.type === 'direct_object') { checkH(el.x, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y, 'width', el); }
+            else if (el.type === 'pred_nom') { checkH(el.x - 25*f, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y, 'width', el); }
+            else if (el.type === 'stilt') { checkH(el.x, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y - el.h, 'width', el); }
+            else if (el.type === 'fork' || el.type === 'diamond') { checkH(el.x + el.w*f, el.y - el.h, 'fork_top', el); checkH(el.x + el.w*f, el.y + el.h, 'fork_bottom', el); }
+            else if (el.type === 'block_text') { checkH(el.x + el.w, el.y + el.h, 'resize_br', el); }
 
-            // 2. Check Bodies (Z-Index Ordered Priority)
+            // 2. Bodies (Z-Index Ordered Priority)
             if (el.type === 'text') {
                 if (!hitText && Math.abs(el.x + 20 - mx) < 60 && Math.abs(el.y - 10 - my) < 25) hitText = el;
             } else if (el.type === 'block_text') {
@@ -389,17 +378,28 @@
                 if (!hitLine) {
                     const ex = el.x + el.w * f, ey = el.y + el.h;
                     let d1, d2;
-                    if (el.flip === 1) { // Vert then Horiz
+                    if (el.flip === 1) { 
                         d1 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - el.x) < 15) ? Math.abs(mx - el.x) : Infinity;
                         d2 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - ey) < 15) ? Math.abs(my - ey) : Infinity;
-                    } else { // Horiz then Vert
+                    } else { 
                         d1 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - el.y) < 15) ? Math.abs(my - el.y) : Infinity;
                         d2 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - ex) < 15) ? Math.abs(mx - ex) : Infinity;
                     }
                     if (d1 < 15 || d2 < 15) hitLine = el;
                 }
             } else {
-                if (!hitLine && Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*f)) - 20 && mx < Math.max(el.x, el.x + (el.w*f)) + 20) hitLine = el;
+                if (!hitLine) {
+                    let bbMinX, bbMaxX, bbMinY, bbMaxY;
+                    if (el.type === 'stilt') { bbMinX = Math.min(el.x - el.w*f, el.x + el.w*f); bbMaxX = Math.max(el.x - el.w*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y + 25; }
+                    else if (el.type === 'fork' || el.type === 'diamond') { bbMinX = Math.min(el.x - 30*f, el.x + el.w*f); bbMaxX = Math.max(el.x - 30*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y + el.h; }
+                    else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { bbMinX = Math.min(el.x - 25*f, el.x + el.w*f); bbMaxX = Math.max(el.x - 25*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y; }
+                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { bbMinX = Math.min(el.x, el.x + el.w*f, el.x + el.dx_top*f); bbMaxX = Math.max(el.x, el.x + el.w*f, el.x + el.dx_top*f); bbMinY = Math.min(el.y, el.y + el.dy_top); bbMaxY = Math.max(el.y, el.y + el.dy_top); }
+                    else if (el.type === 'subject_baseline') { bbMinX = Math.min(el.x - el.dx_left*f, el.x + el.w*f); bbMaxX = Math.max(el.x - el.dx_left*f, el.x + el.w*f); bbMinY = el.y - 30; bbMaxY = el.y + 30; }
+                    else if (el.type === 'x_line') { bbMinX = el.x - 35; bbMaxX = el.x + 35; bbMinY = el.y - 35; bbMaxY = el.y + 35; }
+                    else { bbMinX = Math.min(el.x, el.x + el.w*f); bbMaxX = Math.max(el.x, el.x + el.w*f); bbMinY = Math.min(el.y, el.y + el.h); bbMaxY = Math.max(el.y, el.y + el.h); }
+                    
+                    if (mx >= bbMinX - 10 && mx <= bbMaxX + 10 && my >= bbMinY - 10 && my <= bbMaxY + 10) hitLine = el;
+                }
             }
         });
 
@@ -463,10 +463,7 @@
             isResizing = true; selectedElements = [hit.hitHandle]; currentResizePoint = hit.targetPoint; 
             document.getElementById('styleColor').value = hit.hitHandle.color || '#000000';
             document.getElementById('styleWeight').value = hit.hitHandle.thickness || 2.5;
-            draw(); return;
-        } 
-        
-        if (hit.body) { 
+        } else if (hit.body) { 
             const clicked = hit.body;
             if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
             isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
@@ -482,24 +479,28 @@
         const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
         if (isResizing) {
             const el = selectedElements[0], f = el.flip || 1;
-            if (el.type === 'labeled_arrow') { 
-                if (currentResizePoint === 'line_start') { const ex = el.x + el.w * f, ey = el.y + el.h; el.x = snapEnabled ? Math.round(mx/10)*10 : mx; el.y = snapEnabled ? Math.round(my/10)*10 : my; el.w = (ex - el.x) / f; el.h = ey - el.y; } 
-                else { let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my; el.w = (tx - el.x) / f; el.h = ty - el.y; } 
+            let mxSnap = snapEnabled ? Math.round(mx/10)*10 : mx;
+            let mySnap = snapEnabled ? Math.round(my/10)*10 : my;
+
+            if (el.type === 'labeled_arrow' || el.type === 'single_line') { 
+                if (currentResizePoint === 'line_start') { const ex = el.x + el.w * f, ey = el.y + el.h; el.x = mxSnap; el.y = mySnap; el.w = (ex - el.x) / (el.type === 'single_line' ? 1 : f); el.h = ey - el.y; } 
+                else { el.w = (mxSnap - el.x) / (el.type === 'single_line' ? 1 : f); el.h = mySnap - el.y; } 
             }
-            else if (el.type === 'single_line') { 
-                if (currentResizePoint === 'line_start') { const ex = el.x + el.w, ey = el.y + el.h; el.x = snapEnabled ? Math.round(mx/10)*10 : mx; el.y = snapEnabled ? Math.round(my/10)*10 : my; el.w = (ex - el.x); el.h = ey - el.y; } 
-                else { let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my; el.w = (tx - el.x); el.h = ty - el.y; } 
+            else if (el.type === 'subject_baseline') { if (currentResizePoint === 'subj_left') { el.dx_left = Math.max(20, (el.x - mxSnap) * f); } else { el.w = Math.max(20, (mxSnap - el.x) * f); } }
+            else if (el.type === 'modifier' || el.type === 'prep_shelf') { if (currentResizePoint === 'mod_top') { el.dx_top = (mxSnap - el.x) * f; el.dy_top = mySnap - el.y; } else { el.w = Math.max(20, (mxSnap - el.x) * f); } }
+            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
+                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - mySnap); } else { el.w = Math.max(20, (mxSnap - el.x) * f); } 
             }
-            else if (el.type === 'subject_baseline') { if (currentResizePoint === 'subj_left') { el.dx_left = Math.max(20, snapEnabled ? Math.round(((el.x - mx) * f) / 10) * 10 : (el.x - mx) * f); } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
-            else if (el.type === 'modifier') { if (currentResizePoint === 'mod_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
-            else if (el.type === 'prep_shelf') { if (currentResizePoint === 'prep_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
-            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - (snapEnabled ? Math.round(my/10)*10 : my)); } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
+            else if (el.type === 'stilt') {
+                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - mySnap); } else { el.w = Math.max(20, (mxSnap - el.x) * f); }
+            }
+            else if (el.type === 'fork' || el.type === 'diamond') {
+                if (currentResizePoint === 'fork_top') { el.h = Math.max(10, el.y - mySnap); el.w = Math.max(20, (mxSnap - el.x) * f); }
+                else if (currentResizePoint === 'fork_bottom') { el.h = Math.max(10, mySnap - el.y); el.w = Math.max(20, (mxSnap - el.x) * f); }
+            }
             else if (el.type === 'block_text') {
-                if (currentResizePoint === 'resize_br') {
-                    el.w = Math.max(100, snapEnabled ? Math.round((mx - el.x) / 10) * 10 : mx - el.x);
-                }
+                if (currentResizePoint === 'resize_br') { el.w = Math.max(100, mxSnap - el.x); }
             }
-            else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); el.h = Math.max(10, snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y); }
         } else if (isDragging) { const dx = mx - dragOffset.x, dy = my - dragOffset.y; selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset.x = mx; dragOffset.y = my; }
         else if (isMarquee) { marqueeEnd = {x: mx, y: my}; const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); }
         draw();
@@ -560,12 +561,9 @@
                 
                 if (selectedElements.includes(el)) { 
                     ctx.setLineDash([4, 4]); ctx.strokeStyle = '#3498db'; ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, el.h + 8); ctx.setLineDash([]); 
-                    // Blue Resize Handle
                     const hR = 6 / Math.sqrt(zoomLevel);
                     ctx.fillStyle = '#3498db';
-                    ctx.beginPath();
-                    ctx.arc(el.x + el.w, el.y + el.h, hR, 0, Math.PI * 2);
-                    ctx.fill();
+                    ctx.beginPath(); ctx.arc(el.x + el.w, el.y + el.h, hR, 0, Math.PI * 2); ctx.fill();
                 }
             }
         });
@@ -587,18 +585,22 @@
                 else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
                 else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
                 else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
-                else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
+                else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + el.w, el.y + el.h); }
                 
                 ctx.stroke(); ctx.setLineDash([]);
                 
                 if (isSel) {
                     ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db'; const hR = 6 / Math.sqrt(zoomLevel);
+                    const drawH = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                    
                     if (el.type === 'x_line') { ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.strokeRect(el.x - 35, el.y - 35, 70, 70); ctx.setLineDash([]); }
-                    else if (el.type === 'single_line') { ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y + el.h, hR, 0, Math.PI*2); ctx.fill(); }
-                    else if (el.type === 'subject_baseline') { ctx.beginPath(); ctx.arc(el.x - (el.dx_left*f), el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                    else if (el.type === 'modifier') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top*f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w*f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                    else if (el.type === 'prep_shelf') { ctx.beginPath(); ctx.arc(el.x + (el.dx_top * f), el.y + el.dy_top, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
-                    else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { ctx.beginPath(); ctx.arc(el.type === 'pred_nom' ? el.x - (25*f) : el.x, el.y - el.h, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(el.x + (el.w * f), el.y, hR, 0, Math.PI*2); ctx.fill(); }
+                    else if (el.type === 'single_line') { drawH(el.x, el.y); drawH(el.x + el.w, el.y + el.h); }
+                    else if (el.type === 'subject_baseline') { drawH(el.x - el.dx_left*f, el.y); drawH(el.x + el.w*f, el.y); }
+                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { drawH(el.x + el.dx_top*f, el.y + el.dy_top); drawH(el.x + el.w*f, el.y); }
+                    else if (el.type === 'appositive' || el.type === 'direct_object') { drawH(el.x, el.y - el.h); drawH(el.x + el.w*f, el.y); }
+                    else if (el.type === 'pred_nom') { drawH(el.x - 25*f, el.y - el.h); drawH(el.x + el.w*f, el.y); }
+                    else if (el.type === 'stilt') { drawH(el.x, el.y - el.h); drawH(el.x + el.w*f, el.y - el.h); }
+                    else if (el.type === 'fork' || el.type === 'diamond') { drawH(el.x + el.w*f, el.y - el.h); drawH(el.x + el.w*f, el.y + el.h); }
                 }
             }
         });
@@ -625,45 +627,38 @@
                 ctx.moveTo(el.x, el.y);
                 let angle, mx, my;
 
-                // ORTHOGONAL ROUTING 
                 if (f === 1) { // Vertical then Horizontal
                     ctx.lineTo(el.x, ey);
                     ctx.lineTo(ex, ey);
                     angle = ex > el.x ? 0 : Math.PI; 
-                    
-                    // LABEL ON FIRST SEGMENT (Vertical)
                     mx = el.x;
                     my = el.y + (ey - el.y) / 2;
                 } else { // Horizontal then Vertical
                     ctx.lineTo(ex, el.y);
                     ctx.lineTo(ex, ey);
                     angle = ey > el.y ? Math.PI/2 : -Math.PI/2; 
-                    
-                    // LABEL ON FIRST SEGMENT (Horizontal)
                     mx = el.x + (ex - el.x) / 2;
                     my = el.y;
                 }
 
                 ctx.stroke(); ctx.setLineDash([]);
                 
-                // ARROWHEAD
                 ctx.save(); ctx.translate(ex, ey); ctx.rotate(angle); 
                 ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-12, 6); ctx.lineTo(-12, -6); ctx.closePath(); 
                 ctx.fillStyle = el.color || '#000000'; ctx.fill(); ctx.restore();
 
-                // CLEAN LABEL (No Border, Invisible White Mask, 9px)
                 ctx.font = `bold 9px -apple-system, BlinkMacSystemFont, sans-serif`; 
                 const m = ctx.measureText(el.val.toUpperCase());
-                
-                // Invisible white mask to cut the line
                 ctx.fillStyle = "#ffffff"; 
                 ctx.fillRect(mx - m.width/2 - 4, my - 8, m.width + 8, 16); 
-                
-                // Text overlay
                 ctx.fillStyle = el.color || '#000000'; 
                 ctx.fillText(el.val.toUpperCase(), mx - m.width/2, my + 3);
 
-                if (isSel) { const hR = 6 / Math.sqrt(zoomLevel); ctx.fillStyle = '#3498db'; ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); ctx.beginPath(); ctx.arc(ex, ey, hR, 0, Math.PI*2); ctx.fill(); }
+                if (isSel) { 
+                    const hR = 6 / Math.sqrt(zoomLevel); ctx.fillStyle = '#3498db'; 
+                    ctx.beginPath(); ctx.arc(el.x, el.y, hR, 0, Math.PI*2); ctx.fill(); 
+                    ctx.beginPath(); ctx.arc(ex, ey, hR, 0, Math.PI*2); ctx.fill(); 
+                }
             }
         });
 
