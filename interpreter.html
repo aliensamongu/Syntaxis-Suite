@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <title>Σyntaxis Interpreter</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <!-- Ensure this file is in the same directory -->
     <script src="strongs-greek-dictionary.js"></script>
 
     <style>
@@ -359,30 +360,48 @@
     }
 
     // ---------------------------------------------------------
-    // LEXICAL ENGINES
+    // LEXICAL ENGINES (BULLETPROOF DICTIONARY LOOKUP)
     // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
     
-    // THE BUG FIX IS HERE
     async function getStrongsDef(key) {
         if (!key) return "";
         
-        // Ensure Greek lookups don't crash if variable is named differently
         if (key.startsWith('G')) {
-            // Strip leading zeros from the Strong's number just in case
-            let numPart = key.substring(1).replace(/^0+/, '');
-            let searchKey = 'G' + numPart;
-            
-            // Safely grab the dictionary from the window object
+            // Find the dictionary object no matter what variable name it was given
             let dict = window.strongsDictionary || window.strongsGreekDictionary || window.strongs_greek_dictionary;
-            
-            if (dict && dict[searchKey]) {
-                let e = dict[searchKey];
-                return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+            if (!dict) {
+                for (let k in window) {
+                    if (k.toLowerCase().includes('strong') && typeof window[k] === 'object' && !k.includes('Element')) {
+                        dict = window[k]; break;
+                    }
+                }
             }
+            
+            if (!dict) return "Error: Dictionary file (strongs-greek-dictionary.js) not loaded or variable not found.";
+
+            // Strip non-numbers to get the raw root (e.g. "4102")
+            let numPart = key.replace(/[^0-9]/g, '');
+            
+            // Try every known format that Javascript dictionaries use
+            let keysToTry = [
+                key, // "G4102"
+                'G' + numPart, // "G4102"
+                'G' + numPart.padStart(4, '0'), // "G04102"
+                numPart, // "4102"
+                numPart.padStart(4, '0') // "04102"
+            ];
+            
+            for (let testKey of keysToTry) {
+                if (dict[testKey]) {
+                    let e = dict[testKey];
+                    return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+                }
+            }
+            return "Definition not found in dictionary for " + key;
         }
         
-        // Hebrew lookups
+        // Hebrew lookup
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
