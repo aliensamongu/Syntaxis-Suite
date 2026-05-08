@@ -362,27 +362,46 @@
     // LEXICAL ENGINES
     // ---------------------------------------------------------
     let hebrewLexiconDoc = null; 
+    
+    // THE BUG FIX IS HERE
     async function getStrongsDef(key) {
         if (!key) return "";
-        if (key.startsWith('G') && typeof strongsDictionary !== 'undefined') {
-            let e = strongsDictionary[key] || strongsGreekDictionary[key];
-            if (e) return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+        
+        // Ensure Greek lookups don't crash if variable is named differently
+        if (key.startsWith('G')) {
+            // Strip leading zeros from the Strong's number just in case
+            let numPart = key.substring(1).replace(/^0+/, '');
+            let searchKey = 'G' + numPart;
+            
+            // Safely grab the dictionary from the window object
+            let dict = window.strongsDictionary || window.strongsGreekDictionary || window.strongs_greek_dictionary;
+            
+            if (dict && dict[searchKey]) {
+                let e = dict[searchKey];
+                return typeof e === 'string' ? e : (e.lemma ? `[${e.lemma}]\n` : "") + (e.strongs_def || e.definition || "");
+            }
         }
+        
+        // Hebrew lookups
         if (key.startsWith('H')) {
             if (!hebrewLexiconDoc) {
                 try {
-                    const res = await fetch('strongs_hebrew.xml'); if (!res.ok) throw new Error();
-                    const xmlText = await res.text();
-                    hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+                    const res = await fetch('strongs_hebrew.xml'); 
+                    if (res.ok) {
+                        const xmlText = await res.text();
+                        hebrewLexiconDoc = new DOMParser().parseFromString(xmlText, "text/xml");
+                    }
                 } catch (e) { return "Error loading Hebrew lexicon."; }
             }
-            const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
-            if (entryNode) {
-                const lemmaNode = entryNode.querySelector('w'); const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
-                const meaningNode = entryNode.querySelector('meaning'); const meaning = meaningNode ? meaningNode.textContent : "";
-                const bdbNode = entryNode.querySelector('bdb'); const bdb = bdbNode ? bdbNode.textContent : "";
-                let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
-                if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`; return result;
+            if (hebrewLexiconDoc) {
+                const entryNode = hebrewLexiconDoc.querySelector(`entry[id="${key}"]`);
+                if (entryNode) {
+                    const lemmaNode = entryNode.querySelector('w'); const pron = lemmaNode ? lemmaNode.getAttribute('pron') : "";
+                    const meaningNode = entryNode.querySelector('meaning'); const meaning = meaningNode ? meaningNode.textContent : "";
+                    const bdbNode = entryNode.querySelector('bdb'); const bdb = bdbNode ? bdbNode.textContent : "";
+                    let result = `[${lemmaNode ? lemmaNode.textContent : ""}] - Pronounced: ${pron}\n\nDefinition: ${meaning}`;
+                    if (bdb) result += `\n\nBDB Lexicon:\n${bdb}`; return result;
+                }
             }
         }
         return "Definition not found.";
