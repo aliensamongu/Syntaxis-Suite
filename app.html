@@ -11,61 +11,41 @@
             --radius-small: 8px; --radius-medium: 12px;
         }
         body { margin: 0; display: flex; height: 100vh; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; overflow: hidden; background: var(--bg-main); }
-        
         #sidebar { width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 100; box-shadow: 2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; }
-        
         #right-sidebar { width: var(--right-sidebar-width); background: var(--oxford-navy); flex-shrink: 0; border-left: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column; z-index: 90; box-shadow: -2px 0 15px rgba(0,0,0,0.15); color: var(--oxford-cream); }
-        .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
-
+        .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; gap: 10px; }
         h2 { margin: 0; font-family: Georgia, serif; font-size: 24px; }
         .ix { font-size: 14px; text-decoration: overline; margin-left: 4px; font-weight: bold; color: var(--oxford-gold); }
-        h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
-
+        h3 { margin: 0 0 10px 0; font-size: 12px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
         input[type="text"], textarea, select { width: 100%; box-sizing: border-box; border-radius: var(--radius-small); border: 1px solid var(--oxford-navy-dark); padding: 10px; font-family: inherit; font-size: 13px; color: var(--oxford-navy); background: var(--oxford-cream); outline: none; }
         textarea { height: 120px; line-height: 1.4; resize: none; }
-        
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: #F8F5EE; text-decoration: none; text-transform: uppercase; font-weight: bold; background: #121A2A; border-radius: 4px; border: 1px solid rgba(255,255,255,0.05); }
         .app-nav a.active { background: #C5A059; color: #121A2A; }
-
         .palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 15px; }
         .tool { padding: 10px; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-medium); text-align: center; background: var(--oxford-cream); cursor: pointer; color: var(--oxford-navy); font-size: 11px; font-weight: bold; transition: 0.1s; }
         .tool:hover { background: #fff; transform: translateY(-1px); }
         .tool svg { width: 26px; height: 26px; stroke: var(--oxford-navy); fill: none; stroke-width: 3.5; display: block; margin: 0 auto 6px; }
-
         .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; background: var(--oxford-gold); color: var(--oxford-navy); }
-        .btn-group { display: flex; gap: 5px; margin-top: 10px; }
-        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; }
-        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
-
         #canvas-viewport { flex-grow: 1; overflow: auto; position: relative; background: var(--bg-main); }
         canvas { background: #fff; display: block; cursor: crosshair; }
-
-        #word-bank { height: 250px; overflow-y: auto; padding: 15px; display: flex; flex-wrap: wrap; gap: 6px; background: var(--oxford-navy-dark); border-radius: var(--radius-medium); margin-top: 10px; }
+        #word-bank { height: 250px; overflow-y: auto; padding: 15px; display: flex; flex-wrap: wrap; gap: 6px; background: var(--oxford-navy-dark); border-radius: var(--radius-medium); }
         .bank-word { font-family: Georgia, serif; font-size: 18px; color: var(--oxford-cream); cursor: grab; padding: 4px 8px; border-radius: 4px; }
         .bank-word.selected { background: var(--oxford-gold); color: var(--oxford-navy); }
-
-        /* Apparatus Slide-out Drawer */
         #apparatus-drawer { position: fixed; top: 0; right: -400px; width: 380px; height: 100vh; background: var(--oxford-navy); box-shadow: -5px 0 25px rgba(0,0,0,0.3); transition: right 0.3s ease; z-index: 2000; display: flex; flex-direction: column; border-left: 1px solid var(--oxford-navy-dark); color: var(--oxford-cream); }
         #apparatus-drawer.open { right: 0; }
         .apparatus-header { padding: 25px; border-bottom: 1px solid var(--oxford-navy-dark); display: flex; justify-content: space-between; align-items: center; background: var(--oxford-navy-dark); }
-        .close-btn { background: none; border: none; color: var(--oxford-cream); font-size: 24px; cursor: pointer; }
-        .apparatus-content { padding: 25px; overflow-y: auto; flex-grow: 1; }
-        
-        .ms-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.03); position: relative; }
-        .ms-symbol { color: var(--oxford-gold); font-size: 20px; font-family: Georgia, serif; font-weight: bold; }
+        .ms-card { border: 1px solid rgba(255,255,255,0.1); border-radius: 6px; padding: 15px; margin-bottom: 10px; background: rgba(255,255,255,0.03); }
+        .ms-symbol { color: var(--oxford-gold); font-size: 20px; font-weight: bold; }
         .ms-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; margin-right: 8px; text-transform: uppercase; }
-        .badge-highly { background: #3A4A63; } .badge-likely { background: var(--oxford-gold); color: #121A2A; } .badge-possible { background: var(--rustic-orange); } .badge-unlikely { background: var(--oxford-crimson); }
+        .badge-highly { background: #3A4A63; } .badge-likely { background: var(--oxford-gold); color: #121A2A; } 
         .quick-keys { display: flex; gap: 5px; margin-bottom: 10px; }
         .quick-key { flex: 1; background: var(--oxford-navy-dark); border: 1px solid var(--oxford-navy-dark); border-radius: 4px; cursor: pointer; padding: 8px 0; color: white; font-family: Georgia, serif; font-size: 16px; }
-        
         #variant-modal { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(27, 38, 59, 0.98); z-index: 3000; padding: 25px; flex-direction: column; gap: 10px; }
         #variant-modal.active { display: flex; }
-
         #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: 12px; width: 600px; display: flex; flex-direction: column; gap: 15px; }
-        #block-input { height: 300px; white-space: pre-wrap; font-family: monospace; font-size: 16px; border: 1px solid #ccc; }
     </style>
 </head>
 <body>
@@ -79,44 +59,27 @@
             <a href="interpreter.html">Interpret</a>
             <a href="outliner.html">Outline</a>
         </div>
-
-        <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
-        <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:4)" oninput="autoSave()" style="margin-top:5px;">
+        <input type="text" id="projectName" placeholder="Diagram Name">
+        <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:4)">
         <button class="std-btn" onclick="saveToApp()" style="margin-top:5px; width:100%;">Save App</button>
-
-        <div class="btn-group">
-            <button id="tab-rk" class="active" onclick="switchTab('rk')">Sentence</button>
-            <button id="tab-block" onclick="switchTab('block')">Block / Flow</button>
-        </div>
-
-        <div id="palette-rk" class="palette">
+        <div class="palette">
             <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Baseline</div>
             <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Object</div>
             <div class="tool" onclick="addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
-            <div class="tool" onclick="addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
             <div class="tool" onclick="addShape('fork')"><svg viewBox="0 0 100 100"><path d="M10,50 L30,50 L50,20 L90,20 M30,50 L50,80 L90,80"/></svg>Fork</div>
-            <div class="tool" onclick="addShape('stilt')"><svg viewBox="0 0 100 100"><line x1="10" y1="30" x2="90" y2="30"/><line x1="50" y1="30" x2="50" y2="60"/></svg>Stilt</div>
             <div class="tool" onclick="addShape('text')"><strong>Label</strong></div>
             <button class="std-btn" onclick="toggleApparatus()" style="background:#fff; color:var(--oxford-navy); grid-column: span 2;">📜 Apparatus</button>
         </div>
-
-        <div id="palette-block" class="palette" style="display:none;">
-            <div class="tool" onclick="openBlockModal()" style="grid-column: span 3;">📝 Add Text Block</div>
-            <div class="tool" onclick="addLabeledArrow()" style="grid-column: span 3;">➔ Orthogonal Arrow</div>
-        </div>
-
-        <button class="std-btn" style="background:var(--oxford-crimson); color:white; margin-top:15px;" onclick="if(confirm('Clear canvas?')){elements=[]; draw(); autoSave();}">Clear Canvas</button>
+        <button class="std-btn" style="background:var(--oxford-crimson); color:white; margin-top:15px;" onclick="if(confirm('Clear?')){elements=[]; draw();}">Clear Canvas</button>
     </div>
 </div>
 
-<div id="canvas-viewport">
-    <canvas id="mainCanvas"></canvas>
-</div>
+<div id="canvas-viewport"><canvas id="mainCanvas"></canvas></div>
 
 <div id="right-sidebar">
     <div class="right-inner">
         <h3>Text Source</h3>
-        <input type="text" id="dbRefInput" placeholder="Passage Ref">
+        <input type="text" id="dbRefInput" placeholder="Passage Ref (e.g. Col 1:1-8)">
         <select id="dbModuleSelect">
             <option value="tischendorf.xml">Tischendorf Greek NT</option>
             <option value="srgnt.tsv">SRGNT Greek</option>
@@ -125,155 +88,115 @@
             <option value="emtv.xml">EMTV English</option>
             <option value="esv.xml">English ESV</option>
         </select>
-        <button class="std-btn" onclick="loadBibleText()">Extract Text</button>
-        <div id="dbStatus" style="font-size:10px; color:var(--oxford-gold); text-align:center; margin-top:5px;"></div>
-        <textarea id="passageInput" placeholder="Paste text here..." oninput="updateWordBank(); autoSave();"></textarea>
+        <button class="std-btn" onclick="extractText()">Extract Text</button>
+        <div id="dbStatus" style="font-size:10px; color:var(--oxford-gold); text-align:center;"></div>
+        <textarea id="passageInput" placeholder="Paste text here..." oninput="updateWordBank()"></textarea>
         <div id="word-bank"></div>
     </div>
 </div>
 
 <div id="apparatus-drawer">
-    <div class="apparatus-header"><h3>Textual Apparatus</h3><button class="close-btn" onclick="toggleApparatus()">&times;</button></div>
+    <div class="apparatus-header"><h3>Apparatus</h3><button class="close-btn" onclick="toggleApparatus()">&times;</button></div>
     <div class="apparatus-content">
         <div id="apparatus-list"></div>
-        <button onclick="openVariantModal()" style="width: 100%; margin-top: 10px; padding: 12px; background: transparent; border: 1px dashed var(--oxford-gold); border-radius: 8px; cursor: pointer; color: var(--oxford-gold); font-weight: bold;">+ Add Manuscript Reading</button>
-        <button onclick="launchCNTR()" style="width: 100%; margin-top: 20px; padding: 12px; background: var(--oxford-gold); color: var(--oxford-navy); border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Verify on CNTR ↗</button>
-
+        <button class="std-btn" onclick="openVariantModal()" style="width:100%;">+ Add Reading</button>
+        <button class="std-btn" onclick="launchCNTR()" style="width:100%; margin-top:10px;">Verify on CNTR ↗</button>
         <div id="variant-modal">
             <h4>MS Reading</h4>
             <div class="quick-keys">
                 <button class="quick-key" onclick="insertSiglum('𝔓')">𝔓</button>
                 <button class="quick-key" onclick="insertSiglum('א')">א</button>
                 <button class="quick-key" onclick="insertSiglum('B')">B</button>
-                <button class="quick-key" onclick="insertSiglum('D')">D</button>
                 <button class="quick-key" onclick="insertSiglum('𝔪')">𝔪</button>
             </div>
-            <input type="text" id="v-symbol" placeholder="Symbol (e.g. א)">
-            <select id="v-conviction">
-                <option value="">Conviction...</option>
-                <option value="highly">Highly Likely</option>
-                <option value="likely">Likely</option>
-                <option value="possible">Possible</option>
-                <option value="unlikely">Unlikely</option>
-            </select>
-            <input type="text" id="v-date" placeholder="Date">
+            <input type="text" id="v-symbol" placeholder="Symbol">
+            <select id="v-conviction"><option value="highly">Highly Likely</option><option value="likely">Likely</option></select>
             <textarea id="v-reading" placeholder="Reading..."></textarea>
-            <div style="display:flex; gap:10px;">
-                <button class="std-btn" onclick="closeVariantModal()" style="flex:1; background:#333; color:white;">Cancel</button>
-                <button class="std-btn" onclick="saveVariant()" style="flex:1;">Save</button>
-            </div>
-        </div>
-    </div>
-</div>
-
-<div id="block-modal-overlay">
-    <div id="block-modal">
-        <h3>Edit Text Block</h3>
-        <textarea id="block-input" placeholder="Type or paste text here..."></textarea>
-        <div style="display:flex; gap:10px;">
-            <button class="std-btn" onclick="closeBlockModal()" style="flex:1; background:#333; color:white;">Cancel</button>
-            <button class="std-btn" onclick="submitBlock()" style="flex:1;">Add to Canvas</button>
+            <button class="std-btn" onclick="saveVariant()">Save</button>
+            <button class="std-btn" onclick="closeVariantModal()" style="background:#333;color:#fff;">Cancel</button>
         </div>
     </div>
 </div>
 
 <script>
     const canvas = document.getElementById('mainCanvas'); const ctx = canvas.getContext('2d');
-    let elements = [], selectedElements = [], apparatusData = [], zoomLevel = 1, activeTab = 'rk', editingVariantId = null;
+    let elements = [], selectedElements = [], apparatusData = [], zoomLevel = 1;
     canvas.width = 4000; canvas.height = 4000;
 
-    function switchTab(t) {
-        activeTab = t;
-        document.getElementById('tab-rk').className = (t==='rk'?'active':'');
-        document.getElementById('tab-block').className = (t==='block'?'active':'');
-        document.getElementById('palette-rk').style.display = (t==='rk'?'grid':'none');
-        document.getElementById('palette-block').style.display = (t==='block'?'grid':'none');
-    }
+    const bnumberMap = { "colossians": 51, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45 };
+    const abbrevs = { "col": "colossians", "matt": "matthew", "rom": "romans" };
 
-    async function loadBibleText() {
+    async function extractText() {
+        const query = document.getElementById('dbRefInput').value;
         const mod = document.getElementById('dbModuleSelect').value;
         const status = document.getElementById('dbStatus');
         status.innerText = "Extracting...";
         try {
             const res = await fetch(mod);
-            if(!res.ok) throw new Error();
-            document.getElementById('passageInput').value = "Passage text loaded from " + mod;
+            const text = await res.text();
+            let out = "";
+            if(mod.endsWith('.tsv')) {
+                const match = query.match(/(\w+)\s*(\d+):(\d+)-?(\d+)?/);
+                const bNum = bnumberMap[abbrevs[match[1].toLowerCase()] || match[1].toLowerCase()];
+                const prefix = bNum.toString().padStart(2,'0') + match[2].padStart(3,'0');
+                text.split('\n').forEach(l => { if(l.startsWith(prefix)) out += l.split('\t')[1] + " "; });
+            } else {
+                const xml = new DOMParser().parseFromString(text, "text/xml");
+                xml.querySelectorAll('VERS, verse').forEach(v => out += v.textContent + " ");
+            }
+            document.getElementById('passageInput').value = out.trim();
             updateWordBank(); status.innerText = "Success!";
-        } catch(e) { status.innerText = "Error: File not found."; }
+        } catch(e) { status.innerText = "Error loading text."; }
     }
 
     function toggleApparatus() { document.getElementById('apparatus-drawer').classList.toggle('open'); renderApparatus(); }
     function openVariantModal() { document.getElementById('variant-modal').classList.add('active'); }
-    function closeVariantModal() { document.getElementById('variant-modal').classList.remove('active'); editingVariantId=null; }
+    function closeVariantModal() { document.getElementById('variant-modal').classList.remove('active'); }
     function insertSiglum(s) { document.getElementById('v-symbol').value += s; }
-
+    
     function launchCNTR() {
-        let ref = document.getElementById('verseReference').value || "Matt 1:1";
-        const match = ref.match(/(1\s*|2\s*|3\s*)?([a-zA-Z]+)[\s\.]*(\d+)(?:[\s:\.]+(\d+))?/);
-        if(!match) { window.open("https://greekcntr.org", "_blank"); return; }
-        const book = (match[1]?match[1].replace(/\s/g,''):'') + match[2].toLowerCase();
-        const bMap = {"matthew":40,"matt":40,"mark":41,"luke":42,"john":43,"acts":44,"romans":45,"rom":45,"1corinthians":46,"1cor":46,"2corinthians":47,"2cor":47,"galatians":48,"gal":48,"ephesians":49,"eph":49,"philippians":50,"phil":50,"colossians":51,"col":51,"1thessalonians":52,"2thessalonians":53,"1timothy":54,"2timothy":55,"titus":56,"philemon":57,"hebrews":58,"heb":58,"james":59,"1peter":60,"1pet":60,"2peter":61,"2pet":61,"1john":62,"2john":63,"3john":64,"jude":65,"revelation":66,"rev":66};
-        if(bMap[book]) window.open(`https://greekcntr.org/collation/index.htm?v=${bMap[book]}${parseInt(match[3]).toString().padStart(3,'0')}${(match[4]?parseInt(match[4]):1).toString().padStart(3,'0')}`, "_blank");
-        else window.open("https://greekcntr.org", "_blank");
+        const ref = document.getElementById('verseReference').value || "Matt 1:1";
+        const m = ref.match(/(\w+)\s*(\d+):(\d+)/);
+        if(m) window.open(`https://greekcntr.org/collation/index.htm?v=${bnumberMap[abbrevs[m[1].toLowerCase()]||m[1].toLowerCase()]}${m[2].padStart(3,'0')}${m[3].padStart(3,'0')}`);
     }
 
     function saveVariant() {
-        const s = document.getElementById('v-symbol').value, r = document.getElementById('v-reading').value;
-        if(!s || !r) return;
-        let targetId = selectedElements.length === 1 ? selectedElements[0].id : null;
-        let targetWord = targetId ? selectedElements[0].val : null;
-        apparatusData.push({ id: Date.now(), targetId, targetWord, symbol: s, reading: r, conviction: document.getElementById('v-conviction').value, date: document.getElementById('v-date').value });
-        closeVariantModal(); renderApparatus(); draw(); autoSave();
+        apparatusData.push({ id: Date.now(), symbol: document.getElementById('v-symbol').value, reading: document.getElementById('v-reading').value, conviction: document.getElementById('v-conviction').value });
+        closeVariantModal(); renderApparatus(); draw();
     }
 
     function renderApparatus() {
-        const list = document.getElementById('apparatus-list'); list.innerHTML = '';
-        apparatusData.forEach(v => {
-            list.innerHTML += `<div class="ms-card"><span class="ms-badge badge-${v.conviction}">${v.conviction}</span><span class="ms-symbol">${v.symbol}</span><div class="ms-reading">"${v.reading}"</div></div>`;
-        });
+        const l = document.getElementById('apparatus-list'); l.innerHTML = '';
+        apparatusData.forEach(v => l.innerHTML += `<div class="ms-card"><span class="ms-badge badge-${v.conviction}">${v.conviction}</span><span class="ms-symbol">${v.symbol}</span><div class="ms-reading">${v.reading}</div></div>`);
     }
 
     function addShape(type, x=500, y=500, val='') {
-        elements.push({ id: Date.now(), type, x, y, w: 200, h: 60, val, color: '#000', thickness: 2, flip: 1 });
-        draw(); autoSave();
+        elements.push({ id: Date.now(), type, x, y, w: 150, h: 50, val, color: '#000', thickness: 2, flip: 1 });
+        draw();
     }
 
     function updateWordBank() {
-        const words = document.getElementById('passageInput').value.split(/\s+/);
-        bank.innerHTML = '';
-        words.forEach(w => { if(!w) return; let s = document.createElement('span'); s.className='bank-word'; s.innerText=w; s.draggable=true; s.ondragstart=e=>e.dataTransfer.setData("text",w); bank.appendChild(s); });
+        const b = document.getElementById('word-bank'); b.innerHTML = '';
+        document.getElementById('passageInput').value.split(/\s+/).forEach(w => {
+            if(!w) return; let s = document.createElement('span'); s.className='bank-word'; s.innerText=w; s.draggable=true;
+            s.ondragstart=e=>e.dataTransfer.setData("text",w); b.appendChild(s);
+        });
     }
 
     canvas.ondragover = e => e.preventDefault();
     canvas.ondrop = e => {
-        const val = e.dataTransfer.getData("text"), rect = canvas.getBoundingClientRect();
-        addShape('text', (e.clientX - rect.left), (e.clientY - rect.top), val);
+        const v = e.dataTransfer.getData("text"), r = canvas.getBoundingClientRect();
+        addShape('text', e.clientX - r.left, e.clientY - r.top, v);
     };
 
     function draw() {
         ctx.clearRect(0,0,canvas.width,canvas.height);
         elements.forEach(el => {
             ctx.strokeStyle = el.color; ctx.lineWidth = el.thickness;
-            if(el.type === 'text') {
-                ctx.font = "italic 20px Georgia"; ctx.fillText(el.val, el.x, el.y);
-                if(apparatusData.some(v => v.targetId === el.id)) { ctx.fillStyle = 'orange'; ctx.beginPath(); ctx.arc(el.x+5, el.y-25, 4, 0, 7); ctx.fill(); ctx.fillStyle = '#000'; }
-            } else if(el.type === 'block_text') {
-                ctx.strokeRect(el.x, el.y, el.w, el.h); ctx.font = "14px monospace"; ctx.fillText(el.val.substring(0,30)+"...", el.x+10, el.y+25);
-            } else {
-                ctx.beginPath(); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x+el.w, el.y); ctx.stroke();
-            }
+            if(el.type === 'text') { ctx.font = "italic 20px Georgia"; ctx.fillText(el.val, el.x, el.y); }
+            else { ctx.beginPath(); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x+el.w, el.y); ctx.stroke(); }
         });
     }
-
-    function autoSave() {
-        const data = { elements, apparatus: apparatusData, project: document.getElementById('projectName').value, ref: document.getElementById('verseReference').value };
-        localStorage.setItem('syntaxis_final_save', JSON.stringify(data));
-    }
-
-    window.onload = () => {
-        const saved = JSON.parse(localStorage.getItem('syntaxis_final_save'));
-        if(saved) { elements=saved.elements; apparatusData=saved.apparatus; document.getElementById('projectName').value=saved.project; document.getElementById('verseReference').value=saved.ref; draw(); }
-    };
 </script>
 </body>
 </html>
