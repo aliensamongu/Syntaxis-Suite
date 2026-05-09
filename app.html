@@ -114,9 +114,13 @@
             border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-small);
             padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.03); 
             position: relative; color: var(--oxford-cream);
-            transition: 0.2s;
+            transition: 0.2s; cursor: pointer;
         }
         .ms-card:hover { border-color: rgba(197, 160, 89, 0.3); }
+        
+        /* ADDED: Highlight variant card */
+        .ms-card.active-variant { border-color: var(--rustic-orange); box-shadow: 0 0 8px rgba(200,100,40,0.5); background: rgba(200,100,40,0.1); }
+
         .ms-symbol { color: var(--oxford-gold); font-weight: bold; font-family: Georgia, serif; font-size: 20px; }
         .ms-date { font-size: 11px; color: #aaa; text-transform: uppercase; }
         .ms-reading { font-family: Georgia, serif; font-style: italic; margin-top: 8px; }
@@ -375,6 +379,7 @@
     let elements = [], selectedElements = [];
     let apparatusData = [];
     let editingVariantId = null; 
+    let activeVariantId = null; // ADDED: Tracks highlighted variant
     let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     let currentResizePoint = null, zoomLevel = 1, snapEnabled = true, rightClickedEl = null;
@@ -579,7 +584,15 @@
         input.focus();
     }
 
-    function toggleApparatus() { document.getElementById('apparatus-drawer').classList.toggle('open'); renderApparatus(); }
+    // ADDED: Clear highlights on drawer close
+    function toggleApparatus() { 
+        document.getElementById('apparatus-drawer').classList.toggle('open'); 
+        if (!document.getElementById('apparatus-drawer').classList.contains('open')) {
+            activeVariantId = null;
+            draw();
+        }
+        renderApparatus(); 
+    }
     
     function openVariantModal() { 
         document.getElementById('modal-title').innerText = editingVariantId ? "Edit Manuscript" : "Add Manuscript";
@@ -634,6 +647,24 @@
 
         closeVariantModal(); renderApparatus(); autoSave(); draw();
     }
+
+    // ADDED: Function to pan and highlight diagram shape from drawer click
+    function highlightVariantInDiagram(id) {
+        if (!id) return;
+        activeVariantId = id;
+        const targetEl = elements.find(el => el.id === id);
+        if (targetEl) {
+            selectedElements = [targetEl];
+            const vp = document.getElementById('canvas-viewport');
+            vp.scrollTo({
+                left: targetEl.x * zoomLevel - vp.clientWidth / 2,
+                top: targetEl.y * zoomLevel - vp.clientHeight / 2,
+                behavior: 'smooth'
+            });
+        }
+        draw();
+        renderApparatus();
+    }
     
     function renderApparatus() {
         const list = document.getElementById('apparatus-list'); list.innerHTML = '';
@@ -648,10 +679,11 @@
         apparatusData.forEach(v => { 
             const targetHtml = v.targetWord ? `<span style="font-size:11px; color:var(--rustic-orange); margin-left:5px; font-style:italic;">(${v.targetWord})</span>` : '';
             const badgeHtml = v.conviction ? `<span class="ms-badge badge-${v.conviction}">${labels[v.conviction]}</span>` : '';
+            const isActive = (v.targetId === activeVariantId) ? 'active-variant' : ''; // ADDED active class logic
             
             list.innerHTML += `
-            <div class="ms-card">
-                <button class="edit-btn" onclick="editVariant(${v.id})" title="Edit Variant">
+            <div class="ms-card ${isActive}" onclick="highlightVariantInDiagram(${v.targetId})">
+                <button class="edit-btn" onclick="event.stopPropagation(); editVariant(${v.id})" title="Edit Variant">
                     <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
                         <path d="M12 20h9"></path>
                         <path d="M16.5 3.5a2.121 2.121 0 0 1 3 3L7 19l-4 1 1-4L16.5 3.5z"></path>
@@ -771,84 +803,54 @@
         }
     };
 
-    // ADDED HIT PRIORITY ALGORITHM
-    function getHitElement(mx, my) {
-        let hitHandle = null, targetPoint = null, hitLine = null, hitText = null, hitBlock = null;
-
-        const checkH = (hx, hy, tgt, el) => { if (!hitHandle && Math.hypot(hx - mx, hy - my) < 25 / zoomLevel) { hitHandle = el; targetPoint = tgt; } };
-
-        [...elements].reverse().forEach(el => {
-            const f = el.flip || 1;
-            
-            if (el.type === 'single_line' || el.type === 'labeled_arrow') { checkH(el.x, el.y, 'line_start', el); checkH(el.x + el.w * f, el.y + el.h, 'line_end', el); }
-            else if (el.type === 'subject_baseline') { checkH(el.x - (el.w*f), el.y, 'subj_left', el); checkH(el.x + el.w*f, el.y, 'subj_right', el); }
-            else if (el.type === 'modifier' || el.type === 'prep_shelf') { checkH(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h), 'mod_top', el); checkH(el.x + el.w*f, el.y, 'mod_right', el); }
-            else if (el.type === 'appositive' || el.type === 'direct_object') { checkH(el.x, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y, 'width', el); }
-            else if (el.type === 'pred_nom') { checkH(el.x - 25*f, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y, 'width', el); }
-            else if (el.type === 'stilt') { checkH(el.x, el.y - el.h, 'height', el); checkH(el.x + el.w*f, el.y - el.h, 'width', el); }
-            else if (el.type === 'fork' || el.type === 'diamond') { checkH(el.x + el.w*f, el.y - el.h, 'fork_top', el); checkH(el.x + el.w*f, el.y + el.h, 'fork_bottom', el); }
-            else if (el.type === 'block_text') { checkH(el.x + el.w, el.y + el.h, 'resize_br', el); }
-
-            if (el.type === 'text') {
-                if (!hitText && Math.abs(el.x + 20 - mx) < 60 && Math.abs(el.y - 10 - my) < 25) hitText = el;
-            } else if (el.type === 'block_text') {
-                if (!hitBlock && mx > el.x && mx < el.x + el.w && my > el.y && my < el.y + el.h) hitBlock = el;
-            } else if (el.type === 'labeled_arrow') {
-                if (!hitLine) {
-                    const ex = el.x + el.w * f, ey = el.y + el.h;
-                    let d1, d2;
-                    if (el.flip === 1) { 
-                        d1 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - el.x) < 15) ? Math.abs(mx - el.x) : Infinity;
-                        d2 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - ey) < 15) ? Math.abs(my - ey) : Infinity;
-                    } else { 
-                        d1 = (mx >= Math.min(el.x, ex)-15 && mx <= Math.max(el.x, ex)+15 && Math.abs(my - el.y) < 15) ? Math.abs(my - el.y) : Infinity;
-                        d2 = (my >= Math.min(el.y, ey)-15 && my <= Math.max(el.y, ey)+15 && Math.abs(mx - ex) < 15) ? Math.abs(mx - ex) : Infinity;
-                    }
-                    if (d1 < 15 || d2 < 15) hitLine = el;
-                }
-            } else {
-                if (!hitLine) {
-                    let bbMinX, bbMaxX, bbMinY, bbMaxY;
-                    if (el.type === 'stilt') { bbMinX = Math.min(el.x - el.w*f, el.x + el.w*f); bbMaxX = Math.max(el.x - el.w*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y + 25; }
-                    else if (el.type === 'fork' || el.type === 'diamond') { bbMinX = Math.min(el.x - 30*f, el.x + el.w*f); bbMaxX = Math.max(el.x - 30*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y + el.h; }
-                    else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { bbMinX = Math.min(el.x - 25*f, el.x + el.w*f); bbMaxX = Math.max(el.x - 25*f, el.x + el.w*f); bbMinY = el.y - el.h; bbMaxY = el.y; }
-                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { bbMinX = Math.min(el.x, el.x + el.w*f, el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3))); bbMaxX = Math.max(el.x, el.x + el.w*f, el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3))); bbMinY = Math.min(el.y, el.y + (el.dy_top ? el.dy_top : -el.h)); bbMaxY = Math.max(el.y, el.y + (el.dy_top ? el.dy_top : -el.h)); }
-                    else if (el.type === 'subject_baseline') { bbMinX = Math.min(el.x - (el.w*f), el.x + el.w*f); bbMaxX = Math.max(el.x - (el.w*f), el.x + el.w*f); bbMinY = el.y - 30; bbMaxY = el.y + 30; }
-                    else if (el.type === 'x_line') { bbMinX = el.x - 35; bbMaxX = el.x + 35; bbMinY = el.y - 35; bbMaxY = el.y + 35; }
-                    else { bbMinX = Math.min(el.x, el.x + el.w*f); bbMaxX = Math.max(el.x, el.x + el.w*f); bbMinY = Math.min(el.y, el.y + el.h); bbMaxY = Math.max(el.y, el.y + el.h); }
-                    
-                    if (mx >= bbMinX - 10 && mx <= bbMaxX + 10 && my >= bbMinY - 10 && my <= bbMaxY + 10) hitLine = el;
-                }
-            }
-        });
-
-        return { hitHandle, targetPoint, body: hitText || hitLine || hitBlock };
-    }
-
+    // ADDED: block native drag to prevent stuck shapes
     canvas.onmousedown = (e) => {
         if (e.button !== 0) return;
         e.preventDefault(); 
         const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
+        let targetEl = null, targetPoint = null;
+        elements.forEach(el => {
+            const f = el.flip;
+            if (el.type === 'single_line' || el.type === 'labeled_arrow') { if (Math.hypot(el.x - mx, el.y - my) < 30) { targetEl = el; targetPoint = 'line_start'; } else if (Math.hypot((el.x + el.w * f) - mx, (el.y + el.h) - my) < 30) { targetEl = el; targetPoint = 'line_end'; } }
+            else if (el.type === 'prep_shelf') { if (Math.hypot(el.x + (el.dx_top * f) - mx, el.y + el.dy_top - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_top'; } else if (Math.hypot(el.x + (el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'prep_bottom'; } }
+            else if (el.type === 'appositive' || el.type === 'direct_object') { if (Math.hypot(el.x - mx, (el.y - el.h) - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'height'; } else if (Math.hypot((el.x + el.w * f) - mx, el.y - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'width'; } }
+            else if (el.type !== 'text' && el.type !== 'x_line' && Math.hypot(el.x + (el.w * f) - mx, el.y + el.h - my) < 25 / zoomLevel) { targetEl = el; targetPoint = 'default'; }
+        });
+        if (targetEl) { 
+            isResizing = true; selectedElements = [targetEl]; currentResizePoint = targetPoint; 
+            document.getElementById('styleColor').value = targetEl.color || '#333333';
+            document.getElementById('styleWeight').value = targetEl.thickness || 2.5;
+            draw(); return; 
+        }
+        const clickedText = elements.find(el => el.type === 'text' && Math.abs(el.x - mx) < 60 && Math.abs(el.y - my) < 25);
+        const clickedShape = elements.find(el => { if(el.type === 'text') return false; return Math.abs(el.y - my) < 30 && mx > Math.min(el.x, el.x + (el.w*el.flip)) - 20 && mx < Math.max(el.x, el.x + (el.w*el.flip)) + 20; });
         
-        const hit = getHitElement(mx, my);
-        
-        if (hit.hitHandle) { 
-            isResizing = true; selectedElements = [hit.hitHandle]; currentResizePoint = hit.targetPoint; 
-            document.getElementById('styleColor').value = hit.hitHandle.color || '#333333';
-            document.getElementById('styleWeight').value = hit.hitHandle.thickness || 2.5;
-        } else if (hit.body) { 
-            const clicked = hit.body;
+        if (clickedText || clickedShape) { 
+            const clicked = clickedText || clickedShape; 
             if (!selectedElements.includes(clicked)) { selectedElements = clicked.group ? elements.filter(el => el.group === clicked.group) : [clicked]; } 
             isDragging = true; dragOffset.x = mx; dragOffset.y = my; 
             document.getElementById('styleColor').value = clicked.color || '#333333';
             document.getElementById('styleWeight').value = clicked.thickness || 2.5;
 
-            if (clicked.type === 'text' && apparatusData.some(v => v.targetId === clicked.id)) {
+            // ADDED: Set active variant & open drawer
+            if (clickedText && apparatusData.some(v => v.targetId === clickedText.id)) {
                 document.getElementById('apparatus-drawer').classList.add('open');
+                activeVariantId = clickedText.id;
+                renderApparatus();
+                setTimeout(() => {
+                    const activeCard = document.querySelector('.ms-card.active-variant');
+                    if(activeCard) activeCard.scrollIntoView({ behavior: 'smooth', block: 'center' });
+                }, 50);
+            } else {
+                activeVariantId = null;
+                renderApparatus();
             }
 
         } else { 
+            // ADDED: Fix crazy marquee by resetting end
             isMarquee = true; marqueeStart = {x: mx, y: my}; marqueeEnd = {x: mx, y: my}; selectedElements = []; 
+            activeVariantId = null;
+            renderApparatus();
         }
         draw();
     };
@@ -856,34 +858,27 @@
     window.onmousemove = (e) => {
         const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
         if (isResizing) {
-            const el = selectedElements[0], f = el.flip || 1;
-            let mxSnap = snapEnabled ? Math.round(mx/10)*10 : mx;
-            let mySnap = snapEnabled ? Math.round(my/10)*10 : my;
-
-            if (el.type === 'labeled_arrow' || el.type === 'single_line') { 
-                if (currentResizePoint === 'line_start') { const ex = el.x + el.w * f, ey = el.y + el.h; el.x = mxSnap; el.y = mySnap; el.w = (ex - el.x) / (el.type === 'single_line' ? 1 : f); el.h = ey - el.y; } 
-                else { el.w = (mxSnap - el.x) / (el.type === 'single_line' ? 1 : f); el.h = mySnap - el.y; } 
+            const el = selectedElements[0], f = el.flip;
+            if (el.type === 'single_line' || el.type === 'labeled_arrow') { 
+                let tx = snapEnabled ? Math.round(mx/10)*10 : mx; let ty = snapEnabled ? Math.round(my/10)*10 : my;
+                if (currentResizePoint === 'line_start') { 
+                    let ex = el.x + (el.w * f), ey = el.y + el.h;
+                    if (snapEnabled) { if (Math.abs(ty - ey) <= 20) ty = ey; if (Math.abs(tx - ex) <= 20) tx = ex; }
+                    el.x = tx; el.y = ty; el.w = (ex - tx) / f; el.h = ey - ty;
+                } else { 
+                    if (snapEnabled) { if (Math.abs(ty - el.y) <= 20) ty = el.y; if (Math.abs(tx - el.x) <= 20) tx = el.x; }
+                    el.w = (tx - el.x) / f; el.h = ty - el.y; 
+                } 
             }
-            else if (el.type === 'subject_baseline') { if (currentResizePoint === 'subj_left') { el.w = Math.max(20, (el.x - mxSnap) * f); } else { el.w = Math.max(20, (mxSnap - el.x) * f); } }
-            else if (el.type === 'modifier' || el.type === 'prep_shelf') { if (currentResizePoint === 'mod_top') { el.dx_top = (mxSnap - el.x) * f; el.dy_top = mySnap - el.y; } else { el.w = Math.max(20, (mxSnap - el.x) * f); } }
-            else if (el.type === 'appositive' || el.type === 'direct_object' || el.type === 'pred_nom') { 
-                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - mySnap); } else { el.w = Math.max(20, (mxSnap - el.x) * f); } 
-            }
-            else if (el.type === 'stilt') {
-                if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - mySnap); } else { el.w = Math.max(20, (mxSnap - el.x) * f); }
-            }
-            else if (el.type === 'fork' || el.type === 'diamond') {
-                if (currentResizePoint === 'fork_top') { el.h = Math.max(10, el.y - mySnap); el.w = Math.max(20, (mxSnap - el.x) * f); }
-                else if (currentResizePoint === 'fork_bottom') { el.h = Math.max(10, mySnap - el.y); el.w = Math.max(20, (mxSnap - el.x) * f); }
-            }
-            else if (el.type === 'block_text') {
-                if (currentResizePoint === 'resize_br') { el.w = Math.max(100, mxSnap - el.x); }
-            }
+            else if (el.type === 'prep_shelf') { if (currentResizePoint === 'prep_top') { el.dx_top = snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f; el.dy_top = snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y; } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
+            else if (el.type === 'appositive' || el.type === 'direct_object') { if (currentResizePoint === 'height') { el.h = Math.max(10, el.y - (snapEnabled ? Math.round(my/10)*10 : my)); } else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); } }
+            else { el.w = Math.max(20, snapEnabled ? Math.round(((mx - el.x) * f) / 10) * 10 : (mx - el.x) * f); el.h = Math.max(10, snapEnabled ? Math.round((my - el.y) / 10) * 10 : my - el.y); }
         } else if (isDragging) { const dx = mx - dragOffset.x, dy = my - dragOffset.y; selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset.x = mx; dragOffset.y = my; }
         else if (isMarquee) { marqueeEnd = {x: mx, y: my}; const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); }
         draw();
     };
     
+    // ADDED: strict false resets
     window.onmouseup = () => { 
         if (isDragging && snapEnabled) { selectedElements.forEach(el => { el.x = Math.round(el.x / 10) * 10; el.y = Math.round(el.y / 10) * 10; }); } 
         if (isDragging || isResizing || isMarquee) autoSave(); 
@@ -909,11 +904,11 @@
             
             if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.w*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
             else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
-            else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'modifier') { ctx.moveTo(el.x - (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
             else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dx_top * f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
             else if (el.type === 'stilt') { ctx.moveTo(el.x - (el.w*f), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.moveTo(el.x - (20*f), el.y + 25); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (20*f), el.y + 25); }
             else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
-            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
+            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
             else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
             else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
             
@@ -948,6 +943,17 @@
                 
                 if (apparatusData.some(v => v.targetId === el.id)) {
                     ctx.beginPath(); ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2); ctx.fillStyle = 'var(--rustic-orange)'; ctx.fill(); ctx.fillStyle = el.color || '#333'; 
+                }
+
+                // ADDED: Special Variant Highlight Box
+                if (activeVariantId === el.id) {
+                    ctx.save();
+                    ctx.strokeStyle = 'var(--rustic-orange)';
+                    ctx.lineWidth = 2;
+                    ctx.setLineDash([]);
+                    const m = ctx.measureText(el.val);
+                    ctx.strokeRect(el.x - 6, el.y - 22, m.width + 12, 30);
+                    ctx.restore();
                 }
             }
 
