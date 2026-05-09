@@ -43,7 +43,7 @@
         }
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
-        /* UNIVERSAL APP NAV Styling - ADDED */
+        /* UNIVERSAL APP NAV Styling */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: var(--oxford-gold); }
@@ -177,7 +177,7 @@
     <div class="sidebar-inner">
         <h2>Σyntaxis<span class="ix">IX</span></h2>
 
-        <!-- NAVIGATION MENU - ADDED -->
+        <!-- NAVIGATION MENU -->
         <div class="app-nav">
             <a href="annotator.html">Annotate</a>
             <a href="app.html" class="active">Diagram</a>
@@ -233,7 +233,7 @@
             </div>
         </div>
 
-        <!-- BLOCK DIAGRAM PALETTE - ADDED -->
+        <!-- BLOCK DIAGRAM PALETTE -->
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
             <div class="tool" onclick="openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
             <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Orthogonal Arrow</div>
@@ -354,7 +354,7 @@
     </div>
 </div>
 
-<!-- THE BLOCK MODAL (Text Editor) - ADDED -->
+<!-- THE BLOCK MODAL (Text Editor) -->
 <div id="block-modal-overlay">
     <div id="block-modal">
         <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; font-size: 16px;">Add Text Block</h3>
@@ -378,12 +378,11 @@
     let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     let currentResizePoint = null, zoomLevel = 1, snapEnabled = true, rightClickedEl = null;
-    let activeTab = 'rk'; // ADDED
-    let editingBlockId = null; // ADDED
+    let activeTab = 'rk'; 
+    let editingBlockId = null; 
     
     canvas.width = 4000; canvas.height = 4000;
 
-    // ADDED: SWITCH TAB FUNCTION
     function switchDiagramTab(tab) {
         activeTab = tab;
         document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
@@ -392,7 +391,6 @@
         document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
     }
 
-    // ADDED: EXTRACT TEXT FUNCTION
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
@@ -495,7 +493,6 @@
         }
     }
 
-    // ADDED: BLOCK MODAL LOGIC
     document.getElementById('block-input').addEventListener('keydown', function(e) {
         if (e.key === 'Tab') {
             e.preventDefault();
@@ -546,7 +543,7 @@
         const mx = (e.clientX - rect.left) / zoomLevel;
         const my = (e.clientY - rect.top) / zoomLevel;
         const clicked = elements.find(el => {
-            if (el.type !== 'single_line' && el.type !== 'labeled_arrow') return false; // ADDED labeled arrow
+            if (el.type !== 'single_line' && el.type !== 'labeled_arrow') return false;
             const distToStart = Math.hypot(el.x - mx, el.y - my);
             const distToEnd = Math.hypot((el.x + el.w * el.flip) - mx, (el.y + el.h) - my);
             return distToStart < 40 || distToEnd < 40;
@@ -560,7 +557,7 @@
     function snapLine(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else if (dir === 'vertical') rightClickedEl.w = 0; draw(); autoSave(); } }
 
     function launchCNTR() {
-        let textToParse = document.getElementById('verseReference').value.trim() || document.getElementById('projectName').value.trim() || document.getElementById('dbRefInput').value.trim(); // ADDED fallback to extract
+        let textToParse = document.getElementById('verseReference').value.trim() || document.getElementById('projectName').value.trim() || document.getElementById('dbRefInput').value.trim(); 
         if (!textToParse) return;
         
         const match = textToParse.match(/(1\s*|2\s*|3\s*)?([a-zA-Z]+)[\s\.]*(\d+)(?:[\s:\.]+(\d+))?/);
@@ -694,9 +691,9 @@
         }); 
     }
 
-    function applyStyle(prop, val) { selectedElements.forEach(el => { if (prop === 'bold' && (el.type === 'text' || el.type === 'block_text')) el.bold = !el.bold; else el[prop] = val; }); draw(); autoSave(); } // ADDED bold support for blocks
+    function applyStyle(prop, val) { selectedElements.forEach(el => { if (prop === 'bold' && (el.type === 'text' || el.type === 'block_text')) el.bold = !el.bold; else el[prop] = val; }); draw(); autoSave(); }
     function setZoom(delta) { zoomLevel = Math.max(0.2, Math.min(3, zoomLevel + delta)); canvas.style.transform = `scale(${zoomLevel})`; canvas.style.transformOrigin = 'top left'; }
-    function toggleSnap() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; }
+    function toggleSnap() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; }
     
     function updateWordBank() { 
         const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0); 
@@ -774,7 +771,7 @@
         }
     };
 
-    // ADDED: HIT PRIORITY FOR ALL SHAPES
+    // ADDED HIT PRIORITY ALGORITHM
     function getHitElement(mx, my) {
         let hitHandle = null, targetPoint = null, hitLine = null, hitText = null, hitBlock = null;
 
@@ -829,6 +826,8 @@
     }
 
     canvas.onmousedown = (e) => {
+        if (e.button !== 0) return;
+        e.preventDefault(); 
         const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / zoomLevel; const my = (e.clientY - rect.top) / zoomLevel;
         
         const hit = getHitElement(mx, my);
@@ -849,7 +848,7 @@
             }
 
         } else { 
-            isMarquee = true; marqueeStart = {x: mx, y: my}; selectedElements = []; 
+            isMarquee = true; marqueeStart = {x: mx, y: my}; marqueeEnd = {x: mx, y: my}; selectedElements = []; 
         }
         draw();
     };
@@ -884,6 +883,15 @@
         else if (isMarquee) { marqueeEnd = {x: mx, y: my}; const xMin = Math.min(marqueeStart.x, marqueeEnd.x), xMax = Math.max(marqueeStart.x, marqueeEnd.x), yMin = Math.min(marqueeStart.y, marqueeEnd.y), yMax = Math.max(marqueeStart.y, marqueeEnd.y); selectedElements = elements.filter(el => el.x > xMin && el.x < xMax && el.y > yMin && el.y < yMax); }
         draw();
     };
+    
+    window.onmouseup = () => { 
+        if (isDragging && snapEnabled) { selectedElements.forEach(el => { el.x = Math.round(el.x / 10) * 10; el.y = Math.round(el.y / 10) * 10; }); } 
+        if (isDragging || isResizing || isMarquee) autoSave(); 
+        isDragging = false; isResizing = false; isMarquee = false; 
+        draw(); 
+    };
+    
+    window.onkeydown = (e) => { if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return; const k = e.key.toLowerCase(); if (k === 'g') { const gid = Date.now(); selectedElements.forEach(el => el.group = gid); } else if (k === 'u') { selectedElements.forEach(el => el.group = null); } else if (k === 'f') flipSelected(); else if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; updateWordBank(); } else if (e.key.startsWith('Arrow')) { const n = e.shiftKey ? 10 : 2; if (e.key === 'ArrowUp') selectedElements.forEach(el => el.y -= n); else if (e.key === 'ArrowDown') selectedElements.forEach(el => el.y += n); else if (e.key === 'ArrowLeft') selectedElements.forEach(el => el.x -= n); else if (e.key === 'ArrowRight') selectedElements.forEach(el => el.x += n); } draw(); autoSave(); };
 
     function draw() {
         ctx.clearRect(0, 0, canvas.width, canvas.height); ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
@@ -911,7 +919,6 @@
             
             ctx.stroke(); ctx.setLineDash([]);
             
-            // ADDED: RENDER LABELED ARROW & BLOCK TEXT
             if (el.type === 'labeled_arrow') {
                 const ex = el.x + (el.w * f), ey = el.y + el.h;
                 ctx.beginPath(); ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = el.thickness || 2.5;
