@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis | Diagrammer IX Master</title>
+    <title>Σyntaxis | Diagrammer Master Cloud</title>
     <style>
         :root {
             --sidebar-width: 380px;
@@ -13,13 +13,14 @@
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
+            --rustic-orange: #C86428;
             --radius-small: 8px;
             --radius-medium: 12px;
         }
 
         body {
             margin: 0; display: flex; height: 100vh;
-            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             overflow: hidden; background: var(--bg-main);
         }
         
@@ -39,9 +40,11 @@
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a:hover { border-color: var(--oxford-gold); }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
 
         h2 { margin: 0; color: var(--oxford-cream); font-family: Georgia, serif; font-size: 24px; }
+        .ix { font-size: 14px; text-decoration: overline; margin-left: 4px; font-weight: bold; color: var(--oxford-gold); }
         h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
         input[type="text"], textarea, select {
@@ -49,338 +52,554 @@
             border: 1px solid var(--oxford-navy-dark); padding: 10px;
             font-family: inherit; font-size: 13px; color: var(--oxford-navy);
             background: var(--oxford-cream); transition: 0.1s; outline: none;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-        textarea { height: 120px; flex-shrink: 0; resize: none; }
+        input[type="text"]:focus, textarea:focus, select:focus { border-color: var(--oxford-gold); box-shadow: 0 0 0 2px rgba(197, 160, 89, 0.3); }
+        textarea { height: 120px; flex-shrink: 0; resize: none; line-height: 1.4; }
         
         #word-bank {
             height: 250px; flex-shrink: 0; margin-top: 15px; overflow-y: auto; padding: 15px;
             display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px 10px;
             background: var(--oxford-navy-dark); border-radius: var(--radius-medium);
+            border: 1px solid rgba(255,255,255,0.05);
         }
+        #word-bank::-webkit-scrollbar { width: 6px; }
+        #word-bank::-webkit-scrollbar-thumb { background: #3A4A63; border-radius: 10px; }
         
         .bank-word {
-            font-family: Georgia, serif; font-size: 18px; color: var(--oxford-cream);
-            cursor: grab; padding: 4px 8px; user-select: none; border-radius: 4px;
+            font-family: Georgia, serif; font-size: 19px; color: var(--oxford-cream);
+            cursor: grab; padding: 4px 8px; user-select: none;
+            border-radius: var(--radius-small); background: transparent;
+            transition: 0.1s; border: none;
         }
         .bank-word:hover { background: rgba(255,255,255,0.1); }
+        .bank-word.selected { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
         
         .palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
         .tool {
             padding: 10px; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-medium);
             text-align: center; background: var(--oxford-cream); cursor: pointer;
-            color: var(--oxford-navy); font-size: 10px; font-weight: bold; transition: 0.2s;
+            color: var(--oxford-navy); font-size: 11px; font-weight: bold; transition: 0.1s; line-height: 1.2;
         }
-        .tool:hover { background: #fff; transform: translateY(-2px); }
-        .tool svg { width: 24px; height: 24px; stroke: var(--oxford-navy); fill: none; stroke-width: 3; display: block; margin: 0 auto 5px; }
+        .tool:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
+        .tool svg { width: 28px; height: 28px; stroke: var(--oxford-navy); fill: none; stroke-width: 3.5; display: block; margin: 0 auto 6px; }
         
-        .std-btn { border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; }
+        .std-btn {
+            border: none; padding: 10px; border-radius: var(--radius-small);
+            cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase;
+            transition: 0.1s;
+        }
         
         #canvas-viewport { flex-grow: 1; overflow: auto; position: relative; background: var(--bg-main); }
-        canvas { background: #fff; display: block; }
+        canvas { background: #fff; display: block; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        
+        #apparatus-drawer {
+            position: fixed; top: 0; right: -400px; width: 380px; height: 100vh;
+            background: var(--oxford-navy); box-shadow: -5px 0 25px rgba(0,0,0,0.3);
+            transition: right 0.3s ease; z-index: 2000; display: flex; flex-direction: column;
+            border-left: 1px solid var(--oxford-navy-dark);
+        }
+        #apparatus-drawer.open { right: 0; }
+        .apparatus-header { padding: 25px; border-bottom: 1px solid var(--oxford-navy-dark); display: flex; justify-content: space-between; align-items: center; background: var(--oxford-navy-dark); }
+        .apparatus-header h3 { color: var(--oxford-cream); margin: 0; }
+        .apparatus-content { padding: 25px; overflow-y: auto; flex-grow: 1; position: relative; }
+        
+        .ms-card {
+            border: 1px solid rgba(255,255,255,0.1); border-radius: var(--radius-small);
+            padding: 15px; margin-bottom: 15px; background: rgba(255,255,255,0.03); 
+            position: relative; color: var(--oxford-cream);
+            transition: 0.2s;
+        }
+        .ms-card:hover { border-color: rgba(197, 160, 89, 0.3); }
+        .ms-symbol { color: var(--oxford-gold); font-weight: bold; font-family: Georgia, serif; font-size: 20px; }
+        .ms-date { font-size: 11px; color: #aaa; text-transform: uppercase; }
+        .ms-reading { font-family: Georgia, serif; font-style: italic; margin-top: 8px; }
+        
+        .edit-btn {
+            position: absolute; top: 12px; right: 12px; background: none; border: none; 
+            cursor: pointer; color: #aaa; transition: 0.2s; padding: 4px; border-radius: 4px;
+        }
+        .edit-btn:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
 
-        #custom-prompt { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; }
-        .prompt-box { background:#1e1e1e; border:1px solid #d4af37; padding:20px; border-radius:8px; width:300px; text-align:center; color:white; }
+        .ms-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: var(--oxford-cream); margin-right: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
+        .badge-highly { background: #3A4A63; } 
+        .badge-likely { background: var(--oxford-gold); color: var(--oxford-navy); }
+        .badge-possible { background: var(--rustic-orange); }
+        .badge-unlikely { background: var(--oxford-crimson); }
 
-        .btn-group { display: flex; gap: 5px; margin-top: 15px; }
-        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 10px; font-weight: bold; transition: 0.1s; }
-        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); }
+        .quick-keys { display: flex; gap: 5px; margin-bottom: 10px; }
+        .quick-key { flex: 1; background: var(--oxford-navy-dark); border: 1px solid var(--oxford-navy-dark); border-radius: 4px; cursor: pointer; padding: 6px 0; font-family: Georgia, serif; font-size: 16px; color: var(--oxford-cream); transition: 0.1s; text-align: center; }
+        .quick-key:hover { background: var(--oxford-gold); color: var(--oxford-navy); border-color: var(--oxford-gold); }
+
+        #context-menu {
+            position: fixed; display: none; background: var(--oxford-cream); border: 1px solid var(--oxford-navy-dark);
+            border-radius: var(--radius-small); box-shadow: 0 5px 15px rgba(0,0,0,0.2);
+            z-index: 5000; padding: 5px 0; min-width: 160px;
+        }
+        .context-item { padding: 8px 20px; font-size: 13px; cursor: pointer; color: var(--oxford-navy); transition: 0.1s; font-weight: bold; }
+        .context-item:hover { background: #e8e2d2; }
+        .context-header { padding: 6px 20px; font-size: 10px; font-weight: bold; color: var(--oxford-crimson); text-transform: uppercase; }
+
+        .floating-card {
+            background: var(--oxford-cream); padding: 8px; border-radius: var(--radius-medium);
+            border: 1px solid var(--oxford-navy-dark);
+        }
+
+        #variant-modal { display: none; position: absolute; top: 0; left: 0; right: 0; bottom: 0; background: rgba(27, 38, 59, 0.95); z-index: 3000; padding: 25px; flex-direction: column; gap: 10px; }
+        #variant-modal h4 { color: var(--oxford-gold); margin: 0 0 10px 0; font-size: 18px; }
+        #variant-modal.active { display: flex; }
+        .proj-card { display:flex; justify-content:space-between; align-items:center; background:var(--oxford-cream); padding:10px 15px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); cursor:pointer; margin-bottom:8px; font-size:12px; color: var(--oxford-navy); font-weight: bold;}
+        .proj-card:hover { border-color: var(--oxford-gold); }
+        
+        .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); text-decoration: none; border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
+        .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
+
+        #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
+        #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 80%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
+        #block-input { min-height: 200px; font-family: monospace; white-space: pre-wrap; font-size: 16px; resize: vertical; overflow-y: auto; padding: 15px;}
+        .btn-group { display: flex; gap: 5px; }
+        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.1s; }
+        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
     </style>
 </head>
 <body>
-    
-    <div id="sidebar">
-        <div class="sidebar-inner">
-            <h2>Σyntaxis<span style="font-size:14px; text-decoration:overline; color:var(--oxford-gold); margin-left:4px;">IX</span></h2>
-            <div class="app-nav">
-                <a href="annotator.html">Annotate</a>
-                <a href="app.html" class="active">Diagramer</a>
-                <a href="interpreter.html">Interpret</a>
-                <a href="outliner.html">Outline</a>
-            </div>
-            
-            <div style="display: flex; flex-direction: column; gap: 8px;">
-                <input type="text" id="projectName" placeholder="Project Name">
-                <div style="display: flex; gap: 8px;">
-                    <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" style="flex:1;">
-                    <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Save App</button>
-                </div>
-            </div>
 
-            <div class="btn-group">
-                <button id="tab-rk" class="active" onclick="switchDiagramTab('rk')">Sentence (RK)</button>
-                <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
-            </div>
-            
-            <div id="palette-rk" class="palette">
-                <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
-                <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj</div>
-                <div class="tool" onclick="addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
-                <div class="tool" onclick="addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
-                <div class="tool" onclick="addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood X</div>
-                <div class="tool" onclick="addShape('diamond')"><svg viewBox="0 0 100 100"><path d="M5,50 L25,50 L45,20 L75,20 L95,50 L75,80 L45,80 L25,50 M45,20 L45,80 M75,20 L75,80"/></svg>Compound</div>
-                <div class="tool" onclick="addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
-                <div class="tool" onclick="addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Line</div>
-                <div class="tool" onclick="addShape('text')"><strong>Label</strong></div>
-            </div>
+<div id="sidebar">
+    <div class="sidebar-inner">
+        <h2>Σyntaxis<span class="ix">IX</span></h2>
 
-            <div id="palette-block" class="palette" style="display:none;">
-                <div class="tool" onclick="addShape('block_text')"><svg viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="40"/></svg>Text Box</div>
-                <div class="tool" onclick="addShape('bracket')"><svg viewBox="0 0 100 100"><polyline points="30,10 10,10 10,90 30,90"/></svg>Bracket</div>
-                <div class="tool" onclick="addShape('flow_arrow')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><polyline points="70,30 90,50 70,70"/></svg>Flow Arrow</div>
-                <div class="tool" onclick="addShape('group_box')"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" stroke-dasharray="5,5"/></svg>Group Area</div>
-            </div>
-
-            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); width:100%; margin-top:10px;">Flip Selection (F)</button>
-            <button class="std-btn" onclick="clearCanvas()" style="background:var(--oxford-crimson); color:white; width:100%; margin-top:5px;">Clear Canvas</button>
-
-            <div id="project-list" style="margin-top:20px;"></div>
+        <div class="app-nav">
+            <a href="annotator.html">Annotate</a>
+            <a href="app.html" class="active">Diagram</a>
+            <a href="interpreter.html">Interpret</a>
+            <a href="outliner.html">Outline</a>
         </div>
-    </div>
-    
-    <div id="canvas-viewport">
-        <canvas id="mainCanvas"></canvas>
-    </div>
-    
-    <div id="right-sidebar">
-        <div class="right-inner">
-            <h3>Text Source</h3>
-            <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-                <input type="text" id="dbRefInput" placeholder="Col 1:1-8">
-                <select id="dbModuleSelect">
-                    <option value="esv.xml">ESV English</option>
-                    <option value="tischendorf.xml">Greek NT</option>
-                    <option value="hebrew_ot.xml">Hebrew OT</option>
-                    <option value="srgnt.tsv">SRGNT Greek</option>
-                </select>
-                <button class="std-btn" onclick="loadNativeBibleTextOnly()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
-            </div>
-            <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank()"></textarea>
-            <div id="word-bank"></div>
-        </div>
-    </div>
-
-    <div id="custom-prompt">
-        <div class="prompt-box">
-            <p id="prompt-message"></p>
-            <input type="text" id="prompt-input" style="width:90%; padding:8px; margin-bottom:15px; background:#2d2d2d; border:1px solid #444; color:white;">
-            <div style="display:flex; justify-content:space-around;">
-                <button onclick="submitPrompt()" style="background:#d4af37; border:none; padding:8px 15px; cursor:pointer;">OK</button>
-                <button onclick="closePrompt()" style="background:#444; color:white; border:none; padding:8px 15px; cursor:pointer;">Cancel</button>
-            </div>
-        </div>
-    </div>
-
-    <script>
-        const canvas = document.getElementById('mainCanvas');
-        const ctx = canvas.getContext('2d');
-        const bank = document.getElementById('word-bank');
         
-        let elements = [], selectedElements = [];
-        let isDragging = false, isResizing = false, isSelecting = false;
-        let zoomLevel = 1, dragOffset = {x:0, y:0}, currentResizePoint = null;
-        let selectionBox = { x: 0, y: 0, w: 0, h: 0 };
+        <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
+            <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
+            <div style="display: flex; gap: 8px;">
+                <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" oninput="autoSave()" style="flex:1;">
+                <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save App</button>
+            </div>
+        </div>
 
-        canvas.width = 4000; canvas.height = 4000;
+        <div class="btn-group" style="margin-top: 15px;">
+            <button id="tab-rk" class="active" onclick="switchDiagramTab('rk')">Sentence</button>
+            <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
+        </div>
 
-        const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "colossians": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
-        const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "colossians": 51, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
-        const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "colossians": "Col", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+        <div id="palette-rk" class="palette">
+            <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
+            <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj.</div>
+            <div class="tool" onclick="addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
+            <div class="tool" onclick="addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
+            <div class="tool" onclick="addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood (X)</div>
+            <div class="tool" onclick="addShape('diamond')"><svg viewBox="0 0 100 100"><path d="M5,50 L25,50 L45,20 L75,20 L95,50 L75,80 L45,80 L25,50 M45,20 L45,80 M75,20 L75,80"/></svg>Compound</div>
+            <div class="tool" onclick="addShape('stilt')"><svg viewBox="0 0 100 100"><line x1="10" y1="30" x2="90" y2="30"/><line x1="50" y1="30" x2="50" y2="60"/><path d="M30,90 L50,60 L70,90"/></svg>Platform Stilt</div>
+            <div class="tool" onclick="addShape('fork')"><svg viewBox="0 0 100 100"><path d="M10,50 L30,50 L50,20 L90,20 M30,50 L50,80 L90,80 M50,20 L50,80"/></svg>Fork (Split)</div>
+            <div class="tool" onclick="addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
+            <div class="tool" onclick="addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Single Line</div>
+            <div class="tool" onclick="addShape('text')"><strong style="font-size:20px;">Label</strong></div>
+            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 1;">Flip (F)</button>
+            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBank(); autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
 
-        function switchDiagramTab(tab) {
-            document.getElementById('palette-rk').style.display = (tab === 'rk' ? 'grid' : 'none');
-            document.getElementById('palette-block').style.display = (tab === 'block' ? 'grid' : 'none');
-            document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
-            document.getElementById('tab-block').classList.toggle('active', tab === 'block');
+            <div class="palette floating-card" style="margin-top: 10px; grid-column: span 3; align-items: center; justify-content: space-between; gap: 5px;">
+                <button id="snapToggle" onclick="toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#a9dfbf; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
+                <input type="color" id="styleColor" oninput="applyStyle('color', this.value)" style="width:25px; height:25px; padding:0; border:none; background:transparent; cursor:pointer;">
+                <input type="number" id="styleWeight" value="2.5" step="0.5" oninput="applyStyle('thickness', parseFloat(this.value))" style="width: 40px; height:25px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">
+                <button onclick="applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
+                <button onclick="toggleApparatus()" style="cursor:pointer; padding:5px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; font-weight:bold; font-size:12px; color:var(--oxford-navy);">📜 Text</button>
+                <button onclick="setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
+                <button onclick="setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
+            </div>
+
+            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 3;">
+                <button class="std-btn" onclick="exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
+                <button class="std-btn" onclick="saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
+            </div>
+        </div>
+
+        <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
+            <div class="tool" onclick="openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
+            <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Orthogonal Arrow</div>
+            <div class="tool" onclick="addShape('single_line')" style="font-size: 13px; padding: 15px;">↘ Simple Line</div>
+            <div class="tool" onclick="addShape('text')" style="font-size: 13px; padding: 15px;">🏷 Free Label</div>
+            
+            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 2;">Flip Selection (F)</button>
+            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBank(); autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 2;">Clear Canvas</button>
+            
+            <div class="palette floating-card" style="margin-top: 10px; grid-column: span 2; align-items: center; justify-content: space-between; gap: 5px;">
+                <button id="snapToggle2" onclick="toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#a9dfbf; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
+                <input type="color" id="styleColor2" oninput="applyStyle('color', this.value)" style="width:25px; height:25px; padding:0; border:none; background:transparent; cursor:pointer;">
+                <input type="number" id="styleWeight2" value="2.5" step="0.5" oninput="applyStyle('thickness', parseFloat(this.value))" style="width: 40px; height:25px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">
+                <button onclick="applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
+                <button onclick="setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
+                <button onclick="setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
+            </div>
+            
+            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 2;">
+                <button class="std-btn" onclick="exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
+                <button class="std-btn" onclick="saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
+            </div>
+        </div>
+        
+        <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
+            <h3>Saved Projects</h3>
+            <div id="project-list"></div>
+        </div>
+    </div>
+</div>
+
+<div id="canvas-viewport">
+    <canvas id="mainCanvas"></canvas>
+</div>
+
+<div id="right-sidebar">
+    <div class="right-inner">
+        <h3>Text Source</h3>
+        <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
+            <input type="text" id="dbRefInput" placeholder="Col 1:1-8">
+            <select id="dbModuleSelect">
+                <optgroup label="Original Languages">
+                    <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                    <option value="srgnt.tsv">Statistical Restoration GNT (SRGNT)</option>
+                    <option value="hebrew_ot.xml">Hebrew OT</option>
+                </optgroup>
+                <optgroup label="English Translations">
+                    <option value="kjv_strongs.xml">KJV with Strong's</option>
+                    <option value="emtv.xml">English Majority Text (EMTV)</option>
+                    <option value="esv.xml">English Standard Version (ESV)</option>
+                </optgroup>
+            </select>
+            <button class="std-btn" onclick="window.loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
+            <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center; margin-top: 5px;"></div>
+        </div>
+        
+        <div style="text-align: center; font-size: 10px; color: #888; margin: 5px 0;">— OR PASTE TEXT —</div>
+        <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank(); autoSave();"></textarea>
+        <div id="word-bank"></div>
+    </div>
+</div>
+
+<div id="context-menu">
+    <div class="context-header">Alignment</div>
+    <div class="context-item" onclick="snapLine('horizontal')">Snap Horizontal</div>
+    <div class="context-item" onclick="snapLine('vertical')">Snap Vertical</div>
+    <div class="context-header" style="margin-top:5px;">Style</div>
+    <div class="context-item" onclick="setLineStyle('solid')">Solid Line</div>
+    <div class="context-item" onclick="setLineStyle('dashed')">Dashed Line</div>
+    <div class="context-item" onclick="setLineStyle('dotted')">Dotted Line</div>
+</div>
+
+<div id="apparatus-drawer">
+    <div class="apparatus-header"><h3>Apparatus</h3><button class="close-btn" onclick="toggleApparatus()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button></div>
+    <div class="apparatus-content">
+        <div id="apparatus-list"></div>
+        <button onclick="openVariantModal()" style="width: 100%; margin-top: 10px; padding: 12px; background: transparent; border: 1px dashed var(--oxford-gold); border-radius: 8px; cursor: pointer; color: var(--oxford-gold); font-weight: bold;">+ Add MS Reading</button>
+        <button onclick="launchCNTR()" style="width: 100%; margin-top: 20px; padding: 12px; background: var(--oxford-gold); color: var(--oxford-navy); border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Verify on CNTR ↗</button>
+        
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <div style="font-size: 10px; color: var(--oxford-gold); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; text-align:center;">Free English Resources</div>
+            <div style="display:flex; gap:10px;">
+                <a href="https://netbible.org" target="_blank" class="resource-link">NET Bible ↗</a>
+                <a href="https://www.stepbible.org" target="_blank" class="resource-link">STEP Bible ↗</a>
+            </div>
+        </div>
+
+        <div id="variant-modal">
+            <h4 id="modal-title">Add Manuscript</h4>
+            
+            <div class="quick-keys">
+                <button type="button" class="quick-key" onclick="insertSiglum('𝔓')">𝔓</button>
+                <button type="button" class="quick-key" onclick="insertSiglum('א')">א</button>
+                <button type="button" class="quick-key" onclick="insertSiglum('B')">B</button>
+                <button type="button" class="quick-key" onclick="insertSiglum('D')">D</button>
+                <button type="button" class="quick-key" onclick="insertSiglum('𝔪')">𝔪</button>
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="v-symbol" placeholder="Symbol (e.g. א)" style="flex:1;">
+                <select id="v-conviction" style="flex:1;">
+                    <option value="">Conviction...</option>
+                    <option value="highly">Highly Likely</option>
+                    <option value="likely">Likely</option>
+                    <option value="possible">Possible</option>
+                    <option value="unlikely">Unlikely</option>
+                </select>
+            </div>
+            
+            <input type="text" id="v-date" placeholder="Date" style="margin-top: 10px;">
+            <textarea id="v-reading" placeholder="Reading..." style="margin-top: 10px;"></textarea>
+            <div style="display:flex; gap:10px; margin-top: 10px;">
+                <button class="std-btn" onclick="closeVariantModal()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">Cancel</button>
+                <button class="std-btn" onclick="saveVariant()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="block-modal-overlay">
+    <div id="block-modal">
+        <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; font-size: 16px;">Add Text Block</h3>
+        <textarea id="block-input" placeholder="Type or paste text here. Use TAB to indent..."></textarea>
+        <div style="display: flex; gap: 10px;">
+            <button class="std-btn secondary" onclick="closeBlockModal()" style="flex:1;">Cancel</button>
+            <button class="std-btn" onclick="submitBlock()" style="flex:1;">Add to Canvas</button>
+        </div>
+    </div>
+</div>
+
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
+    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+
+    const firebaseConfig = {
+        apiKey: "AIzaSyAWEDa3YDhaOrYPT4oNrwqEXRk8Jmo8vo8",
+        authDomain: "syntaxis-bible-study-suite.firebaseapp.com",
+        projectId: "syntaxis-bible-study-suite",
+        storageBucket: "syntaxis-bible-study-suite.firebasestorage.app",
+        messagingSenderId: "348178982976",
+        appId: "1:348178982976:web:2b27ba62e26a4655add7a5"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getFirestore(app);
+    const auth = getAuth(app);
+    let currentUser = null;
+
+    // --- SHARED DATA ---
+    window.elements = [];
+    window.selectedElements = [];
+    window.apparatusData = [];
+    let editingVariantId = null; 
+    let isDragging = false, isResizing = false, isMarquee = false;
+    let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
+    let currentResizePoint = null, zoomLevel = 1, snapEnabled = true, rightClickedEl = null;
+    let activeTab = 'rk'; 
+    let editingBlockId = null; 
+
+    // --- CLOUD LOGIC ---
+    window.saveToApp = async function() {
+        if (!currentUser) { alert("Please Sign In to save to cloud."); return; }
+        const name = document.getElementById('projectName').value.trim();
+        if (!name) { alert("Enter a project name."); return; }
+        const data = {
+            passage: document.getElementById('passageInput').value,
+            elements: window.elements,
+            apparatus: window.apparatusData,
+            verseReference: document.getElementById('verseReference').value,
+            lastSaved: Date.now()
+        };
+        try {
+            await setDoc(doc(db, "users", currentUser.uid, "diagrams", name), data);
+            alert("Saved to Cloud!");
+        } catch (e) { alert("Cloud error. See console."); }
+    };
+
+    window.loadFromApp = async function(name) {
+        if (!currentUser) return;
+        const projectsRef = collection(db, "users", currentUser.uid, "diagrams");
+        const snapshot = await getDocs(projectsRef);
+        snapshot.forEach(doc => {
+            if (doc.id === name) {
+                const d = doc.data();
+                window.elements = d.elements || [];
+                window.apparatusData = d.apparatus || [];
+                document.getElementById('passageInput').value = d.passage || "";
+                document.getElementById('projectName').value = name;
+                document.getElementById('verseReference').value = d.verseReference || "";
+                window.updateWordBank();
+                window.selectedElements = [];
+                window.draw();
+                window.renderApparatus();
+            }
+        });
+    };
+
+    window.deleteProject = async function(name, e) {
+        if (e) e.stopPropagation();
+        if (!currentUser) return;
+        if (confirm(`Delete "${name}"?`)) {
+            await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name));
         }
+    };
 
-        function draw() {
-            ctx.clearRect(0, 0, canvas.width, canvas.height);
-            elements.forEach(el => {
-                const isSel = selectedElements.includes(el);
-                const f = el.flip || 1;
-                ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = 2.5;
+    function listenToProjects(user) {
+        onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
+            const listDiv = document.getElementById('project-list');
+            listDiv.innerHTML = '';
+            snapshot.forEach((doc) => {
+                const name = doc.id;
+                const card = document.createElement('div');
+                card.className = 'proj-card';
+                card.onclick = () => window.loadFromApp(name);
+                card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); font-weight:bold;">&times;</button>`;
+                listDiv.appendChild(card);
+            });
+        });
+    }
 
-                if (el.type === 'subject_baseline') {
-                    ctx.moveTo(el.x - el.w*f, el.y); ctx.lineTo(el.x + el.w*f, el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30);
-                } else if (el.type === 'direct_object' || el.type === 'appositive') {
-                    ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
-                } else if (el.type === 'modifier' || el.type === 'prep_shelf') {
-                    ctx.moveTo(el.x + (el.dx_top||-20)*f, el.y + (el.dy_top||-40)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
-                } else if (el.type === 'single_line') {
-                    ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y + el.h);
-                } else if (el.type === 'x_line') {
-                    ctx.moveTo(el.x - el.w, el.y - el.h); ctx.lineTo(el.x + el.w, el.y + el.h); ctx.moveTo(el.x + el.w, el.y - el.h); ctx.lineTo(el.x - el.w, el.y + el.h);
-                } else if (el.type === 'text' || el.type === 'block_text') {
-                    ctx.font = "italic 20px Georgia"; ctx.fillText(el.val, el.x, el.y);
-                    if (el.type === 'block_text') ctx.strokeRect(el.x - 5, el.y - 25, el.w + 10, 35);
-                } else if (el.type === 'bracket') {
-                    ctx.moveTo(el.x + 20, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x, el.y + el.h); ctx.lineTo(el.x + 20, el.y + el.h);
-                } else if (el.type === 'flow_arrow') {
-                    ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + el.w, el.y); ctx.lineTo(el.x + el.w - 10, el.y - 10); ctx.moveTo(el.x + el.w, el.y); ctx.lineTo(el.x + el.w - 10, el.y + 10);
-                } else if (el.type === 'group_box') {
-                    ctx.setLineDash([5, 5]); ctx.strokeRect(el.x, el.y, el.w, el.h); ctx.setLineDash([]);
-                }
+    onAuthStateChanged(auth, (user) => {
+        if (user) { currentUser = user; listenToProjects(user); }
+        else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>'; }
+    });
+
+    // --- SHARED UI LOGIC ---
+    window.switchDiagramTab = function(tab) {
+        activeTab = tab;
+        document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
+        document.getElementById('tab-block').classList.toggle('active', tab === 'block');
+        document.getElementById('palette-rk').style.display = tab === 'rk' ? 'grid' : 'none';
+        document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
+    };
+
+    window.loadNativeBibleTextOnly = async function(query, fileName) {
+        if (!query.trim()) return;
+        const status = document.getElementById('dbStatus'); status.innerText = "Extracting...";
+        try {
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            if (!match) throw new Error("Format: Col 1 or Col 1:1-8");
+            const bSearch = match[1].trim().toLowerCase(), chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
+            const bName = abbrevs[bSearch] || bSearch, bNum = bnumberMap[bName], osis = osisMap[bName];
+            const res = await fetch(fileName);
+            const docXML = new DOMParser().parseFromString(await res.text(), "text/xml");
+            const isZef = docXML.querySelector('BIBLEBOOK') !== null;
+            let chapNode = isZef ? docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[number="${chap}"]`);
+            if (!chapNode) throw new Error("Passage not found");
+            let txt = "";
+            chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(v => {
+                let vn = parseInt(v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop());
+                if (sV !== null && (vn < sV || vn > eV)) return;
+                txt += v.textContent + " ";
+            });
+            document.getElementById('passageInput').value = txt.replace(/\s+/g, ' ').trim();
+            window.updateWordBank(); status.innerText = "";
+        } catch (e) { status.innerText = e.message; }
+    };
+
+    window.draw = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        window.elements.forEach(el => {
+            const isSel = window.selectedElements.includes(el), f = el.flip; 
+            ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = el.thickness || 2.5;
+            if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
+            
+            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.w*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
+            else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dx_top * f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
+            else if (el.type === 'stilt') { ctx.moveTo(el.x - (el.w*f), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.moveTo(el.x - (20*f), el.y + 25); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (20*f), el.y + 25); }
+            else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
+            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
+            else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
+            else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
+            ctx.stroke(); ctx.setLineDash([]);
+            
+            if (el.type === 'labeled_arrow') {
+                const ex = el.x + (el.w * f), ey = el.y + el.h; ctx.beginPath(); ctx.lineWidth = el.thickness || 2.5; ctx.moveTo(el.x, el.y);
+                if (f === 1) { ctx.lineTo(el.x, ey); ctx.lineTo(ex, ey); } else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); }
                 ctx.stroke();
-
-                if (isSel) {
-                    ctx.fillStyle = '#3498db';
-                    const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI*2); ctx.fill(); };
-                    if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); }
-                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
-                    else if (el.type.includes('line') || el.type === 'bracket' || el.type === 'flow_arrow' || el.type === 'group_box') { handle(el.x, el.y); handle(el.x + el.w, el.y + el.h); }
-                    else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
-                }
-            });
-
-            if (isSelecting) {
-                ctx.strokeStyle = 'rgba(52, 152, 219, 0.5)'; ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
-                ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
-                ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
             }
-        }
-
-        function getHitHandle(mx, my) {
-            for (let el of selectedElements) {
-                const f = el.flip || 1;
-                const check = (hx, hy, type) => Math.hypot(hx - mx, hy - my) < 15 ? type : null;
-                let h = null;
-                if (el.type === 'subject_baseline') h = check(el.x-el.w*f, el.y, 'L') || check(el.x+el.w*f, el.y, 'R');
-                else if (el.type === 'modifier' || el.type === 'prep_shelf') h = check(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T') || check(el.x+el.w*f, el.y, 'R');
-                else if (el.type.includes('line') || el.type === 'bracket' || el.type === 'flow_arrow' || el.type === 'group_box') h = check(el.x, el.y, 'L') || check(el.x+el.w, el.y+el.h, 'R');
-                else h = check(el.x, el.y-el.h, 'H') || check(el.x+el.w*f, el.y, 'W');
-                if(h) return {el, type:h};
+            if (el.type === 'block_text') {
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(el.x, el.y, el.w, el.h || 50); ctx.strokeRect(el.x, el.y, el.w, el.h || 50);
+                ctx.fillStyle = el.color || "#000"; ctx.font = "14px sans-serif"; ctx.fillText(el.val.substring(0,30), el.x+10, el.y+30);
             }
-            return null;
-        }
+            if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
 
-        canvas.onmousedown = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left) / zoomLevel, my = (e.clientY - rect.top) / zoomLevel;
-            const handleHit = getHitHandle(mx, my);
-            if (handleHit) { isResizing = true; currentResizePoint = handleHit.type; return; }
-            const bodyHit = elements.slice().reverse().find(el => Math.hypot(el.x - mx, el.y - my) < 50);
-            if (bodyHit) { if(!e.shiftKey) selectedElements = [bodyHit]; else selectedElements.push(bodyHit); isDragging = true; dragOffset.x = mx - bodyHit.x; dragOffset.y = my - bodyHit.y; }
-            else { isSelecting = true; selectionBox = { x: mx, y: my, w: 0, h: 0 }; selectedElements = []; }
-            draw();
-        };
-
-        window.onmousemove = (e) => {
-            const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left) / zoomLevel, my = (e.clientY - rect.top) / zoomLevel;
-            if (isResizing) {
-                const el = selectedElements[0], f = el.flip || 1;
-                if (currentResizePoint === 'R' || currentResizePoint === 'W') el.w = (mx - el.x) / f;
-                if (currentResizePoint === 'L') el.w = (el.x - mx) / f;
-                if (currentResizePoint === 'H') el.h = el.y - my;
-                if (currentResizePoint === 'T') { el.dx_top = (mx - el.x) / f; el.dy_top = my - el.y; }
-            } else if (isDragging) {
-                selectedElements.forEach(el => { el.x = mx - dragOffset.x; el.y = my - dragOffset.y; });
-            } else if (isSelecting) {
-                selectionBox.w = mx - selectionBox.x; selectionBox.h = my - selectionBox.y;
-                const x1 = Math.min(selectionBox.x, mx), x2 = Math.max(selectionBox.x, mx);
-                const y1 = Math.min(selectionBox.y, my), y2 = Math.max(selectionBox.y, my);
-                selectedElements = elements.filter(el => el.x >= x1 && el.x <= x2 && el.y >= y1 && el.y <= y2);
+            if (isSel) {
+                ctx.fillStyle = '#3498db'; const hR = 6 / Math.sqrt(window.zoomLevel);
+                const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
+                else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
             }
-            draw();
-        };
+        });
+        if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); }
+    };
 
-        window.onmouseup = () => { isDragging = isResizing = isSelecting = false; draw(); autoSave(); };
+    window.updateWordBank = function() {
+        const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
+        bank.innerHTML = '';
+        words.forEach(word => {
+            const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word;
+            span.draggable = true; span.onclick = () => span.classList.toggle('selected');
+            span.ondragstart = (e) => e.dataTransfer.setData("text/plain", word); bank.appendChild(span);
+        });
+    };
 
-        window.onkeydown = (e) => {
-            const step = e.shiftKey ? 10 : 2;
-            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
-                e.preventDefault();
-                selectedElements.forEach(el => { if (e.key === 'ArrowUp') el.y -= step; if (e.key === 'ArrowDown') el.y += step; if (e.key === 'ArrowLeft') el.x -= step; if (e.key === 'ArrowRight') el.x += step; });
-                draw();
-            }
-            if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; draw(); }
-        };
+    window.addShape = function(type, x=null, y=null, val=null) {
+        if (type === 'text' && val === null) { val = prompt("Enter text:"); if (!val) return; }
+        const vp = document.getElementById('canvas-viewport');
+        const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth / 2) / zoomLevel;
+        const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight / 2) / zoomLevel;
+        window.elements.push({ id: Date.now(), type, x: dX, y: dY, w: 120, h: 40, val, flip: 1, color: '#333', thickness: 2.5 });
+        window.draw();
+    };
 
-        function addShape(type, val = '') {
-            if ((type === 'text' || type === 'block_text') && !val) { showCustomPrompt("Label:", "", (v) => { if(v) addShape(type, v); }); return; }
-            elements.push({ id: Date.now(), type, x: 500, y: 500, w: 100, h: 40, val, flip: 1, dx_top: -20, dy_top: -40 });
-            draw(); updateWordBank();
+    window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
+    window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
+    window.autoSave = function() { sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ elements: window.elements, passage: document.getElementById('passageInput').value })); };
+    window.renderApparatus = function() { /* Apparatus untouched */ };
+    window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); };
+
+    // --- HIT DETECTION ---
+    function getHitElement(mx, my) {
+        let hitHandle = null, targetPoint = null, hitBody = null;
+        const checkH = (hx, hy, tgt, el) => { if (!hitHandle && Math.hypot(hx - mx, hy - my) < 20 / window.zoomLevel) { hitHandle = el; targetPoint = tgt; } };
+        [...window.elements].reverse().forEach(el => {
+            const f = el.flip || 1;
+            if (el.type === 'single_line' || el.type === 'labeled_arrow') { checkH(el.x, el.y, 'line_start', el); checkH(el.x+el.w*f, el.y+el.h, 'line_end', el); }
+            else if (el.type === 'subject_baseline') { checkH(el.x-el.w*f, el.y, 'subj_left', el); checkH(el.x+el.w*f, el.y, 'subj_right', el); }
+            if (!hitBody && Math.hypot(el.x - mx, el.y - my) < 50) hitBody = el;
+        });
+        return { hitHandle, targetPoint, body: hitBody };
+    }
+
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / window.zoomLevel, my = (e.clientY - rect.top) / window.zoomLevel;
+        const hit = getHitElement(mx, my);
+        if (hit.hitHandle) { isResizing = true; window.selectedElements = [hit.hitHandle]; currentResizePoint = hit.targetPoint; }
+        else if (hit.body) { isDragging = true; if(!e.shiftKey) window.selectedElements = [hit.body]; else window.selectedElements.push(hit.body); dragOffset = {x:mx, y:my}; }
+        else { isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; window.selectedElements = []; }
+        window.draw();
+    };
+
+    window.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left) / window.zoomLevel, my = (e.clientY - rect.top) / window.zoomLevel;
+        if (isResizing) {
+            const el = window.selectedElements[0], f = el.flip || 1;
+            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end') { el.w = (mx - el.x)/f; el.h = my - el.y; }
+            if (currentResizePoint === 'subj_left' || currentResizePoint === 'line_start') { el.w = (el.x - mx)*f; }
+        } else if (isDragging) {
+            const dx = mx - dragOffset.x, dy = my - dragOffset.y;
+            window.selectedElements.forEach(el => { el.x += dx; el.y += dy; });
+            dragOffset = {x:mx, y:my};
+        } else if (isMarquee) {
+            marqueeEnd = {x:mx, y:my};
+            const x1 = Math.min(marqueeStart.x, mx), x2 = Math.max(marqueeStart.x, mx), y1 = Math.min(marqueeStart.y, my), y2 = Math.max(marqueeStart.y, my);
+            window.selectedElements = window.elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2);
         }
-        function addPrepShelf() { addShape('prep_shelf'); }
-        function flipSelected() { selectedElements.forEach(el => el.flip *= -1); draw(); }
-        function clearCanvas() { if(confirm("Clear Everything?")) { elements = []; draw(); updateWordBank(); } }
+        window.draw();
+    };
 
-        function updateWordBank() {
-            const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
-            bank.innerHTML = '';
-            words.forEach(word => {
-                const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word; span.draggable = true;
-                span.ondragstart = (e) => e.dataTransfer.setData("text", word); bank.appendChild(span);
-            });
-        }
+    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; window.draw(); window.autoSave(); };
+    window.onkeydown = (e) => {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const n = e.shiftKey ? 10 : 2;
+        if (e.key === 'ArrowUp') window.selectedElements.forEach(el => el.y -= n);
+        if (e.key === 'ArrowDown') window.selectedElements.forEach(el => el.y += n);
+        if (e.key === 'ArrowLeft') window.selectedElements.forEach(el => el.x -= n);
+        if (e.key === 'ArrowRight') window.selectedElements.forEach(el => el.x += n);
+        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; }
+        window.draw();
+    };
 
-        canvas.ondrop = (e) => {
-            e.preventDefault(); const word = e.dataTransfer.getData("text");
-            const rect = canvas.getBoundingClientRect();
-            elements.push({ id: Date.now(), type: 'text', x: (e.clientX-rect.left)/zoomLevel, y: (e.clientY-rect.top)/zoomLevel, val: word });
-            draw();
-        };
-        canvas.ondragover = e => e.preventDefault();
-
-        async function loadNativeBibleTextOnly() {
-            const query = document.getElementById('dbRefInput').value.trim();
-            const fileName = document.getElementById('dbModuleSelect').value;
-            if(!query) return;
-            try {
-                let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-                const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
-                if (!match) throw new Error("Format: Col 1 or Col 1:1-8");
-                const bName = abbrevs[match[1].trim().toLowerCase()] || match[1].trim().toLowerCase();
-                const bNum = bnumberMap[bName], chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
-                
-                const res = await fetch(fileName); const text = await res.text();
-                const doc = new DOMParser().parseFromString(text, "text/xml");
-                
-                if (fileName === 'srgnt.tsv') {
-                    const targetPrefix = bNum.toString().padStart(2, '0') + chap.toString().padStart(3, '0');
-                    const lines = text.split('\n'); let out = "";
-                    for (let line of lines) { if (line.split('\t')[0].startsWith(targetPrefix)) { const vInt = parseInt(line.split('\t')[0].substring(5, 8)); if (sV !== null && (vInt < sV || vInt > eV)) continue; out += line.split('\t')[1] + " "; } }
-                    document.getElementById('passageInput').value = out.trim();
-                } else {
-                    const osis = osisMap[bName]; const isZef = doc.querySelector('BIBLEBOOK') !== null;
-                    const chapNode = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : doc.querySelector(`chapter[osisID="${osis}.${chap}"]`) || doc.querySelector(`chapter[number="${chap}"]`);
-                    if (!chapNode) throw new Error("Passage not found.");
-                    let out = "";
-                    chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => {
-                        let vNum = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || vNode.getAttribute('osisID')?.split('.').pop());
-                        if (sV !== null && (vNum < sV || vNum > eV)) return;
-                        out += vNode.textContent + " ";
-                    });
-                    document.getElementById('passageInput').value = out.trim();
-                }
-                updateWordBank();
-            } catch(e) { alert(e.message); }
-        }
-
-        function autoSave() { localStorage.setItem('syntaxis_app_autosave', JSON.stringify({ elements, passage: document.getElementById('passageInput').value })); }
-        function saveToApp() {
-            const name = document.getElementById('projectName').value || prompt("Name:"); if(!name) return;
-            const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-            projects[name] = { elements, passage: document.getElementById('passageInput').value };
-            localStorage.setItem('syntaxis_projects', JSON.stringify(projects)); updateProjectList(); alert("Saved!");
-        }
-        function updateProjectList() {
-            const list = document.getElementById('project-list'); list.innerHTML = '';
-            const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-            Object.keys(projects).forEach(n => {
-                const div = document.createElement('div'); div.style.cssText = "padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; cursor:pointer; border-radius:4px; display:flex; justify-content:space-between;";
-                div.innerHTML = `<span>${n}</span><span onclick="deleteDiagramProject('${n}', event)" style="color:var(--oxford-crimson); font-weight:bold;">✕</span>`;
-                div.onclick = () => { elements = projects[n].elements; document.getElementById('passageInput').value = projects[n].passage; document.getElementById('projectName').value = n; draw(); updateWordBank(); };
-                list.appendChild(div);
-            });
-        }
-        function deleteDiagramProject(name, e) { e.stopPropagation(); if(confirm("Delete?")) { const projects = JSON.parse(localStorage.getItem('syntaxis_projects')); delete projects[name]; localStorage.setItem('syntaxis_projects', JSON.stringify(projects)); updateProjectList(); } }
-        let currentPromptCallback = null;
-        function showCustomPrompt(msg, def, cb) { document.getElementById('custom-prompt').style.display='flex'; document.getElementById('prompt-message').innerText=msg; document.getElementById('prompt-input').value=def; currentPromptCallback=cb; document.getElementById('prompt-input').focus(); }
-        function submitPrompt() { const v=document.getElementById('prompt-input').value; document.getElementById('custom-prompt').style.display='none'; if(currentPromptCallback) currentPromptCallback(v); }
-        function closePrompt() { document.getElementById('custom-prompt').style.display='none'; }
-        window.onload = () => { updateProjectList(); draw(); };
-    </script>
-    <script type="module" src="firebase-setup.js"></script>
+    window.draw();
+</script>
 </body>
 </html>
