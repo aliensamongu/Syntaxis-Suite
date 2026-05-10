@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis Annotator | Master Editor</title>
+    <title>Σyntaxis Annotator</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
     <style>
         :root {
@@ -142,7 +142,7 @@
         <div style="display: flex; flex-direction: column; gap: 8px;">
             <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. Rom 1:16)">
             <div class="btn-group">
-                <button class="std-btn" onclick="saveLocalApp()">Save</button>
+                <button class="std-btn" onclick="saveLocalApp()" style="background: var(--oxford-gold); color: var(--oxford-navy-dark);">Save App</button>
                 <button class="std-btn secondary" onclick="downloadJSON()">JSON</button>
                 <button class="std-btn secondary" onclick="document.getElementById('fileInput').click()">Load</button>
                 <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadJSON(event)">
@@ -274,8 +274,8 @@
     
     let selectedWords = [];
     let lastClickedWordId = null;
-    let connections = []; 
-    let notes = []; 
+    let connections = [];
+    let notes = [];
 
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
@@ -294,7 +294,7 @@
         if (!query.trim()) return;
         
         canvas.innerHTML = `<span style="color:var(--rustic-orange); font-style:italic;">Loading module...</span>`;
-        canvas.className = 'spacing-standard'; 
+        canvas.className = 'spacing-standard';
         clearAllWorkspace();
         originalToggleContainer.style.display = 'none';
 
@@ -312,7 +312,7 @@
             const endVerse = match[4] ? parseInt(match[4]) : startVerse;
             const fullBookName = abbrevs[searchBook] || searchBook;
             
-            canvas.innerHTML = ''; 
+            canvas.innerHTML = '';
             let wordIndex = 0;
 
             const processZefaniaNodes = (vers, container) => {
@@ -367,8 +367,8 @@
 
             if (fileName === 'nt_interlinear' || fileName === 'ot_interlinear') {
                 const isHebrew = fileName === 'ot_interlinear';
-                originalToggleContainer.style.display = 'flex'; 
-                originalToggle.checked = true; 
+                originalToggleContainer.style.display = 'flex';
+                originalToggle.checked = true;
                 if (originalToggleLabel) originalToggleLabel.innerText = isHebrew ? 'Show Hebrew' : 'Show Greek';
 
                 const bNum = bnumberMap[fullBookName];
@@ -561,10 +561,11 @@
         element.classList.add('active-label');
     }
 
-    function addLabel() {
-        const name = prompt("Label name (e.g. Verbs, Nouns):");
+    function addLabel(name = null, color = null) {
+        if (!name) name = prompt("Label name (e.g. Verbs, Nouns):");
         if (!name) return;
-        const color = colorPicker.value;
+        if (!color) color = colorPicker.value;
+        
         const btn = document.createElement('div');
         btn.className = 'saved-item label-item';
         
@@ -582,7 +583,7 @@
     }
 
     function editLabel(labelElement, event) {
-        event.stopPropagation(); 
+        event.stopPropagation();
         const textSpan = labelElement.querySelector('.label-text');
         const currentName = textSpan.innerText;
         const newName = prompt("Edit Label Name:", currentName);
@@ -592,10 +593,10 @@
     }
 
     function deleteLabel(labelElement, event) {
-        event.stopPropagation(); 
+        event.stopPropagation();
         if (confirm("Are you sure you want to delete this label?")) {
             if (labelElement.classList.contains('active-label')) {
-                syncColorPicker(); 
+                syncColorPicker();
             }
             labelElement.remove();
         }
@@ -627,7 +628,7 @@
         selectedWords = []; lastClickedWordId = null;
         if(originalToggleContainer) originalToggleContainer.style.display = 'none';
 
-        const words = raw.split(/(\s+)/); 
+        const words = raw.split(/(\s+)/);
         let wordIndex = 0;
 
         words.forEach(chunk => {
@@ -639,7 +640,7 @@
                 span.id = `w-${wordIndex++}`;
                 span.innerText = chunk;
                 span.onclick = (e) => {
-                    e.stopPropagation(); 
+                    e.stopPropagation();
                     handleWordClick(e, span.id);
                 };
                 canvas.appendChild(span);
@@ -656,7 +657,7 @@
             const start = Math.min(currentIdx, lastIdx);
             const end = Math.max(currentIdx, lastIdx);
 
-            if (!event.ctrlKey && !event.metaKey) clearSelection(false); 
+            if (!event.ctrlKey && !event.metaKey) clearSelection(false);
 
             for (let i = start; i <= end; i++) {
                 const wId = `w-${i}`;
@@ -666,7 +667,7 @@
                     if(el) el.classList.add('selected');
                 }
             }
-        } 
+        }
         else if (event.ctrlKey || event.metaKey) {
             const index = selectedWords.indexOf(id);
             if (index > -1) {
@@ -677,7 +678,7 @@
                 document.getElementById(id).classList.add('selected');
             }
             lastClickedWordId = id;
-        } 
+        }
         else {
             clearSelection(false);
             selectedWords = [id];
@@ -725,9 +726,9 @@
             const el = document.getElementById(id);
             if (!el) return;
             if (type === 'highlight') {
-                el.style.transform = ''; 
+                el.style.transform = '';
                 el.style.backgroundColor = hexToRgba(color, 0.5);
-                el.style.borderBottom = ''; 
+                el.style.borderBottom = '';
                 el.style.borderRadius = '3px 8px / 8px 3px';
                 el.style.boxShadow = `0 0 4px ${hexToRgba(color, 0.4)}`;
                 el.style.display = 'inline-block';
@@ -737,7 +738,7 @@
             } else if (type === 'underline') {
                 el.style.transform = ''; el.style.boxShadow = ''; el.style.backgroundColor = '';
                 const existingTag = el.querySelector('.grammar-tag');
-                if(existingTag) existingTag.remove(); 
+                if(existingTag) existingTag.remove();
                 const currentDepth = el.querySelectorAll('.ul-layer').length;
                 const innerContent = el.innerHTML;
                 const offset = 4 + (currentDepth * 5);
@@ -745,7 +746,7 @@
                 if(existingTag) el.appendChild(existingTag);
             }
         });
-        clearSelection(); 
+        clearSelection();
     }
 
     function promptGrammarTag() {
@@ -777,7 +778,7 @@
             el.style.transform = ''; el.style.boxShadow = ''; el.style.borderRadius = '4px'; el.style.display = 'inline-block';
             
             const existingTag = el.querySelector('.grammar-tag');
-            if(existingTag) existingTag.remove(); 
+            if(existingTag) existingTag.remove();
             
             const textOnly = el.innerText.replace(existingTag ? existingTag.innerText : '', '').trim();
             el.style = '';
@@ -831,7 +832,7 @@
 
     function drawArrows() {
         if(!svgPaths) return;
-        svgPaths.innerHTML = ''; 
+        svgPaths.innerHTML = '';
         const workspaceRect = document.getElementById('workspace').getBoundingClientRect();
         const ws = document.getElementById('workspace');
         
@@ -844,23 +845,23 @@
             const rect2 = w2.getBoundingClientRect();
 
             const x1 = (rect1.left + rect1.width / 2) - workspaceRect.left + ws.scrollLeft;
-            const y1 = (rect1.top) - workspaceRect.top + ws.scrollTop - 5; 
+            const y1 = (rect1.top) - workspaceRect.top + ws.scrollTop - 5;
             const x2 = (rect2.left + rect2.width / 2) - workspaceRect.left + ws.scrollLeft;
-            const y2 = (rect2.top) - workspaceRect.top + ws.scrollTop - 10; 
+            const y2 = (rect2.top) - workspaceRect.top + ws.scrollTop - 10;
 
             const distance = Math.abs(x2 - x1);
-            const archHeight = Math.min(100, distance / 2); 
+            const archHeight = Math.min(100, distance / 2);
             
             const cx1 = x1;
             const cy1 = Math.min(y1, y2) - archHeight - 30;
             const cx2 = x2;
-            const cy2 = Math.min(y1, y2) - archHeight - 30; 
+            const cy2 = Math.min(y1, y2) - archHeight - 30;
 
             const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
             path.setAttribute('d', `M ${x1} ${y1} C ${cx1} ${cy1}, ${cx2} ${cy2}, ${x2} ${y2}`);
             path.setAttribute('fill', 'none');
             path.setAttribute('stroke-width', '2');
-            path.setAttribute('stroke', conn.color); 
+            path.setAttribute('stroke', conn.color);
             path.setAttribute('marker-end', ensureMarker(conn.color));
 
             if (conn.style === 'dashed') path.setAttribute('stroke-dasharray', '8,8');
@@ -894,7 +895,7 @@
         });
 
         renderGutter();
-        clearSelection(); 
+        clearSelection();
     }
 
     function renderGutter() {
@@ -909,7 +910,7 @@
             card.ondragover = (e) => e.preventDefault();
             card.ondrop = () => dropNote(n.id);
             
-            card.onmouseenter = () => { 
+            card.onmouseenter = () => {
                 clearSelection(false);
                 n.wordIds.forEach(id => {
                     const el = document.getElementById(id);
@@ -964,12 +965,20 @@
     }
 
     function getAppData() {
+        const labelData = [];
+        document.querySelectorAll('.label-item').forEach(lbl => {
+            labelData.push({
+                name: lbl.querySelector('.label-text').innerText,
+                color: lbl.querySelector('.label-text').style.borderLeftColor
+            });
+        });
         return {
             projectName: document.getElementById('projectName').value,
             rawText: document.getElementById('rawTextInput').value,
             canvasHTML: canvas.innerHTML,
-            savedNotes: notes,             
-            savedConnections: connections  
+            savedNotes: notes,
+            savedConnections: connections,
+            savedLabels: labelData
         };
     }
 
@@ -984,6 +993,15 @@
         }
         notes = data.savedNotes || [];
         connections = data.savedConnections || [];
+
+        const labelContainer = document.getElementById('label-container');
+        labelContainer.innerHTML = '';
+        if (data.savedLabels) {
+            data.savedLabels.forEach(lbl => {
+                addLabel(lbl.name, lbl.color);
+            });
+        }
+
         renderGutter();
         requestAnimationFrame(drawArrows);
     }
@@ -992,7 +1010,7 @@
         const name = document.getElementById('projectName').value.trim() || "Untitled Annotation";
         localStorage.setItem('syntaxis_annotator_' + name, JSON.stringify(getAppData()));
         updateProjectList();
-        alert("Project saved successfully!");
+        alert("Project saved to App!");
     }
 
     function updateProjectList() {
@@ -1048,19 +1066,15 @@
         document.getElementById('btn-space-loose').classList.remove('active');
         document.getElementById('btn-space-double').classList.remove('active');
         document.getElementById('btn-space-' + type).classList.add('active');
-        setTimeout(drawArrows, 350); 
+        setTimeout(drawArrows, 350);
     }
 
     document.getElementById('workspace').addEventListener('scroll', drawArrows);
     window.addEventListener('resize', drawArrows);
     window.addEventListener('DOMContentLoaded', updateProjectList);
-
-</script>
 </script>
 
-    <script type="module" src="firebase-setup.js"></script>
+<script type="module" src="firebase-setup.js"></script>
 
-</body>
-</html>
 </body>
 </html>
