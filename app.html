@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis | Diagrammer IX</title>
+    <title>Σyntaxis | Diagrammer IX Master</title>
     <style>
         :root {
             --sidebar-width: 380px;
@@ -40,11 +40,9 @@
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
-        .app-nav a:hover { border-color: var(--oxford-gold); }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
 
         h2 { margin: 0; color: var(--oxford-cream); font-family: Georgia, serif; font-size: 24px; }
-        .ix { font-size: 14px; text-decoration: overline; margin-left: 4px; font-weight: bold; color: var(--oxford-gold); }
         h3 { margin: 0 0 10px 0; font-size: 13px; color: var(--oxford-gold); text-transform: uppercase; letter-spacing: 1px; font-weight: bold; }
 
         input[type="text"], textarea, select {
@@ -52,53 +50,43 @@
             border: 1px solid var(--oxford-navy-dark); padding: 10px;
             font-family: inherit; font-size: 13px; color: var(--oxford-navy);
             background: var(--oxford-cream); transition: 0.1s; outline: none;
-            box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
         }
-        textarea { height: 120px; flex-shrink: 0; resize: none; line-height: 1.4; }
+        textarea { height: 120px; flex-shrink: 0; resize: none; }
         
         #word-bank {
             height: 250px; flex-shrink: 0; margin-top: 15px; overflow-y: auto; padding: 15px;
             display: flex; flex-wrap: wrap; align-content: flex-start; gap: 6px 10px;
             background: var(--oxford-navy-dark); border-radius: var(--radius-medium);
-            border: 1px solid rgba(255,255,255,0.05);
         }
         
         .bank-word {
-            font-family: Georgia, serif; font-size: 19px; color: var(--oxford-cream);
-            cursor: grab; padding: 4px 8px; user-select: none;
-            border-radius: var(--radius-small); background: transparent;
-            transition: 0.1s; border: none;
+            font-family: Georgia, serif; font-size: 18px; color: var(--oxford-cream);
+            cursor: grab; padding: 4px 8px; user-select: none; border-radius: 4px;
         }
         .bank-word:hover { background: rgba(255,255,255,0.1); }
-        .bank-word.selected { background: var(--oxford-gold); color: var(--oxford-navy); font-weight: bold; }
         
         .palette { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; margin-top: 20px; }
         .tool {
             padding: 10px; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-medium);
             text-align: center; background: var(--oxford-cream); cursor: pointer;
-            color: var(--oxford-navy); font-size: 11px; font-weight: bold; transition: 0.1s; line-height: 1.2;
+            color: var(--oxford-navy); font-size: 10px; font-weight: bold;
         }
-        .tool:hover { background: #fff; transform: translateY(-1px); box-shadow: 0 4px 8px rgba(0,0,0,0.15); }
-        .tool svg { width: 28px; height: 28px; stroke: var(--oxford-navy); fill: none; stroke-width: 3.5; display: block; margin: 0 auto 6px; }
+        .tool svg { width: 24px; height: 24px; stroke: var(--oxford-navy); fill: none; stroke-width: 3; display: block; margin: 0 auto 5px; }
         
-        .std-btn { border: none; padding: 10px; border-radius: var(--radius-small); cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; transition: 0.2s; }
+        .std-btn { border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         
         #canvas-viewport { flex-grow: 1; overflow: auto; position: relative; background: var(--bg-main); }
-        canvas { background: #fff; display: block; cursor: crosshair; box-shadow: 0 0 20px rgba(0,0,0,0.05); }
+        canvas { background: #fff; display: block; cursor: crosshair; }
 
         #custom-prompt { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; }
         .prompt-box { background:#1e1e1e; border:1px solid #d4af37; padding:20px; border-radius:8px; width:300px; text-align:center; color:white; }
-
-        .btn-group { display: flex; gap: 5px; }
-        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 11px; font-weight: bold; transition: 0.1s; }
-        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy); }
     </style>
 </head>
 <body>
     
     <div id="sidebar">
         <div class="sidebar-inner">
-            <h2>Σyntaxis<span class="ix">IX</span></h2>
+            <h2>Σyntaxis<span style="font-size:14px; text-decoration:overline; color:var(--oxford-gold); margin-left:4px;">IX</span></h2>
             <div class="app-nav">
                 <a href="annotator.html">Annotate</a>
                 <a href="app.html" class="active">Diagramer</a>
@@ -106,37 +94,29 @@
                 <a href="outliner.html">Outline</a>
             </div>
             
-            <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-                <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
+            <div style="display: flex; flex-direction: column; gap: 8px;">
+                <input type="text" id="projectName" placeholder="Project Name">
                 <div style="display: flex; gap: 8px;">
-                    <input type="text" id="verseReference" placeholder="Ref (e.g. Rom 1:16)" style="flex:1;">
-                    <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save App</button>
+                    <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" style="flex:1;">
+                    <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Save App</button>
                 </div>
-            </div>
-            
-            <div class="btn-group" style="margin-top: 15px;">
-                <button id="tab-rk" class="active" onclick="switchDiagramTab('rk')">Sentence</button>
-                <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
             </div>
             
             <div id="palette-rk" class="palette">
                 <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
-                <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj.</div>
+                <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj</div>
                 <div class="tool" onclick="addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
                 <div class="tool" onclick="addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
-                <div class="tool" onclick="addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood</div>
+                <div class="tool" onclick="addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood X</div>
                 <div class="tool" onclick="addShape('diamond')"><svg viewBox="0 0 100 100"><path d="M5,50 L25,50 L45,20 L75,20 L95,50 L75,80 L45,80 L25,50 M45,20 L45,80 M75,20 L75,80"/></svg>Compound</div>
                 <div class="tool" onclick="addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
                 <div class="tool" onclick="addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Line</div>
-                <div class="tool" onclick="addShape('text')"><strong style="font-size:18px;">Label</strong></div>
-                <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 3; margin-top:5px;">Flip Selection (F)</button>
+                <div class="tool" onclick="addShape('text')"><strong>Label</strong></div>
+                <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 3; margin-top:5px;">Flip (F)</button>
                 <button class="std-btn" onclick="clearCanvas()" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
             </div>
 
-            <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
-                <h3>Saved Projects</h3>
-                <div id="project-list"></div>
-            </div>
+            <div id="project-list" style="margin-top:20px;"></div>
         </div>
     </div>
     
@@ -148,27 +128,27 @@
         <div class="right-inner">
             <h3>Text Source</h3>
             <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-                <input type="text" id="dbRefInput" placeholder="Matt 1:1-5">
+                <input type="text" id="dbRefInput" placeholder="Col 1:1-8">
                 <select id="dbModuleSelect">
-                    <option value="esv.xml">English Standard Version (ESV)</option>
-                    <option value="tischendorf.xml">Tischendorf Greek NT</option>
+                    <option value="esv.xml">ESV English</option>
+                    <option value="tischendorf.xml">Greek NT</option>
                     <option value="hebrew_ot.xml">Hebrew OT</option>
-                    <option value="srgnt.tsv">SRGNT (Greek TSV)</option>
+                    <option value="srgnt.tsv">SRGNT Greek</option>
                 </select>
                 <button class="std-btn" onclick="loadNativeBibleTextOnly()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
             </div>
-            <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank(); autoSave();"></textarea>
+            <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank()"></textarea>
             <div id="word-bank"></div>
         </div>
     </div>
 
     <div id="custom-prompt">
         <div class="prompt-box">
-            <p id="prompt-message" style="margin-bottom:15px; font-weight:bold;"></p>
-            <input type="text" id="prompt-input" style="width:90%; padding:8px; margin-bottom:15px; background:#2d2d2d; border:1px solid #444; color:white; border-radius:4px;">
+            <p id="prompt-message"></p>
+            <input type="text" id="prompt-input" style="width:90%; padding:8px; margin-bottom:15px; background:#2d2d2d; border:1px solid #444; color:white;">
             <div style="display:flex; justify-content:space-around;">
-                <button onclick="submitPrompt()" style="background:#d4af37; color:black; border:none; padding:8px 15px; border-radius:4px; cursor:pointer; font-weight:bold;">OK</button>
-                <button onclick="closePrompt()" style="background:#444; color:white; border:none; padding:8px 15px; border-radius:4px; cursor:pointer;">Cancel</button>
+                <button onclick="submitPrompt()" style="background:#d4af37; border:none; padding:8px 15px; cursor:pointer;">OK</button>
+                <button onclick="closePrompt()" style="background:#444; color:white; border:none; padding:8px 15px; cursor:pointer;">Cancel</button>
             </div>
         </div>
     </div>
@@ -179,40 +159,15 @@
         const bank = document.getElementById('word-bank');
         
         let elements = [], selectedElements = [];
-        let isDragging = false, zoomLevel = 1;
-        let dragOffset = {x:0, y:0};
-        let activeTab = 'rk';
-
-        const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation", "col": "colossians" };
-        const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
-        const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+        let isDragging = false, isResizing = false, zoomLevel = 1;
+        let dragOffset = {x:0, y:0}, currentResizePoint = null;
 
         canvas.width = 4000; canvas.height = 4000;
 
-        function switchDiagramTab(tab) {
-            activeTab = tab;
-            document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
-            document.getElementById('tab-block').classList.toggle('active', tab === 'block');
-        }
+        const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
+        const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
+        const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
 
-        // --- THE ADVANCED HIT DETECTION (Enables Grabbing) ---
-        function getHitElement(mx, my) {
-            return elements.slice().reverse().find(el => {
-                const f = el.flip || 1;
-                if (el.type === 'text') {
-                    // Check if mouse is near the text
-                    return Math.abs(el.x + 20 - mx) < 60 && Math.abs(el.y - 10 - my) < 25;
-                }
-                // Check if mouse is near the lines of the shape
-                let minX = Math.min(el.x, el.x + el.w * f);
-                let maxX = Math.max(el.x, el.x + el.w * f);
-                let minY = el.y - (el.h || 30);
-                let maxY = el.y + (el.h || 30);
-                return mx >= minX - 20 && mx <= maxX + 20 && my >= minY - 20 && my <= maxY + 20;
-            });
-        }
-
-        // --- DRAWING LOGIC ---
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             elements.forEach(el => {
@@ -232,67 +187,81 @@
                     ctx.moveTo(el.x + (el.dx_top || -20)*f, el.y + (el.dy_top || -40)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
                 } else if (el.type === 'single_line') {
                     ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y + el.h);
-                } else if (el.type === 'text') {
-                    ctx.font = "italic 20px Georgia";
-                    ctx.fillText(el.val, el.x, el.y);
-                } else if (el.type === 'diamond') {
-                    ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y);
-                    ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y);
-                    ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h);
                 } else if (el.type === 'x_line') {
-                    ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30);
+                    ctx.moveTo(el.x - el.w, el.y - el.h); ctx.lineTo(el.x + el.w, el.y + el.h);
+                    ctx.moveTo(el.x + el.w, el.y - el.h); ctx.lineTo(el.x - el.w, el.y + el.h);
+                } else if (el.type === 'text') {
+                    ctx.font = "italic 20px Georgia"; ctx.fillText(el.val, el.x, el.y);
                 }
                 ctx.stroke();
 
                 if (isSel) {
-                    ctx.save();
-                    ctx.strokeStyle = '#3498db'; ctx.setLineDash([5, 5]); ctx.lineWidth = 1;
-                    ctx.strokeRect(el.x - 60, el.y - 40, (el.w?el.w*2:120), 80);
-                    ctx.restore();
+                    ctx.fillStyle = '#3498db';
+                    const drawHandle = (hx, hy, type) => {
+                        ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI*2); ctx.fill();
+                    };
+                    if (el.type === 'subject_baseline') { drawHandle(el.x - (el.w*f), el.y, 'L'); drawHandle(el.x + (el.w*f), el.y, 'R'); }
+                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { drawHandle(el.x + (el.dx_top || -20)*f, el.y + (el.dy_top || -40), 'T'); drawHandle(el.x + (el.w*f), el.y, 'R'); }
+                    else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'single_line' || el.type === 'x_line') {
+                        drawHandle(el.x, el.y - el.h, 'H'); drawHandle(el.x + (el.w*f), el.y, 'W');
+                    }
                 }
             });
         }
 
+        function getHitHandle(mx, my) {
+            for (let el of selectedElements) {
+                const f = el.flip || 1;
+                const check = (hx, hy, type) => Math.hypot(hx - mx, hy - my) < 15 ? type : null;
+                let h = null;
+                if (el.type === 'subject_baseline') { h = check(el.x - el.w*f, el.y, 'L') || check(el.x + el.w*f, el.y, 'R'); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { h = check(el.x + (el.dx_top||-20)*f, el.y + (el.dy_top||-40), 'T') || check(el.x + el.w*f, el.y, 'R'); }
+                else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'single_line' || el.type === 'x_line') { h = check(el.x, el.y - el.h, 'H') || check(el.x + el.w*f, el.y, 'W'); }
+                if (h) return { el, type: h };
+            }
+            return null;
+        }
+
         canvas.onmousedown = (e) => {
             const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left) / zoomLevel;
-            const my = (e.clientY - rect.top) / zoomLevel;
-            
-            const hit = getHitElement(mx, my);
-            if (hit) {
-                selectedElements = [hit]; isDragging = true;
-                dragOffset.x = mx - hit.x; dragOffset.y = my - hit.y;
-            } else {
-                selectedElements = [];
-            }
+            const mx = (e.clientX - rect.left) / zoomLevel, my = (e.clientY - rect.top) / zoomLevel;
+            const handleHit = getHitHandle(mx, my);
+            if (handleHit) { isResizing = true; currentResizePoint = handleHit.type; return; }
+            const bodyHit = elements.slice().reverse().find(el => Math.hypot(el.x - mx, el.y - my) < 60);
+            if (bodyHit) { selectedElements = [bodyHit]; isDragging = true; dragOffset.x = mx - bodyHit.x; dragOffset.y = my - bodyHit.y; }
+            else { selectedElements = []; }
             draw();
         };
 
         window.onmousemove = (e) => {
-            if (!isDragging) return;
             const rect = canvas.getBoundingClientRect();
-            const mx = (e.clientX - rect.left) / zoomLevel;
-            const my = (e.clientY - rect.top) / zoomLevel;
-            selectedElements[0].x = mx - dragOffset.x;
-            selectedElements[0].y = my - dragOffset.y;
-            draw();
+            const mx = (e.clientX - rect.left) / zoomLevel, my = (e.clientY - rect.top) / zoomLevel;
+            if (isResizing) {
+                const el = selectedElements[0], f = el.flip || 1;
+                if (currentResizePoint === 'R' || currentResizePoint === 'W') el.w = (mx - el.x) / f;
+                if (currentResizePoint === 'L') el.w = (el.x - mx) / f;
+                if (currentResizePoint === 'H') el.h = el.y - my;
+                if (currentResizePoint === 'T') { el.dx_top = (mx - el.x) / f; el.dy_top = my - el.y; }
+                draw();
+            } else if (isDragging) {
+                selectedElements[0].x = mx - dragOffset.x; selectedElements[0].y = my - dragOffset.y;
+                draw();
+            }
         };
 
-        window.onmouseup = () => { isDragging = false; autoSave(); };
+        window.onmouseup = () => { isDragging = false; isResizing = false; autoSave(); };
 
         function addShape(type, val = '') {
-            if (type === 'text' && !val) { showCustomPrompt("Enter Label Text:", "", (v) => { if(v) addShape('text', v); }); return; }
-            elements.push({ id: Date.now(), type, x: 500, y: 500, w: 120, h: 40, val, flip: 1 });
+            if (type === 'text' && !val) { showCustomPrompt("Label:", "", (v) => { if(v) addShape('text', v); }); return; }
+            elements.push({ id: Date.now(), type, x: 500, y: 500, w: 100, h: 40, val, flip: 1, dx_top: -20, dy_top: -40 });
             draw(); updateWordBank();
         }
-
-        function addPrepShelf() { elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 40, dy_top: -40, flip: 1 }); draw(); }
+        function addPrepShelf() { addShape('prep_shelf'); }
         function flipSelected() { selectedElements.forEach(el => el.flip *= -1); draw(); }
-        function clearCanvas() { if(confirm("Clear everything?")) { elements = []; selectedElements = []; draw(); updateWordBank(); } }
+        function clearCanvas() { if(confirm("Clear Everything?")) { elements = []; draw(); updateWordBank(); } }
 
         function updateWordBank() {
-            const passageVal = document.getElementById('passageInput').value;
-            const words = passageVal.split(/\s+/).filter(w => w.length > 0);
+            const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
             bank.innerHTML = '';
             words.forEach(word => {
                 const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word; span.draggable = true;
@@ -303,10 +272,8 @@
         canvas.ondrop = (e) => {
             e.preventDefault(); const word = e.dataTransfer.getData("text");
             const rect = canvas.getBoundingClientRect();
-            const x = (e.clientX - rect.left) / zoomLevel;
-            const y = (e.clientY - rect.top) / zoomLevel;
-            elements.push({ id: Date.now(), type: 'text', x, y, w: 100, h: 30, val: word, flip: 1 });
-            draw(); updateWordBank();
+            elements.push({ id: Date.now(), type: 'text', x: (e.clientX-rect.left)/zoomLevel, y: (e.clientY-rect.top)/zoomLevel, val: word });
+            draw();
         };
         canvas.ondragover = e => e.preventDefault();
 
@@ -314,106 +281,51 @@
             const query = document.getElementById('dbRefInput').value.trim();
             const fileName = document.getElementById('dbModuleSelect').value;
             if(!query) return;
-
             try {
-                let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
-                const match = formattedQuery.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+                let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+                const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
                 if (!match) throw new Error("Format: Col 1 or Col 1:1-8");
-
-                const bookSearch = match[1].trim().toLowerCase();
-                const chapNum = match[2];
-                const startVerse = match[3] ? parseInt(match[3]) : null;
-                const endVerse = match[4] ? parseInt(match[4]) : startVerse;
-                const fullBookName = abbrevs[bookSearch] || bookSearch;
-                const bNum = bnumberMap[fullBookName];
-
-                const res = await fetch(fileName);
-                const text = await res.text();
+                const bName = abbrevs[match[1].trim().toLowerCase()] || match[1].trim().toLowerCase();
+                const bNum = bnumberMap[bName], chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
+                const res = await fetch(fileName); const text = await res.text();
                 const doc = new DOMParser().parseFromString(text, "text/xml");
-
-                if (fileName === 'srgnt.tsv') {
-                    const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
-                    const lines = text.split('\n');
-                    let output = "";
-                    for (let line of lines) {
-                        const cols = line.split('\t');
-                        if (cols[0].startsWith(targetPrefix)) {
-                            const vInt = parseInt(cols[0].substring(5, 8));
-                            if (startVerse !== null && (vInt < startVerse || vInt > endVerse)) continue;
-                            output += cols[1] + " ";
-                        }
-                    }
-                    document.getElementById('passageInput').value = output.trim();
-                } else {
-                    const isZef = doc.querySelector('BIBLEBOOK') !== null;
-                    const isO = doc.querySelector("chapter[osisID]") !== null;
-
-                    let chapNode = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chapNum}"]`) :
-                                   isO ? doc.querySelector(`chapter[osisID="${osisMap[fullBookName]}.${chapNum}"]`) :
-                                   doc.querySelector(`chapter[number="${chapNum}"]`);
-
-                    if (!chapNode && !isZef) {
-                        const bookNode = doc.querySelector(`book[number="${bNum}"]`);
-                        if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chapNum}"]`);
-                    }
-
-                    if (!chapNode) throw new Error("Passage not found.");
-
-                    let output = "";
-                    chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => {
-                        let vInt = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || vNode.getAttribute('osisID')?.split('.').pop());
-                        if (startVerse !== null && (vInt < startVerse || vInt > endVerse)) return;
-                        output += vNode.textContent + " ";
-                    });
-                    document.getElementById('passageInput').value = output.trim();
-                }
-                updateWordBank();
+                const isZef = doc.querySelector('BIBLEBOOK') !== null;
+                const chapNode = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : doc.querySelector(`chapter[osisID*=".${chap}"]`) || doc.querySelector(`chapter[number="${chap}"]`);
+                if (!chapNode) throw new Error("Chapter not found.");
+                let out = "";
+                chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => {
+                    let vNum = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || vNode.getAttribute('osisID')?.split('.').pop());
+                    if (sV !== null && (vNum < sV || vNum > eV)) return;
+                    out += vNode.textContent + " ";
+                });
+                document.getElementById('passageInput').value = out.trim(); updateWordBank();
             } catch(e) { alert(e.message); }
         }
 
         function autoSave() { localStorage.setItem('syntaxis_app_autosave', JSON.stringify({ elements, passage: document.getElementById('passageInput').value })); }
         function saveToApp() {
-            const name = document.getElementById('projectName').value || prompt("Project Name:");
+            const name = document.getElementById('projectName').value || prompt("Name:");
             if(!name) return;
             const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
             projects[name] = { elements, passage: document.getElementById('passageInput').value };
             localStorage.setItem('syntaxis_projects', JSON.stringify(projects));
-            updateProjectList(); alert("Saved to App!");
+            updateProjectList(); alert("Saved!");
         }
-
         function updateProjectList() {
             const list = document.getElementById('project-list'); list.innerHTML = '';
             const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-            Object.keys(projects).forEach(name => {
-                const div = document.createElement('div');
-                div.style.cssText = "padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; cursor:pointer; border-radius:4px; display:flex; justify-content:space-between;";
-                div.innerHTML = `<span>${name}</span><span onclick="deleteDiagramProject('${name}', event)" style="color:var(--oxford-crimson); font-weight:bold;">✕</span>`;
-                div.onclick = () => { elements = projects[name].elements; document.getElementById('passageInput').value = projects[name].passage; document.getElementById('projectName').value = name; draw(); updateWordBank(); };
+            Object.keys(projects).forEach(n => {
+                const div = document.createElement('div'); div.style.padding='8px'; div.style.background='rgba(255,255,255,0.05)'; div.style.marginBottom='5px'; div.style.cursor='pointer'; div.innerText=n;
+                div.onclick = () => { elements = projects[n].elements; document.getElementById('passageInput').value = projects[n].passage; draw(); updateWordBank(); };
                 list.appendChild(div);
             });
         }
-
-        function deleteDiagramProject(name, e) { e.stopPropagation(); if(confirm("Delete project?")) { const projects = JSON.parse(localStorage.getItem('syntaxis_projects')); delete projects[name]; localStorage.setItem('syntaxis_projects', JSON.stringify(projects)); updateProjectList(); } }
-
         let currentPromptCallback = null;
-        function showCustomPrompt(msg, def, cb) { 
-            document.getElementById('custom-prompt').style.display = 'flex';
-            document.getElementById('prompt-message').innerText = msg;
-            document.getElementById('prompt-input').value = def;
-            currentPromptCallback = cb;
-            document.getElementById('prompt-input').focus();
-        }
-        function submitPrompt() { 
-            const val = document.getElementById('prompt-input').value;
-            document.getElementById('custom-prompt').style.display = 'none';
-            if(currentPromptCallback) currentPromptCallback(val);
-        }
-        function closePrompt() { document.getElementById('custom-prompt').style.display = 'none'; }
-
+        function showCustomPrompt(msg, def, cb) { document.getElementById('custom-prompt').style.display='flex'; document.getElementById('prompt-message').innerText=msg; document.getElementById('prompt-input').value=def; currentPromptCallback=cb; }
+        function submitPrompt() { const v=document.getElementById('prompt-input').value; document.getElementById('custom-prompt').style.display='none'; if(currentPromptCallback) currentPromptCallback(v); }
+        function closePrompt() { document.getElementById('custom-prompt').style.display='none'; }
         window.onload = () => { updateProjectList(); draw(); };
     </script>
-
     <script type="module" src="firebase-setup.js"></script>
-
 </body>
 </html>
