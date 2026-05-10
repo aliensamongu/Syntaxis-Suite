@@ -271,10 +271,10 @@
     const contextMenu = document.getElementById('context-menu');
     
     let selectedWordId = null;
-    let lexiconData = {};
+    let lexiconData = {}; 
     let rightClickedData = null;
-    let bibleCache = "";
-    let currentLoadedBook = "";
+    let bibleCache = ""; 
+    let currentLoadedBook = ""; 
     let currentLoadedChapter = "";
 
     document.addEventListener('click', (e) => { if (contextMenu && !contextMenu.contains(e.target)) contextMenu.style.display = 'none'; });
@@ -294,7 +294,7 @@
         else { langSelect.style.display = 'none'; langSelect.value = 'orig'; }
     }
 
-    let hebrewLexiconDoc = null;
+    let hebrewLexiconDoc = null; 
     async function getStrongsDef(key) {
         if (!key) return "";
         if (key.startsWith('G')) {
@@ -465,6 +465,8 @@
         try {
             let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2"); const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
             let sV = null, eV = null; if (match) { currentLoadedChapter = match[2]; currentLoadedBook = abbrevs[match[1].trim().toLowerCase()] || match[1].trim().toLowerCase(); sV = match[3] ? parseInt(match[3]) : null; eV = match[4] ? parseInt(match[4]) : sV; }
+            const bNum = bnumberMap[currentLoadedBook];
+            if (!bNum) throw new Error(`Book mapping for '${currentLoadedBook}' not found.`);
             passageContainer.innerHTML = ''; lexiconData = {}; let rIdx = 0;
             const processZef = (vNode, container, bNum) => {
                 const pref = (bNum <= 39) ? 'H' : 'G'; Array.from(vNode.childNodes).forEach(n => {
@@ -474,10 +476,11 @@
             };
             if (fileName.includes('interlinear')) {
                 const isHeb = fileName.includes('ot'); if(originalToggleContainer) { originalToggleContainer.style.display = 'flex'; originalToggle.checked = true; originalToggleLabel.innerText = isHeb ? 'Show Hebrew' : 'Show Greek'; }
-                const bNum = bnumberMap[currentLoadedBook], osis = osisMap[currentLoadedBook];
+                const osis = osisMap[currentLoadedBook];
                 const [r1, r2] = await Promise.all([fetch(isHeb ? 'hebrew_ot.xml' : 'tischendorf.xml'), fetch(isHeb ? 'esv.xml' : 'emtv.xml')]);
                 const doc1 = new DOMParser().parseFromString(await r1.text(), "text/xml"), doc2 = new DOMParser().parseFromString(await r2.text(), "text/xml");
-                const chap1 = doc1.querySelector(`CHAPTER[cnumber="${currentLoadedChapter}"]`), chap2 = isHeb ? doc2.querySelector(`chapter[number="${currentLoadedChapter}"]`) : doc2.querySelector(`chapter[osisID="${osis}.${currentLoadedChapter}"]`);
+                const chap1 = doc1.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${currentLoadedChapter}"]`), chap2 = isHeb ? doc2.querySelector(`book[number="${bNum}"] chapter[number="${currentLoadedChapter}"]`) : doc2.querySelector(`chapter[osisID="${osis}.${currentLoadedChapter}"]`);
+                if (!chap1 || !chap2) throw new Error(`Chapter ${currentLoadedChapter} not found.`);
                 const vs1 = Array.from(chap1.querySelectorAll('VERS')), vs2 = Array.from(chap2.querySelectorAll('verse'));
                 for (let i=0; i < Math.max(vs1.length, vs2.length); i++) { const vInt = i+1; if (sV !== null && (vInt < sV || vInt > eV)) continue; const blk = document.createElement('div'); blk.className = 'verse-block'; const num = document.createElement('span'); num.className = 'verse-num'; num.innerText = vInt; blk.appendChild(num); const oL = document.createElement('div'); oL.className = isHeb ? 'original-line hebrew' : 'original-line'; if(vs1[i]) processZef(vs1[i], oL, bNum); blk.appendChild(oL); const eL = document.createElement('div'); eL.className = 'english-line'; if(vs2[i]) vs2[i].textContent.split(/(\s+)/).forEach(ch => { if(ch.trim()){ const s = document.createElement('span'); s.className = 'word'; s.id = `w-${rIdx++}`; s.innerText = ch; lexiconData[s.id] = { word: ch.replace(/[.,;!?]/g, ''), isEnglish: true }; s.onclick = () => handleWordClick(s.id); s.oncontextmenu = (e) => handleRightClick(e, s.id, true); eL.appendChild(s); } else eL.appendChild(document.createTextNode(ch)); }); blk.appendChild(eL); passageContainer.appendChild(blk); }
                 if(syncUi) syncUi.style.display = 'flex'; return;
@@ -485,8 +488,9 @@
             const res = await fetch(fileName === 'mhc_sync' ? 'vol1.xml' : fileName); const doc = new DOMParser().parseFromString(await res.text(), "text/xml");
             if (fileName === 'mhc_sync' || fileName.includes('luther') || !match) { doc.querySelectorAll("div1").forEach(d => { const btn = document.createElement('button'); btn.className = 'std-btn secondary'; btn.style.display="block"; btn.style.width="100%"; btn.style.textAlign="left"; btn.style.margin="5px 0"; btn.innerText = d.getAttribute('title') || d.id; btn.onclick = () => { document.getElementById('bibleRefInput').value = d.id; triggerLoadModule(); }; passageContainer.appendChild(btn); }); return; }
             if(syncUi) syncUi.style.display = 'flex'; passageContainer.style.fontFamily = isEng ? "-apple-system, sans-serif" : "Georgia, serif";
-            const bNum = bnumberMap[currentLoadedBook], isZef = doc.querySelector('BIBLEBOOK') !== null, isO = doc.querySelector("chapter[osisID]") !== null;
-            const chap = isZef ? doc.querySelector(`CHAPTER[cnumber="${currentLoadedChapter}"]`) : isO ? doc.querySelector(`chapter[osisID="${osisMap[currentLoadedBook]}.${currentLoadedChapter}"]`) : doc.querySelector(`chapter[number="${currentLoadedChapter}"]`);
+            const isZef = doc.querySelector('BIBLEBOOK') !== null, isO = doc.querySelector("chapter[osisID]") !== null;
+            const chap = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${currentLoadedChapter}"]`) : isO ? doc.querySelector(`chapter[osisID="${osisMap[currentLoadedBook]}.${currentLoadedChapter}"]`) : doc.querySelector(`book[number="${bNum}"] chapter[number="${currentLoadedChapter}"]`);
+            if (!chap) throw new Error(`Could not find Chapter ${currentLoadedChapter} in Book ${currentLoadedBook}.`);
             chap.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => { let vInt = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || (vNode.getAttribute('osisID')||"").split('.').pop()); if (sV !== null && (vInt < sV || vInt > eV)) return; const num = document.createElement('span'); num.className = 'verse-num'; num.innerText = vInt; passageContainer.appendChild(num); if(isZef) processZef(vNode, passageContainer, bNum); else vNode.textContent.split(/(\s+)/).forEach(ch => { if(ch.trim()){ const s = document.createElement('span'); s.className = 'word'; s.id = `w-${rIdx++}`; s.innerText = ch; lexiconData[s.id] = { word: ch.replace(/[.,;!?]/g, ''), isEnglish: isEng }; s.onclick = () => handleWordClick(s.id); s.oncontextmenu = (e) => handleRightClick(e, s.id, isEng); passageContainer.appendChild(s); } else passageContainer.appendChild(document.createTextNode(ch)); }); passageContainer.appendChild(document.createTextNode(" ")); });
         } catch (e) { passageContainer.innerHTML = `Error: ${e.message}`; }
     }
@@ -545,46 +549,28 @@
     function exportAnki() { let csv = ankiDeck.map(c => `${c.front}\t<b>Lemma:</b> ${c.lemma}<br><b>Strong's:</b> ${c.strongs}<br><b>Morph:</b> ${c.parsing}<br><br>${c.def.replace(/\n/g, '<br>')}`).join('\n'); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/plain" })); a.download = "Anki.txt"; a.click(); }
     function exportSpreadsheet() { let tsv = "Word\tLemma\tStrong's\tMorphology\tDefinition\n" + ankiDeck.map(c => `${c.front}\t${c.lemma}\t${c.strongs}\t${c.parsing}\t${c.def}`).join('\n'); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([tsv], { type: "text/tab-separated-values" })); a.download = "Vocab.tsv"; a.click(); }
 
-    // --- INTERPRETER SAVE/LOAD LOGIC ---
     function saveInterpreterApp() {
         const name = document.getElementById('projectName').value.trim() || "Untitled Study";
-        const data = {
-            projectName: name,
-            ref: document.getElementById('bibleRefInput').value,
-            notebook: document.getElementById('research-notebook').innerHTML,
-            timestamp: new Date().toISOString()
-        };
+        const data = { projectName: name, ref: document.getElementById('bibleRefInput').value, notebook: document.getElementById('research-notebook').innerHTML, timestamp: new Date().toISOString() };
         localStorage.setItem('syntaxis_interpreter_' + name, JSON.stringify(data));
         updateInterpreterList();
         alert("Study saved to App!");
     }
 
     function updateInterpreterList() {
-        const list = document.getElementById('saved-projects-list');
-        if(!list) return;
-        list.innerHTML = '';
+        const list = document.getElementById('saved-projects-list'); if(!list) return; list.innerHTML = '';
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('syntaxis_interpreter_')) {
-                const name = key.replace('syntaxis_interpreter_', '');
-                const div = document.createElement('div');
+                const name = key.replace('syntaxis_interpreter_', ''), div = document.createElement('div');
                 div.style.cssText = "background: rgba(0,0,0,0.2); padding: 8px; border-radius: 4px; font-size: 11px; cursor: pointer; margin-top: 5px; display: flex; justify-content: space-between; align-items: center;";
                 div.innerHTML = `<span>${name}</span><span onclick="deleteInterpreterProject('${key}', event)" style="color:var(--oxford-crimson); font-weight:bold; padding-left:10px;">✕</span>`;
-                div.onclick = () => {
-                    const data = JSON.parse(localStorage.getItem(key));
-                    document.getElementById('projectName').value = data.projectName;
-                    document.getElementById('bibleRefInput').value = data.ref;
-                    document.getElementById('research-notebook').innerHTML = data.notebook;
-                    triggerLoadModule();
-                };
+                div.onclick = () => { const data = JSON.parse(localStorage.getItem(key)); document.getElementById('projectName').value = data.projectName; document.getElementById('bibleRefInput').value = data.ref; document.getElementById('research-notebook').innerHTML = data.notebook; triggerLoadModule(); };
                 list.appendChild(div);
             }
         });
     }
 
-    function deleteInterpreterProject(key, e) {
-        e.stopPropagation();
-        if(confirm("Delete this saved study?")) { localStorage.removeItem(key); updateInterpreterList(); }
-    }
+    function deleteInterpreterProject(key, e) { e.stopPropagation(); if(confirm("Delete this saved study?")) { localStorage.removeItem(key); updateInterpreterList(); } }
 </script>
 
 <script type="module" src="firebase-setup.js"></script>
