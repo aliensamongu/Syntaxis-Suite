@@ -13,7 +13,6 @@
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
-            --rustic-orange: #C86428;
             --radius-small: 8px;
             --radius-medium: 12px;
         }
@@ -39,7 +38,7 @@
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
 
         h2 { margin: 0; color: var(--oxford-cream); font-family: Georgia, serif; font-size: 24px; }
@@ -69,17 +68,22 @@
         .tool {
             padding: 10px; border: 1px solid var(--oxford-navy-dark); border-radius: var(--radius-medium);
             text-align: center; background: var(--oxford-cream); cursor: pointer;
-            color: var(--oxford-navy); font-size: 10px; font-weight: bold;
+            color: var(--oxford-navy); font-size: 10px; font-weight: bold; transition: 0.2s;
         }
+        .tool:hover { background: #fff; transform: translateY(-2px); }
         .tool svg { width: 24px; height: 24px; stroke: var(--oxford-navy); fill: none; stroke-width: 3; display: block; margin: 0 auto 5px; }
         
         .std-btn { border: none; padding: 10px; border-radius: 4px; cursor: pointer; font-weight: bold; font-size: 11px; text-transform: uppercase; }
         
         #canvas-viewport { flex-grow: 1; overflow: auto; position: relative; background: var(--bg-main); }
-        canvas { background: #fff; display: block; cursor: crosshair; }
+        canvas { background: #fff; display: block; }
 
         #custom-prompt { display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(0,0,0,0.7); z-index:9999; align-items:center; justify-content:center; }
         .prompt-box { background:#1e1e1e; border:1px solid #d4af37; padding:20px; border-radius:8px; width:300px; text-align:center; color:white; }
+
+        .btn-group { display: flex; gap: 5px; margin-top: 15px; }
+        .btn-group button { flex: 1; background: var(--oxford-navy-dark); color: var(--oxford-cream); border: 1px solid rgba(255,255,255,0.1); padding: 8px; border-radius: var(--radius-small); cursor: pointer; font-size: 10px; font-weight: bold; transition: 0.1s; }
+        .btn-group button.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); }
     </style>
 </head>
 <body>
@@ -101,6 +105,11 @@
                     <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy);">Save App</button>
                 </div>
             </div>
+
+            <div class="btn-group">
+                <button id="tab-rk" class="active" onclick="switchDiagramTab('rk')">Sentence (RK)</button>
+                <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
+            </div>
             
             <div id="palette-rk" class="palette">
                 <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
@@ -112,9 +121,17 @@
                 <div class="tool" onclick="addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
                 <div class="tool" onclick="addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Line</div>
                 <div class="tool" onclick="addShape('text')"><strong>Label</strong></div>
-                <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 3; margin-top:5px;">Flip (F)</button>
-                <button class="std-btn" onclick="clearCanvas()" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
             </div>
+
+            <div id="palette-block" class="palette" style="display:none;">
+                <div class="tool" onclick="addShape('block_text')"><svg viewBox="0 0 100 100"><rect x="10" y="30" width="80" height="40"/></svg>Text Box</div>
+                <div class="tool" onclick="addShape('bracket')"><svg viewBox="0 0 100 100"><polyline points="30,10 10,10 10,90 30,90"/></svg>Bracket</div>
+                <div class="tool" onclick="addShape('flow_arrow')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><polyline points="70,30 90,50 70,70"/></svg>Flow Arrow</div>
+                <div class="tool" onclick="addShape('group_box')"><svg viewBox="0 0 100 100"><rect x="10" y="10" width="80" height="80" stroke-dasharray="5,5"/></svg>Group Area</div>
+            </div>
+
+            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); width:100%; margin-top:10px;">Flip Selection (F)</button>
+            <button class="std-btn" onclick="clearCanvas()" style="background:var(--oxford-crimson); color:white; width:100%; margin-top:5px;">Clear Canvas</button>
 
             <div id="project-list" style="margin-top:20px;"></div>
         </div>
@@ -159,54 +176,67 @@
         const bank = document.getElementById('word-bank');
         
         let elements = [], selectedElements = [];
-        let isDragging = false, isResizing = false, zoomLevel = 1;
-        let dragOffset = {x:0, y:0}, currentResizePoint = null;
+        let isDragging = false, isResizing = false, isSelecting = false;
+        let zoomLevel = 1, dragOffset = {x:0, y:0}, currentResizePoint = null;
+        let selectionBox = { x: 0, y: 0, w: 0, h: 0 };
 
         canvas.width = 4000; canvas.height = 4000;
 
-        const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
-        const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
-        const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+        const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "colossians": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
+        const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "colossians": 51, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
+        const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "colossians": "Col", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+
+        function switchDiagramTab(tab) {
+            document.getElementById('palette-rk').style.display = (tab === 'rk' ? 'grid' : 'none');
+            document.getElementById('palette-block').style.display = (tab === 'block' ? 'grid' : 'none');
+            document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
+            document.getElementById('tab-block').classList.toggle('active', tab === 'block');
+        }
 
         function draw() {
             ctx.clearRect(0, 0, canvas.width, canvas.height);
             elements.forEach(el => {
                 const isSel = selectedElements.includes(el);
                 const f = el.flip || 1;
-                ctx.beginPath();
-                ctx.strokeStyle = el.color || '#333';
-                ctx.fillStyle = el.color || '#333';
-                ctx.lineWidth = el.thickness || 2.5;
+                ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = 2.5;
 
                 if (el.type === 'subject_baseline') {
-                    ctx.moveTo(el.x - (el.w*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y);
-                    ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30);
+                    ctx.moveTo(el.x - el.w*f, el.y); ctx.lineTo(el.x + el.w*f, el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30);
                 } else if (el.type === 'direct_object' || el.type === 'appositive') {
                     ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
                 } else if (el.type === 'modifier' || el.type === 'prep_shelf') {
-                    ctx.moveTo(el.x + (el.dx_top || -20)*f, el.y + (el.dy_top || -40)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
+                    ctx.moveTo(el.x + (el.dx_top||-20)*f, el.y + (el.dy_top||-40)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y);
                 } else if (el.type === 'single_line') {
                     ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y + el.h);
                 } else if (el.type === 'x_line') {
-                    ctx.moveTo(el.x - el.w, el.y - el.h); ctx.lineTo(el.x + el.w, el.y + el.h);
-                    ctx.moveTo(el.x + el.w, el.y - el.h); ctx.lineTo(el.x - el.w, el.y + el.h);
-                } else if (el.type === 'text') {
+                    ctx.moveTo(el.x - el.w, el.y - el.h); ctx.lineTo(el.x + el.w, el.y + el.h); ctx.moveTo(el.x + el.w, el.y - el.h); ctx.lineTo(el.x - el.w, el.y + el.h);
+                } else if (el.type === 'text' || el.type === 'block_text') {
                     ctx.font = "italic 20px Georgia"; ctx.fillText(el.val, el.x, el.y);
+                    if (el.type === 'block_text') ctx.strokeRect(el.x - 5, el.y - 25, el.w + 10, 35);
+                } else if (el.type === 'bracket') {
+                    ctx.moveTo(el.x + 20, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x, el.y + el.h); ctx.lineTo(el.x + 20, el.y + el.h);
+                } else if (el.type === 'flow_arrow') {
+                    ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + el.w, el.y); ctx.lineTo(el.x + el.w - 10, el.y - 10); ctx.moveTo(el.x + el.w, el.y); ctx.lineTo(el.x + el.w - 10, el.y + 10);
+                } else if (el.type === 'group_box') {
+                    ctx.setLineDash([5, 5]); ctx.strokeRect(el.x, el.y, el.w, el.h); ctx.setLineDash([]);
                 }
                 ctx.stroke();
 
                 if (isSel) {
                     ctx.fillStyle = '#3498db';
-                    const drawHandle = (hx, hy, type) => {
-                        ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI*2); ctx.fill();
-                    };
-                    if (el.type === 'subject_baseline') { drawHandle(el.x - (el.w*f), el.y, 'L'); drawHandle(el.x + (el.w*f), el.y, 'R'); }
-                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { drawHandle(el.x + (el.dx_top || -20)*f, el.y + (el.dy_top || -40), 'T'); drawHandle(el.x + (el.w*f), el.y, 'R'); }
-                    else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'single_line' || el.type === 'x_line') {
-                        drawHandle(el.x, el.y - el.h, 'H'); drawHandle(el.x + (el.w*f), el.y, 'W');
-                    }
+                    const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, 6, 0, Math.PI*2); ctx.fill(); };
+                    if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); }
+                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                    else if (el.type.includes('line') || el.type === 'bracket' || el.type === 'flow_arrow' || el.type === 'group_box') { handle(el.x, el.y); handle(el.x + el.w, el.y + el.h); }
+                    else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
                 }
             });
+
+            if (isSelecting) {
+                ctx.strokeStyle = 'rgba(52, 152, 219, 0.5)'; ctx.fillStyle = 'rgba(52, 152, 219, 0.1)';
+                ctx.strokeRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+                ctx.fillRect(selectionBox.x, selectionBox.y, selectionBox.w, selectionBox.h);
+            }
         }
 
         function getHitHandle(mx, my) {
@@ -214,10 +244,11 @@
                 const f = el.flip || 1;
                 const check = (hx, hy, type) => Math.hypot(hx - mx, hy - my) < 15 ? type : null;
                 let h = null;
-                if (el.type === 'subject_baseline') { h = check(el.x - el.w*f, el.y, 'L') || check(el.x + el.w*f, el.y, 'R'); }
-                else if (el.type === 'modifier' || el.type === 'prep_shelf') { h = check(el.x + (el.dx_top||-20)*f, el.y + (el.dy_top||-40), 'T') || check(el.x + el.w*f, el.y, 'R'); }
-                else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'single_line' || el.type === 'x_line') { h = check(el.x, el.y - el.h, 'H') || check(el.x + el.w*f, el.y, 'W'); }
-                if (h) return { el, type: h };
+                if (el.type === 'subject_baseline') h = check(el.x-el.w*f, el.y, 'L') || check(el.x+el.w*f, el.y, 'R');
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') h = check(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T') || check(el.x+el.w*f, el.y, 'R');
+                else if (el.type.includes('line') || el.type === 'bracket' || el.type === 'flow_arrow' || el.type === 'group_box') h = check(el.x, el.y, 'L') || check(el.x+el.w, el.y+el.h, 'R');
+                else h = check(el.x, el.y-el.h, 'H') || check(el.x+el.w*f, el.y, 'W');
+                if(h) return {el, type:h};
             }
             return null;
         }
@@ -227,9 +258,9 @@
             const mx = (e.clientX - rect.left) / zoomLevel, my = (e.clientY - rect.top) / zoomLevel;
             const handleHit = getHitHandle(mx, my);
             if (handleHit) { isResizing = true; currentResizePoint = handleHit.type; return; }
-            const bodyHit = elements.slice().reverse().find(el => Math.hypot(el.x - mx, el.y - my) < 60);
-            if (bodyHit) { selectedElements = [bodyHit]; isDragging = true; dragOffset.x = mx - bodyHit.x; dragOffset.y = my - bodyHit.y; }
-            else { selectedElements = []; }
+            const bodyHit = elements.slice().reverse().find(el => Math.hypot(el.x - mx, el.y - my) < 50);
+            if (bodyHit) { if(!e.shiftKey) selectedElements = [bodyHit]; else selectedElements.push(bodyHit); isDragging = true; dragOffset.x = mx - bodyHit.x; dragOffset.y = my - bodyHit.y; }
+            else { isSelecting = true; selectionBox = { x: mx, y: my, w: 0, h: 0 }; selectedElements = []; }
             draw();
         };
 
@@ -242,17 +273,31 @@
                 if (currentResizePoint === 'L') el.w = (el.x - mx) / f;
                 if (currentResizePoint === 'H') el.h = el.y - my;
                 if (currentResizePoint === 'T') { el.dx_top = (mx - el.x) / f; el.dy_top = my - el.y; }
-                draw();
             } else if (isDragging) {
-                selectedElements[0].x = mx - dragOffset.x; selectedElements[0].y = my - dragOffset.y;
-                draw();
+                selectedElements.forEach(el => { el.x = mx - dragOffset.x; el.y = my - dragOffset.y; });
+            } else if (isSelecting) {
+                selectionBox.w = mx - selectionBox.x; selectionBox.h = my - selectionBox.y;
+                const x1 = Math.min(selectionBox.x, mx), x2 = Math.max(selectionBox.x, mx);
+                const y1 = Math.min(selectionBox.y, my), y2 = Math.max(selectionBox.y, my);
+                selectedElements = elements.filter(el => el.x >= x1 && el.x <= x2 && el.y >= y1 && el.y <= y2);
             }
+            draw();
         };
 
-        window.onmouseup = () => { isDragging = false; isResizing = false; autoSave(); };
+        window.onmouseup = () => { isDragging = isResizing = isSelecting = false; draw(); autoSave(); };
+
+        window.onkeydown = (e) => {
+            const step = e.shiftKey ? 10 : 2;
+            if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(e.key)) {
+                e.preventDefault();
+                selectedElements.forEach(el => { if (e.key === 'ArrowUp') el.y -= step; if (e.key === 'ArrowDown') el.y += step; if (e.key === 'ArrowLeft') el.x -= step; if (e.key === 'ArrowRight') el.x += step; });
+                draw();
+            }
+            if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; draw(); }
+        };
 
         function addShape(type, val = '') {
-            if (type === 'text' && !val) { showCustomPrompt("Label:", "", (v) => { if(v) addShape('text', v); }); return; }
+            if ((type === 'text' || type === 'block_text') && !val) { showCustomPrompt("Label:", "", (v) => { if(v) addShape(type, v); }); return; }
             elements.push({ id: Date.now(), type, x: 500, y: 500, w: 100, h: 40, val, flip: 1, dx_top: -20, dy_top: -40 });
             draw(); updateWordBank();
         }
@@ -287,41 +332,51 @@
                 if (!match) throw new Error("Format: Col 1 or Col 1:1-8");
                 const bName = abbrevs[match[1].trim().toLowerCase()] || match[1].trim().toLowerCase();
                 const bNum = bnumberMap[bName], chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
+                
                 const res = await fetch(fileName); const text = await res.text();
                 const doc = new DOMParser().parseFromString(text, "text/xml");
-                const isZef = doc.querySelector('BIBLEBOOK') !== null;
-                const chapNode = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : doc.querySelector(`chapter[osisID*=".${chap}"]`) || doc.querySelector(`chapter[number="${chap}"]`);
-                if (!chapNode) throw new Error("Chapter not found.");
-                let out = "";
-                chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => {
-                    let vNum = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || vNode.getAttribute('osisID')?.split('.').pop());
-                    if (sV !== null && (vNum < sV || vNum > eV)) return;
-                    out += vNode.textContent + " ";
-                });
-                document.getElementById('passageInput').value = out.trim(); updateWordBank();
+                
+                if (fileName === 'srgnt.tsv') {
+                    const targetPrefix = bNum.toString().padStart(2, '0') + chap.toString().padStart(3, '0');
+                    const lines = text.split('\n'); let out = "";
+                    for (let line of lines) { if (line.split('\t')[0].startsWith(targetPrefix)) { const vInt = parseInt(line.split('\t')[0].substring(5, 8)); if (sV !== null && (vInt < sV || vInt > eV)) continue; out += line.split('\t')[1] + " "; } }
+                    document.getElementById('passageInput').value = out.trim();
+                } else {
+                    const osis = osisMap[bName]; const isZef = doc.querySelector('BIBLEBOOK') !== null;
+                    const chapNode = isZef ? doc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : doc.querySelector(`chapter[osisID="${osis}.${chap}"]`) || doc.querySelector(`chapter[number="${chap}"]`);
+                    if (!chapNode) throw new Error("Passage not found.");
+                    let out = "";
+                    chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(vNode => {
+                        let vNum = parseInt(vNode.getAttribute('vnumber') || vNode.getAttribute('number') || vNode.getAttribute('osisID')?.split('.').pop());
+                        if (sV !== null && (vNum < sV || vNum > eV)) return;
+                        out += vNode.textContent + " ";
+                    });
+                    document.getElementById('passageInput').value = out.trim();
+                }
+                updateWordBank();
             } catch(e) { alert(e.message); }
         }
 
         function autoSave() { localStorage.setItem('syntaxis_app_autosave', JSON.stringify({ elements, passage: document.getElementById('passageInput').value })); }
         function saveToApp() {
-            const name = document.getElementById('projectName').value || prompt("Name:");
-            if(!name) return;
+            const name = document.getElementById('projectName').value || prompt("Name:"); if(!name) return;
             const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
             projects[name] = { elements, passage: document.getElementById('passageInput').value };
-            localStorage.setItem('syntaxis_projects', JSON.stringify(projects));
-            updateProjectList(); alert("Saved!");
+            localStorage.setItem('syntaxis_projects', JSON.stringify(projects)); updateProjectList(); alert("Saved!");
         }
         function updateProjectList() {
             const list = document.getElementById('project-list'); list.innerHTML = '';
             const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
             Object.keys(projects).forEach(n => {
-                const div = document.createElement('div'); div.style.padding='8px'; div.style.background='rgba(255,255,255,0.05)'; div.style.marginBottom='5px'; div.style.cursor='pointer'; div.innerText=n;
-                div.onclick = () => { elements = projects[n].elements; document.getElementById('passageInput').value = projects[n].passage; draw(); updateWordBank(); };
+                const div = document.createElement('div'); div.style.cssText = "padding:8px; background:rgba(255,255,255,0.05); margin-bottom:5px; cursor:pointer; border-radius:4px; display:flex; justify-content:space-between;";
+                div.innerHTML = `<span>${n}</span><span onclick="deleteDiagramProject('${n}', event)" style="color:var(--oxford-crimson); font-weight:bold;">✕</span>`;
+                div.onclick = () => { elements = projects[n].elements; document.getElementById('passageInput').value = projects[n].passage; document.getElementById('projectName').value = n; draw(); updateWordBank(); };
                 list.appendChild(div);
             });
         }
+        function deleteDiagramProject(name, e) { e.stopPropagation(); if(confirm("Delete?")) { const projects = JSON.parse(localStorage.getItem('syntaxis_projects')); delete projects[name]; localStorage.setItem('syntaxis_projects', JSON.stringify(projects)); updateProjectList(); } }
         let currentPromptCallback = null;
-        function showCustomPrompt(msg, def, cb) { document.getElementById('custom-prompt').style.display='flex'; document.getElementById('prompt-message').innerText=msg; document.getElementById('prompt-input').value=def; currentPromptCallback=cb; }
+        function showCustomPrompt(msg, def, cb) { document.getElementById('custom-prompt').style.display='flex'; document.getElementById('prompt-message').innerText=msg; document.getElementById('prompt-input').value=def; currentPromptCallback=cb; document.getElementById('prompt-input').focus(); }
         function submitPrompt() { const v=document.getElementById('prompt-input').value; document.getElementById('custom-prompt').style.display='none'; if(currentPromptCallback) currentPromptCallback(v); }
         function closePrompt() { document.getElementById('custom-prompt').style.display='none'; }
         window.onload = () => { updateProjectList(); draw(); };
