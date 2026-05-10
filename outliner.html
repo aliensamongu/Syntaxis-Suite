@@ -23,7 +23,7 @@
             background: var(--bg-main); overflow: hidden;
         }
 
-        /* LEFT PANEL: Restored Sidebar UI */
+        /* LEFT PANEL: Sidebar UI */
         #sidebar {
             width: 380px; background: var(--oxford-navy); flex-shrink: 0;
             display: flex; flex-direction: column; padding: 25px;
@@ -68,10 +68,8 @@
 
         /* Outline List */
         #outline-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 15px; }
-        
         .point-group { display: flex; flex-direction: column; gap: 4px; }
         .sub-points-container { display: flex; flex-direction: column; gap: 4px; }
-
         .point-card { background: var(--oxford-cream); color: var(--oxford-navy-dark); border-radius: 4px; padding: 8px; display: flex; align-items: center; gap: 10px; cursor: grab; }
         .point-card:active { cursor: grabbing; }
         .drag-handle { color: #aaa; cursor: grab; font-size: 18px; }
@@ -82,23 +80,19 @@
 
         /* RIGHT PANEL: Word Processor */
         #editor-panel { flex-grow: 1; display: flex; flex-direction: column; background: var(--bg-main); position: relative;}
-        
         #toolbar {
             background: white; padding: 10px 20px; border-bottom: 1px solid #ccc;
             display: flex; gap: 10px; align-items: center; box-shadow: 0 2px 10px rgba(0,0,0,0.05);
         }
         .tool-btn { background: var(--bg-main); border: 1px solid #ccc; border-radius: 4px; padding: 5px 10px; cursor: pointer; font-weight: bold; font-family: serif; }
         .tool-select { padding: 4px; border: 1px solid #ccc; border-radius: 4px; cursor: pointer; }
-
         #document-wrapper { flex-grow: 1; overflow-y: auto; padding: 40px; display: flex; justify-content: center; align-items: flex-start; }
-        
         #sermon-editor {
             width: 100%; max-width: 850px; min-height: 1000px; background: white;
             padding: 80px; box-sizing: border-box; border-radius: 4px;
             box-shadow: 0 5px 20px rgba(0,0,0,0.1); font-family: Georgia, serif;
             font-size: 16px; line-height: 1.8; color: #333; outline: none;
         }
-
     </style>
 </head>
 <body>
@@ -116,7 +110,7 @@
     <input type="text" id="projectName" class="ui-input" placeholder="Project Name (e.g. 1 Peter 3)">
     
     <div class="btn-row">
-        <button class="btn" onclick="saveLocalApp()">Save App</button>
+        <button class="btn" onclick="saveLocalApp()" style="background: var(--oxford-gold); color: var(--oxford-navy-dark);">Save App</button>
         <button class="btn btn-dark" onclick="downloadJSON()">⬇ JSON</button>
         <button class="btn btn-dark" onclick="document.getElementById('fileInput').click()">⬆ Load</button>
         <input type="file" id="fileInput" style="display: none;" accept=".json" onchange="loadJSON(event)">
@@ -149,15 +143,11 @@
     </div>
 
     <h3>1. Proposition Builder</h3>
-    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Define the core meaning of the passage.</div>
     <textarea id="exIdea" class="ui-input" placeholder="Exegetical Idea (What it meant to them...)"></textarea>
     <textarea id="thProp" class="ui-input prop-box" placeholder="Theological Proposition (What it means timelessly...)"></textarea>
 
     <h3>2. Outline Engine</h3>
-    <div style="font-size: 11px; color: rgba(255,255,255,0.7); margin-bottom: 10px;">Drag and drop to reorder. Numbering is automatic.</div>
-    
     <div id="outline-list"></div>
-    
     <div class="btn-row">
         <button class="btn" onclick="addPoint('main')">+ Main Point</button>
         <button class="btn" style="background: #999;" onclick="addPoint('sub')">+ Sub</button>
@@ -197,379 +187,162 @@
 </div>
 
 <script>
-    // --- BIBLE DATA MAPS ---
-    const abbrevs = {
-        "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter",
-        "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians",
-        "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians",
-        "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy",
-        "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john",
-        "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel",
-        "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings",
-        "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles",
-        "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy",
-        "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther",
-        "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon",
-        "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel",
-        "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah",
-        "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi",
-        "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans",
-        "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon",
-        "heb": "hebrews", "jas": "james", "rev": "revelation"
-    };
-    const bnumberMap = {
-        "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39,
-        "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66
-    };
-    const osisMap = {
-        "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth",
-        "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal",
-        "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev"
-    };
+    const abbrevs = { "1 pe": "1 peter", "2 pe": "2 peter", "1 pet": "1 peter", "2 pet": "2 peter", "1pe": "1 peter", "2pe": "2 peter", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "1 co": "1 corinthians", "2 co": "2 corinthians", "1cor": "1 corinthians", "2cor": "2 corinthians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 thes": "1 thessalonians", "2 thes": "2 thessalonians", "1th": "1 thessalonians", "2th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "1 tim": "1 timothy", "2 tim": "2 timothy", "1ti": "1 timothy", "2ti": "2 timothy", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "1jn": "1 john", "2jn": "2 john", "3jn": "3 john", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 sam": "1 samuel", "2 sam": "2 samuel", "1sa": "1 samuel", "2sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1ki": "1 kings", "2ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "1 chr": "1 chronicles", "2 chr": "2 chronicles", "1ch": "1 chronicles", "2ch": "2 chronicles", "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "psa": "psalms", "ps": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "song": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "gal": "galatians", "eph": "ephesians", "php": "philippians", "col": "colossians", "phm": "philemon", "heb": "hebrews", "jas": "james", "rev": "revelation" };
+    const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "colossians": 51, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
+    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "colossians": "Col", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
 
-    // --- OUTLINER BIBLE ENGINE (Injector) ---
     async function loadNativeBibleToEditor(query, fileName) {
         if (!query.trim()) return;
         const status = document.getElementById('dbStatus');
         status.innerText = "Extracting passage...";
-        
         try {
             let formattedQuery = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
             const match = formattedQuery.match(/^(\d?\s*[a-zA-Z]+)\s*(\d+)/);
             if (!match) { status.innerText = "Error: Invalid Ref."; return; }
-
             const searchBook = match[1].trim().toLowerCase();
             const chapNum = match[2];
             const fullBookName = abbrevs[searchBook] || searchBook;
-            
-            let htmlOut = `
-                <hr style="margin: 30px 0; border: none; border-top: 1px dashed #ccc;">
-                <h3 style="color: var(--oxford-navy); text-transform: capitalize; margin-bottom: 10px;">${fullBookName} ${chapNum}</h3>
-                <p ${fileName === 'hebrew_ot.xml' ? 'dir="rtl" style="font-family: \'SBL Hebrew\', serif; font-size: 1.3em; text-align: right;"' : 'style="line-height: 1.8;"'}>
-            `;
-
-            // TSV Engine
+            let htmlOut = `<hr style="margin: 30px 0; border: none; border-top: 1px dashed #ccc;"><h3 style="color: var(--oxford-navy); text-transform: capitalize; margin-bottom: 10px;">${fullBookName} ${chapNum}</h3><p ${fileName === 'hebrew_ot.xml' ? 'dir="rtl" style="font-family: \'SBL Hebrew\', serif; font-size: 1.3em; text-align: right;"' : 'style="line-height: 1.8;"'}>`;
             if (fileName === 'srgnt.tsv') {
-                const res = await fetch('srgnt.tsv');
-                if (!res.ok) throw new Error("Could not find srgnt.tsv");
-                const tsvText = await res.text();
-                const bNum = bnumberMap[fullBookName];
-                if (!bNum) throw new Error(`Book mapping not found.`);
-                
+                const res = await fetch('srgnt.tsv'); if (!res.ok) throw new Error("Could not find srgnt.tsv");
+                const tsvText = await res.text(); const bNum = bnumberMap[fullBookName];
                 const targetPrefix = bNum.toString().padStart(2, '0') + chapNum.toString().padStart(3, '0');
-                const lines = tsvText.split('\n');
-                let currentVerse = "";
-                
+                const lines = tsvText.split('\n'); let currentVerse = "";
                 for (let i = 0; i < lines.length; i++) {
-                    const line = lines[i].trim();
-                    if (!line) continue;
-                    const cols = line.split('\t');
-                    const id = cols[0];
-                    if (id.startsWith(targetPrefix)) {
-                        const vNumInt = parseInt(id.substring(5, 8).replace(/^0+/, ''), 10);
-                        if (vNumInt.toString() !== currentVerse) {
-                            currentVerse = vNumInt.toString();
-                            htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${currentVerse}</sup>`;
-                        }
+                    const line = lines[i].trim(); if (!line) continue; const cols = line.split('\t');
+                    if (cols[0].startsWith(targetPrefix)) {
+                        const vNumInt = parseInt(cols[0].substring(5, 8));
+                        if (vNumInt.toString() !== currentVerse) { currentVerse = vNumInt.toString(); htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${currentVerse}</sup>`; }
                         htmlOut += cols[1] + " ";
                     }
                 }
             } else {
-                // XML Engine
-                const response = await fetch(fileName);
-                if (!response.ok) throw new Error(`File ${fileName} missing`);
-                const xmlText = await response.text();
-
-                const parser = new DOMParser();
-                const xmlDoc = parser.parseFromString(xmlText, "text/xml");
-
+                const response = await fetch(fileName); const xmlText = await response.text();
+                const xmlDoc = new DOMParser().parseFromString(xmlText, "text/xml");
                 const isZefania = xmlDoc.querySelector('BIBLEBOOK') !== null;
-                const isOSIS = xmlDoc.querySelector("div[type='book']") !== null || xmlDoc.querySelector("chapter[osisID]") !== null;
-                const isSimpleXML = xmlDoc.querySelector("book[number]") !== null && !isZefania;
-
+                const isOSIS = xmlDoc.querySelector("chapter[osisID]") !== null;
+                const bNum = bnumberMap[fullBookName];
                 if (isZefania) {
-                    const bNum = bnumberMap[fullBookName];
-                    const bookNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"]`);
-                    const chapNode = bookNode ? bookNode.querySelector(`CHAPTER[cnumber="${chapNum}"]`) : null;
-                    if (!chapNode) throw new Error("Chapter not found.");
-
-                    const verses = chapNode.querySelectorAll('VERS');
-                    verses.forEach(vers => {
+                    const chapNode = xmlDoc.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chapNum}"]`);
+                    chapNode.querySelectorAll('VERS').forEach(vers => {
                         htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('vnumber')}</sup>`;
-                        Array.from(vers.childNodes).forEach(node => {
-                            if (node.nodeType === Node.TEXT_NODE) htmlOut += node.textContent + " ";
-                            else if (node.nodeName.toLowerCase() === 'gr') htmlOut += node.textContent + " ";
-                            else if (node.nodeName.toLowerCase() === 'style') htmlOut += `<span style="font-style: italic; color: #888;">${node.textContent}</span> `;
-                        });
+                        Array.from(vers.childNodes).forEach(node => { htmlOut += node.textContent + " "; });
                     });
-                } else if (isOSIS) {
+                } else {
                     const osisId = osisMap[fullBookName];
-                    const chapNode = xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`);
-                    if (!chapNode) throw new Error("Chapter not found.");
-
-                    const verses = chapNode.querySelectorAll('verse');
-                    verses.forEach(vers => { 
-                        const vNumMatch = vers.getAttribute('osisID').match(/\.(\d+)$/);
-                        htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vNumMatch ? vNumMatch[1] : "?"}</sup>${vers.textContent} `; 
-                    });
-                } else if (isSimpleXML) {
-                    const bNum = bnumberMap[fullBookName];
-                    const bookNode = xmlDoc.querySelector(`book[number="${bNum}"]`);
-                    const chapNode = bookNode ? bookNode.querySelector(`chapter[number="${chapNum}"]`) : null;
-                    if (!chapNode) throw new Error("Chapter not found.");
-
-                    const verses = chapNode.querySelectorAll('verse');
-                    verses.forEach(vers => { 
-                        htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('number')}</sup>${vers.textContent} `; 
-                    });
+                    const chapNode = isOSIS ? xmlDoc.querySelector(`chapter[osisID="${osisId}.${chapNum}"]`) : xmlDoc.querySelector(`chapter[number="${chapNum}"]`);
+                    chapNode.querySelectorAll('verse').forEach(vers => { htmlOut += `<sup style="color: var(--rustic-orange); font-weight: bold; margin-right: 4px;">${vers.getAttribute('number') || vers.getAttribute('osisID').split('.').pop()}</sup>${vers.textContent} `; });
                 }
             }
-
-            htmlOut += `</p><br>`;
-            document.getElementById('sermon-editor').innerHTML += htmlOut;
-            
-            status.innerText = "Injected successfully!";
-            setTimeout(() => status.innerText = "", 3000);
-
-        } catch (error) {
-            status.innerText = error.message;
-        }
+            htmlOut += `</p><br>`; document.getElementById('sermon-editor').innerHTML += htmlOut;
+            status.innerText = "Injected successfully!"; setTimeout(() => status.innerText = "", 3000);
+        } catch (error) { status.innerText = error.message; }
     }
 
-    // 1. WORD PROCESSOR
-    function formatDoc(command, value = null) {
-        document.execCommand(command, false, value);
-        document.getElementById('sermon-editor').focus();
-    }
+    function formatDoc(command, value = null) { document.execCommand(command, false, value); document.getElementById('sermon-editor').focus(); }
 
-    // 2. OUTLINE BUILDER (Parent/Child Drag & Drop)
     const outlineList = document.getElementById('outline-list');
-    let draggedGroup = null;
-    let draggedSub = null;
+    let draggedGroup = null; let draggedSub = null;
 
     function addPoint(type, value = '') {
         if (type === 'main') {
-            const group = document.createElement('div');
-            group.className = 'point-group';
-            group.draggable = true;
-
-            const card = document.createElement('div');
-            card.className = 'point-card main-point';
-            card.innerHTML = `
-                <span class="drag-handle">⋮⋮</span>
-                <input type="text" class="point-input" placeholder="Main Point..." value="${value}">
-                <button class="delete-btn" onclick="this.closest('.point-group').remove()">✕</button>
-            `;
-            
-            const subContainer = document.createElement('div');
-            subContainer.className = 'sub-points-container';
-            
-            group.addEventListener('dragstart', function(e) {
-                if(e.target !== group) return; 
-                draggedGroup = group;
-                setTimeout(() => group.style.opacity = '0.5', 0);
-                e.stopPropagation();
-            });
-            group.addEventListener('dragend', function(e) {
-                if(e.target !== group) return;
-                setTimeout(() => { group.style.opacity = '1'; draggedGroup = null; }, 0);
-                e.stopPropagation();
-            });
-            group.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
-            group.addEventListener('drop', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                if (draggedGroup && draggedGroup !== group) {
-                    const rect = group.getBoundingClientRect();
-                    const dropAbove = e.clientY < rect.top + rect.height / 2;
-                    if (dropAbove) outlineList.insertBefore(draggedGroup, group);
-                    else outlineList.insertBefore(draggedGroup, group.nextSibling);
-                }
-                if (draggedSub) {
-                    subContainer.appendChild(draggedSub);
-                }
-            });
-
-            group.appendChild(card);
-            group.appendChild(subContainer);
-            outlineList.appendChild(group);
-
+            const group = document.createElement('div'); group.className = 'point-group'; group.draggable = true;
+            const card = document.createElement('div'); card.className = 'point-card main-point';
+            card.innerHTML = `<span class="drag-handle">⋮⋮</span><input type="text" class="point-input" placeholder="Main Point..." value="${value}"><button class="delete-btn" onclick="this.closest('.point-group').remove()">✕</button>`;
+            const subContainer = document.createElement('div'); subContainer.className = 'sub-points-container';
+            group.addEventListener('dragstart', e => { if(e.target !== group) return; draggedGroup = group; setTimeout(() => group.style.opacity = '0.5', 0); });
+            group.addEventListener('dragend', e => { group.style.opacity = '1'; draggedGroup = null; });
+            group.addEventListener('dragover', e => e.preventDefault());
+            group.addEventListener('drop', e => { e.preventDefault(); if (draggedGroup && draggedGroup !== group) { const rect = group.getBoundingClientRect(); if (e.clientY < rect.top + rect.height/2) outlineList.insertBefore(draggedGroup, group); else outlineList.insertBefore(draggedGroup, group.nextSibling); } if (draggedSub) subContainer.appendChild(draggedSub); });
+            group.appendChild(card); group.appendChild(subContainer); outlineList.appendChild(group);
         } else {
-            const groups = document.querySelectorAll('.point-group');
-            if (groups.length === 0) {
-                addPoint('main', 'Main Point'); 
-            }
+            const groups = document.querySelectorAll('.point-group'); if (groups.length === 0) addPoint('main', 'Main Point');
             const lastGroup = document.querySelectorAll('.point-group')[document.querySelectorAll('.point-group').length - 1];
             const subContainer = lastGroup.querySelector('.sub-points-container');
-
-            const card = document.createElement('div');
-            card.className = 'point-card sub-point';
-            card.draggable = true;
-            card.innerHTML = `
-                <span class="drag-handle">⋮⋮</span>
-                <input type="text" class="point-input" placeholder="Sub Point..." value="${value}">
-                <button class="delete-btn" onclick="this.parentElement.remove()">✕</button>
-            `;
-
-            card.addEventListener('dragstart', function(e) {
-                draggedSub = card;
-                setTimeout(() => card.style.opacity = '0.5', 0);
-                e.stopPropagation(); 
-            });
-            card.addEventListener('dragend', function(e) {
-                setTimeout(() => { card.style.opacity = '1'; draggedSub = null; }, 0);
-                e.stopPropagation();
-            });
-            card.addEventListener('dragover', e => { e.preventDefault(); e.stopPropagation(); });
-            card.addEventListener('drop', function(e) {
-                e.preventDefault(); e.stopPropagation();
-                if (draggedSub && draggedSub !== card) {
-                    const rect = card.getBoundingClientRect();
-                    const dropAbove = e.clientY < rect.top + rect.height / 2;
-                    if (dropAbove) card.parentElement.insertBefore(draggedSub, card);
-                    else card.parentElement.insertBefore(draggedSub, card.nextSibling);
-                }
-            });
-
+            const card = document.createElement('div'); card.className = 'point-card sub-point'; card.draggable = true;
+            card.innerHTML = `<span class="drag-handle">⋮⋮</span><input type="text" class="point-input" placeholder="Sub Point..." value="${value}"><button class="delete-btn" onclick="this.parentElement.remove()">✕</button>`;
+            card.addEventListener('dragstart', e => { draggedSub = card; setTimeout(() => card.style.opacity = '0.5', 0); e.stopPropagation(); });
+            card.addEventListener('dragend', e => { card.style.opacity = '1'; draggedSub = null; e.stopPropagation(); });
+            card.addEventListener('dragover', e => e.preventDefault());
+            card.addEventListener('drop', e => { e.preventDefault(); if (draggedSub && draggedSub !== card) { const rect = card.getBoundingClientRect(); if (e.clientY < rect.top + rect.height/2) card.parentElement.insertBefore(draggedSub, card); else card.parentElement.insertBefore(draggedSub, card.nextSibling); } e.stopPropagation(); });
             subContainer.appendChild(card);
         }
     }
 
-    // 3. THE BRIDGE
     function pushToEditor() {
         const editor = document.getElementById('sermon-editor');
         const projName = document.getElementById('projectName').value || "Sermon Framework";
-        const exIdea = document.getElementById('exIdea').value;
-        const thProp = document.getElementById('thProp').value;
-        const points = document.querySelectorAll('.point-card');
-        
-        let injectedHTML = `<hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;">`;
-        injectedHTML += `<h2 style="color: var(--oxford-navy);">${projName}</h2>`;
-
-        if(exIdea || thProp) {
+        let injectedHTML = `<hr style="margin: 40px 0; border: none; border-top: 1px solid #ddd;"><h2 style="color: var(--oxford-navy);">${projName}</h2>`;
+        if(document.getElementById('exIdea').value || document.getElementById('thProp').value) {
             injectedHTML += `<div style="background: #f8f9fa; padding: 20px; border-radius: 8px; margin-bottom: 20px;">`;
-            if(exIdea) injectedHTML += `<p><strong>Exegetical Idea:</strong> <br><em>${exIdea}</em></p>`;
-            if(thProp) injectedHTML += `<p><strong>Theological Proposition:</strong> <br><span style="color: var(--oxford-gold); font-weight: bold;">${thProp}</span></p>`;
+            if(document.getElementById('exIdea').value) injectedHTML += `<p><strong>Exegetical Idea:</strong> <br><em>${document.getElementById('exIdea').value}</em></p>`;
+            if(document.getElementById('thProp').value) injectedHTML += `<p><strong>Theological Proposition:</strong> <br><span style="color: var(--oxford-gold); font-weight: bold;">${document.getElementById('thProp').value}</span></p>`;
             injectedHTML += `</div>`;
         }
-
+        const points = document.querySelectorAll('.point-card');
         if(points.length > 0) {
-            injectedHTML += `<h3 style="margin-top: 30px; border-bottom: 2px solid var(--oxford-gold); display: inline-block;">Message Outline</h3>`;
-            injectedHTML += `<ul style="list-style-type: none; padding-left: 0; margin-top: 15px;">`;
-            let mainCount = 1; let subCount = 'a';
+            injectedHTML += `<h3 style="margin-top: 30px; border-bottom: 2px solid var(--oxford-gold); display: inline-block;">Message Outline</h3><ul style="list-style-type: none; padding-left: 0; margin-top: 15px;">`;
+            let mCount = 1; let sCount = 'a';
             points.forEach(point => {
-                const isSub = point.classList.contains('sub-point');
-                const text = point.querySelector('.point-input').value || "(Empty Point)";
-                if(isSub) {
-                    injectedHTML += `<li style="margin-left: 40px; margin-bottom: 10px; font-size: 16px;"><strong>${subCount}.</strong> ${text}</li>`;
-                    subCount = String.fromCharCode(subCount.charCodeAt(0) + 1);
-                } else {
-                    injectedHTML += `<li style="margin-bottom: 15px; font-size: 18px; margin-top: 20px;"><strong>${mainCount}.</strong> ${text}</li>`;
-                    mainCount++; subCount = 'a'; 
-                }
+                const text = point.querySelector('.point-input').value || "(Empty)";
+                if(point.classList.contains('sub-point')) { injectedHTML += `<li style="margin-left: 40px; margin-bottom: 10px; font-size: 16px;"><strong>${sCount}.</strong> ${text}</li>`; sCount = String.fromCharCode(sCount.charCodeAt(0) + 1); }
+                else { injectedHTML += `<li style="margin-bottom: 15px; font-size: 18px; margin-top: 20px;"><strong>${mCount}.</strong> ${text}</li>`; mCount++; sCount = 'a'; }
             });
             injectedHTML += `</ul>`;
         }
-        injectedHTML += `<p><br>Start your manuscript here...</p>`;
         editor.innerHTML += injectedHTML;
     }
 
-    // 4. SAVE & EXPORT LOGIC
     function getAppData() {
-        const points = Array.from(document.querySelectorAll('.point-card')).map(card => ({
-            text: card.querySelector('.point-input').value,
-            isSub: card.classList.contains('sub-point')
-        }));
         return {
             projectName: document.getElementById('projectName').value,
             exIdea: document.getElementById('exIdea').value,
             thProp: document.getElementById('thProp').value,
             editorContent: document.getElementById('sermon-editor').innerHTML,
-            outlinePoints: points
+            outlinePoints: Array.from(document.querySelectorAll('.point-card')).map(card => ({ text: card.querySelector('.point-input').value, isSub: card.classList.contains('sub-point') }))
         };
     }
 
     function loadAppData(data) {
-        if(data.projectName) document.getElementById('projectName').value = data.projectName;
-        if(data.exIdea) document.getElementById('exIdea').value = data.exIdea;
-        if(data.thProp) document.getElementById('thProp').value = data.thProp;
-        if(data.editorContent) document.getElementById('sermon-editor').innerHTML = data.editorContent;
-        if(data.outlinePoints) {
-            document.getElementById('outline-list').innerHTML = '';
-            data.outlinePoints.forEach(pt => addPoint(pt.isSub ? 'sub' : 'main', pt.text));
-        }
+        document.getElementById('projectName').value = data.projectName || '';
+        document.getElementById('exIdea').value = data.exIdea || '';
+        document.getElementById('thProp').value = data.thProp || '';
+        document.getElementById('sermon-editor').innerHTML = data.editorContent || '';
+        document.getElementById('outline-list').innerHTML = '';
+        if(data.outlinePoints) data.outlinePoints.forEach(pt => addPoint(pt.isSub ? 'sub' : 'main', pt.text));
     }
 
     function saveLocalApp() {
         const projName = document.getElementById('projectName').value || 'Untitled Outline';
         localStorage.setItem('syntaxis_outliner_' + projName, JSON.stringify(getAppData()));
         updateProjectList();
+        alert("Outline saved to App!");
     }
 
     function updateProjectList() {
-        const list = document.getElementById('saved-projects-list');
-        list.innerHTML = '';
+        const list = document.getElementById('saved-projects-list'); list.innerHTML = '';
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith('syntaxis_outliner_')) {
                 const name = key.replace('syntaxis_outliner_', '');
                 const div = document.createElement('div');
-                div.style.padding = '8px'; div.style.background = 'rgba(0,0,0,0.2)'; 
-                div.style.marginBottom = '5px'; div.style.borderRadius = '4px'; div.style.cursor = 'pointer';
-                div.innerText = name;
+                div.style.cssText = "padding: 8px; background: rgba(0,0,0,0.2); margin-bottom: 5px; border-radius: 4px; cursor: pointer; display: flex; justify-content: space-between;";
+                div.innerHTML = `<span>${name}</span><span onclick="deleteOutlinerProject('${key}', event)" style="color:var(--oxford-crimson); font-weight:bold;">✕</span>`;
                 div.onclick = () => loadAppData(JSON.parse(localStorage.getItem(key)));
                 list.appendChild(div);
             }
         });
-        if(list.innerHTML === '') list.innerHTML = 'Save an app to see it here...';
     }
 
-    function downloadJSON() {
-        const data = getAppData();
-        const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement("a");
-        a.href = url;
-        a.download = (data.projectName || "Sermon_Outline") + ".json";
-        a.click();
-    }
-
-    function loadJSON(event) {
-        const file = event.target.files[0];
-        if (!file) return;
-        const reader = new FileReader();
-        reader.onload = e => loadAppData(JSON.parse(e.target.result));
-        reader.readAsText(file);
-    }
-
-    function takeSnapshot() {
-        const editor = document.getElementById('sermon-editor');
-        html2canvas(editor, { scale: 2 }).then(canvas => {
-            const a = document.createElement('a');
-            a.href = canvas.toDataURL("image/png");
-            a.download = (document.getElementById('projectName').value || "Sermon_Document") + ".png";
-            a.click();
-        });
-    }
-
-    function exportPDF() {
-        const editor = document.getElementById('sermon-editor');
-        const opt = {
-            margin:       0.5,
-            filename:     (document.getElementById('projectName').value || "Sermon_Document") + '.pdf',
-            image:        { type: 'jpeg', quality: 0.98 },
-            html2canvas:  { scale: 2 },
-            jsPDF:        { unit: 'in', format: 'letter', orientation: 'portrait' }
-        };
-        html2pdf().set(opt).from(editor).save();
-    }
+    function deleteOutlinerProject(key, e) { e.stopPropagation(); if(confirm("Delete this outline?")) { localStorage.removeItem(key); updateProjectList(); } }
+    function downloadJSON() { const data = getAppData(); const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([JSON.stringify(data, null, 2)], { type: "application/json" })); a.download = (data.projectName || "Outline") + ".json"; a.click(); }
+    function loadJSON(event) { const file = event.target.files[0]; if (!file) return; const reader = new FileReader(); reader.onload = e => loadAppData(JSON.parse(e.target.result)); reader.readAsText(file); }
+    function takeSnapshot() { html2canvas(document.getElementById('sermon-editor'), { scale: 2 }).then(canvas => { const a = document.createElement('a'); a.href = canvas.toDataURL("image/png"); a.download = "Sermon.png"; a.click(); }); }
+    function exportPDF() { html2pdf().set({ margin: 0.5, filename: 'Sermon.pdf', image: { type: 'jpeg', quality: 0.98 }, html2canvas: { scale: 2 }, jsPDF: { unit: 'in', format: 'letter' } }).from(document.getElementById('sermon-editor')).save(); }
 
     window.addEventListener('DOMContentLoaded', updateProjectList);
-
-</script>
 </script>
 
-    <script type="module" src="firebase-setup.js"></script>
+<script type="module" src="firebase-setup.js"></script>
 
-</body>
-</html>
 </body>
 </html>
