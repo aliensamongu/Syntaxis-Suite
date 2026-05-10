@@ -1266,5 +1266,11 @@
     function exportSpreadsheet() { let tsv = "Word\tLemma\tStrong's\tMorphology\tDefinition\n" + ankiDeck.map(c => `${c.front}\t${c.lemma||""}\t${c.strongs||""}\t${c.parsing||""}\t${c.def||""}`).join('\n'); const blob = new Blob([tsv], { type: "text/tab-separated-values" }); const a = document.createElement("a"); a.href = URL.createObjectURL(blob); a.download = "Vocab.tsv"; a.click(); }
 
 </script>
+</script>
+
+    <script type="module" src="firebase-setup.js"></script>
+
+</body>
+</html>
 </body>
 </html>
