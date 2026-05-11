@@ -351,9 +351,11 @@
 </div>
 
 <script>
+    // --- GUARANTEED GLOBAL DATA ---
     window.elements = [];
     window.selectedElements = [];
     window.apparatusData = [];
+    
     let editingVariantId = null, editingBlockId = null;
     let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
@@ -419,6 +421,7 @@
                 chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
             } else {
                 const bookNode = docXML.querySelector(`book[number="${bNum}"]`) || docXML.querySelector(`div[osisID="${osis}"]`) || docXML.querySelector(`div[type="book"]`);
+                
                 if (bookNode) {
                     chapNode = bookNode.querySelector(`chapter[osisID="${osis}.${chap}"]`) || bookNode.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`) || bookNode.querySelector(`chapter[number="${chap}"]`);
                 } else {
@@ -442,6 +445,7 @@
     window.draw = function() {
         const canvas = document.getElementById('mainCanvas');
         const ctx = canvas.getContext('2d');
+        canvas.width = 4000; canvas.height = 4000;
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
@@ -500,10 +504,8 @@
             else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
             else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
             else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
-            
             ctx.stroke(); ctx.setLineDash([]);
             
-            // FULLY RESTORED ORTHOGONAL ARROW
             if (el.type === 'labeled_arrow') {
                 const ex = el.x + (el.w * f), ey = el.y + el.h;
                 ctx.beginPath(); ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = el.thickness || 2.5;
@@ -514,10 +516,8 @@
                 else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); angle = ey > el.y ? Math.PI/2 : -Math.PI/2; mx = el.x + (ex - el.x) / 2; my = el.y; }
                 ctx.stroke(); ctx.setLineDash([]);
                 
-                // Draw Arrowhead
                 ctx.save(); ctx.translate(ex, ey); ctx.rotate(angle); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-12, 6); ctx.lineTo(-12, -6); ctx.closePath(); ctx.fillStyle = el.color || '#000000'; ctx.fill(); ctx.restore();
                 
-                // Draw Text Label with White Knockout
                 ctx.font = `bold 10px -apple-system, BlinkMacSystemFont, sans-serif`; 
                 const m = ctx.measureText(el.val.toUpperCase()); 
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(mx - m.width/2 - 4, my - 8, m.width + 8, 16); 
@@ -530,35 +530,58 @@
             }
             if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
 
-            if (isSel && el.type !== 'text') {
-                ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
-                const hR = 6 / Math.sqrt(window.zoomLevel);
-                const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
-                
-                if (el.type === 'block_text') { 
-                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
-                    ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); 
+            if (isSel) {
+                if (el.type === 'text') {
+                    ctx.strokeStyle = '#3498db'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
+                    const m = ctx.measureText(el.val); 
+                    ctx.strokeRect(el.x - 4, el.y - 20, m.width + 8, 26); 
                     ctx.setLineDash([]); 
-                    handle(el.x + el.w, el.y + (el.h||50)); 
+                } else {
+                    ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
+                    const hR = 6 / Math.sqrt(window.zoomLevel);
+                    const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                    
+                    if (el.type === 'block_text') { 
+                        ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
+                        ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); 
+                        ctx.setLineDash([]); 
+                        handle(el.x + el.w, el.y + (el.h||50)); 
+                    }
+                    else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
+                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                    else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
+                    else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
                 }
-                else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
-                else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
-                else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
-                else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
             }
         });
         if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); ctx.setLineDash([]); }
     };
 
     window.updateWordBank = function() {
-        const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
-        const bank = document.getElementById('word-bank'); bank.innerHTML = ''; let used = [];
-        window.elements.filter(el => el.type === 'text').forEach(el => used.push(...el.val.split(/\s+/)));
+        const passageInput = document.getElementById('passageInput');
+        if(!passageInput) return;
+        const words = passageInput.value.split(/\s+/).filter(w => w.length > 0);
+        const bank = document.getElementById('word-bank'); 
+        if(!bank) return;
+        bank.innerHTML = ''; 
+        let used = [];
+        if (window.elements) {
+            window.elements.filter(el => el.type === 'text').forEach(el => used.push(...el.val.split(/\s+/)));
+        }
         words.forEach(word => {
             const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word;
-            if (used.indexOf(word) !== -1) { span.style.textDecoration = 'line-through'; span.style.opacity = '0.4'; used.splice(used.indexOf(word),1); }
-            span.draggable = true; span.onclick = () => span.classList.toggle('selected');
-            span.ondragstart = (e) => { const s = Array.from(document.querySelectorAll('.bank-word.selected')); e.dataTransfer.setData("text/plain", s.length > 0 ? s.map(x => x.innerText).join(' ') : word); };
+            const usedIdx = used.indexOf(word);
+            if (usedIdx !== -1) { 
+                span.style.textDecoration = 'line-through'; 
+                span.style.opacity = '0.4'; 
+                used.splice(usedIdx, 1); 
+            }
+            span.draggable = true; 
+            span.onclick = () => span.classList.toggle('selected');
+            span.ondragstart = (e) => { 
+                const s = Array.from(document.querySelectorAll('.bank-word.selected')); 
+                e.dataTransfer.setData("text/plain", s.length > 0 ? s.map(x => x.innerText).join(' ') : word); 
+            };
             bank.appendChild(span);
         });
     };
@@ -574,7 +597,7 @@
     };
 
     window.addShape = function(type, x=null, y=null, val=null) {
-        if ((type === 'text' || type === 'block_text' || type === 'labeled_arrow') && val === null) { val = prompt("Label:"); if (!val) return; }
+        if ((type === 'text' || type === 'block_text') && val === null) { val = prompt("Label:"); if (!val) return; }
         const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
         const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/window.zoomLevel;
         window.elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, w_left: 120, w_right: 120, val, flip: 1, color: '#333', thickness: 2.5 });
@@ -584,7 +607,7 @@
     window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
     window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
     
-    // RESTORED AUTO SAVE DATA INTEGRITY
+    // THE REAL AUTOSAVE FIX
     window.autoSave = function() { 
         sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ 
             elements: window.elements, 
@@ -605,6 +628,7 @@
 
     // --- INTERACTION ---
     function getHitElement(mx, my) {
+        const ctx = document.getElementById('mainCanvas').getContext('2d');
         let hH = null, tP = null, hB = null;
         const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
         [...window.elements].reverse().forEach(el => {
@@ -621,7 +645,6 @@
             }
             if (!hB) {
                 if (el.type === 'text') {
-                    const ctx = document.getElementById('mainCanvas').getContext('2d');
                     ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
                     const tw = ctx.measureText(el.val).width;
                     if (mx >= el.x && mx <= el.x + tw && my >= el.y - 20 && my <= el.y + 5) hB = el;
@@ -721,11 +744,29 @@
     window.openBlockModal = () => { editingBlockId=null; document.getElementById('block-input').value=''; document.getElementById('block-modal-overlay').style.display='flex'; };
     window.closeBlockModal = () => document.getElementById('block-modal-overlay').style.display='none';
     window.submitBlock = () => { const t = document.getElementById('block-input').value; window.addShape('block_text', null, null, t); window.closeBlockModal(); };
-    window.addLabeledArrow = () => { window.addShape('labeled_arrow', null, null, null); };
+    window.addLabeledArrow = () => { const l = prompt("Arrow Label:"); window.addShape('labeled_arrow', null, null, l); };
     window.openVariantModal = () => document.getElementById('variant-modal').classList.add('active');
     window.closeVariantModal = () => document.getElementById('variant-modal').classList.remove('active');
     window.saveVariant = () => { /* Logic untouched */ window.closeVariantModal(); };
-    window.launchCNTR = () => { /* Logic untouched */ };
+    
+    // RESTORED CNTR LOGIC IN FULL
+    window.launchCNTR = function() {
+        let textToParse = document.getElementById('verseReference').value.trim() || document.getElementById('projectName').value.trim() || document.getElementById('dbRefInput').value.trim(); 
+        if (!textToParse) return;
+        
+        const match = textToParse.match(/(1\s*|2\s*|3\s*)?([a-zA-Z]+)[\s\.]*(\d+)(?:[\s:\.]+(\d+))?/);
+        if(!match) { window.open("https://greekcntr.org", "_blank"); return; }
+        
+        const bookName = (match[1] ? match[1].replace(/\s+/g, '') : '') + match[2].toLowerCase();
+        const ntBooks = {"matthew":40,"matt":40,"mt":40,"mark":41,"mk":41,"luke":42,"lk":42,"john":43,"jhn":43,"jn":43,"acts":44,"romans":45,"rom":45,"1corinthians":46,"1cor":46,"2corinthians":47,"2cor":47,"galatians":48,"gal":48,"ephesians":49,"eph":49,"philippians":50,"phil":50,"php":50,"colossians":51,"col":51,"1thessalonians":52,"1th":52,"2thessalonians":53,"2th":53,"1timothy":54,"1ti":54,"2timothy":55,"2ti":55,"titus":56,"tit":56,"philemon":57,"phm":57,"hebrews":58,"heb":58,"james":59,"jas":59,"1peter":60,"1pet":60,"2peter":61,"2pet":61,"1john":62,"1jn":62,"2john":63,"2jn":63,"3john":64,"3jn":64,"jude":65,"jud":65,"revelation":66,"rev":66};
+        
+        if (ntBooks[bookName]) { 
+            window.open(`https://greekcntr.org/collation/index.htm?v=${ntBooks[bookName]}${parseInt(match[3]).toString().padStart(3,'0')}${(match[4]?parseInt(match[4]):1).toString().padStart(3,'0')}`, "_blank"); 
+        } else {
+            window.open("https://greekcntr.org", "_blank");
+        }
+    };
+    
     window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
 
     // Load Local Cache on DOM Content Loaded
