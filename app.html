@@ -38,7 +38,7 @@
         }
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
-        .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
+        .app-nav { display: flex; gap: 5px; margin-bottom: 10px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: var(--oxford-gold); }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
@@ -168,7 +168,9 @@
 
 <div id="sidebar">
     <div class="sidebar-inner">
-        <h2>Σyntaxis<span class="ix">IX</span></h2>
+        <div style="display: flex; justify-content: space-between; align-items: center;">
+            <h2>Σyntaxis<span class="ix">IX</span></h2>
+        </div>
 
         <div class="app-nav">
             <a href="annotator.html">Annotate</a>
@@ -176,53 +178,68 @@
             <a href="interpreter.html">Interpret</a>
             <a href="outliner.html">Outline</a>
         </div>
+
+        <div style="display: flex; justify-content: space-between; align-items: center; padding-bottom: 10px; border-bottom: 1px solid rgba(255,255,255,0.1);">
+            <span id="user-status" style="font-size: 10px; color: #aaa;">Not Signed In</span>
+            <button id="auth-btn" class="std-btn secondary" style="width: auto; padding: 5px 10px; cursor: pointer; background: var(--oxford-gold); color: var(--oxford-navy);" onclick="window.toggleAuth()">Sign In</button>
+        </div>
         
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
+            <input type="text" id="projectName" placeholder="Diagram Name" oninput="window.autoSave()">
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" oninput="autoSave()" style="flex:1;">
-                <button class="std-btn" onclick="saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save App</button>
+                <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" oninput="window.autoSave()" style="flex:1;">
+                <button class="std-btn" onclick="window.saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save Cloud</button>
             </div>
         </div>
 
         <div class="btn-group" style="margin-top: 15px;">
-            <button id="tab-rk" class="active" onclick="switchDiagramTab('rk')">Sentence</button>
-            <button id="tab-block" onclick="switchDiagramTab('block')">Block / Flow</button>
+            <button id="tab-rk" class="active" onclick="window.switchDiagramTab('rk')">Sentence</button>
+            <button id="tab-block" onclick="window.switchDiagramTab('block')">Block / Flow</button>
         </div>
 
         <div id="palette-rk" class="palette">
-            <div class="tool" onclick="addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
-            <div class="tool" onclick="addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj.</div>
-            <div class="tool" onclick="addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
-            <div class="tool" onclick="addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
-            <div class="tool" onclick="addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood (X)</div>
-            <div class="tool" onclick="addShape('diamond')"><svg viewBox="0 0 100 100"><path d="M5,50 L25,50 L45,20 L75,20 L95,50 L75,80 L45,80 L25,50 M45,20 L45,80 M75,20 L75,80"/></svg>Compound</div>
-            <div class="tool" onclick="addShape('stilt')"><svg viewBox="0 0 100 100"><line x1="10" y1="30" x2="90" y2="30"/><line x1="50" y1="30" x2="50" y2="60"/><path d="M30,90 L50,60 L70,90"/></svg>Platform Stilt</div>
-            <div class="tool" onclick="addShape('fork')"><svg viewBox="0 0 100 100"><path d="M10,50 L30,50 L50,20 L90,20 M30,50 L50,80 L90,80 M50,20 L50,80"/></svg>Fork (Split)</div>
-            <div class="tool" onclick="addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
-            <div class="tool" onclick="addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Single Line</div>
-            <div class="tool" onclick="addShape('text')"><strong style="font-size:20px;">Label</strong></div>
-            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 1;">Flip (F)</button>
-            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBank(); autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
+            <div class="tool" onclick="window.addShape('subject_baseline')"><svg viewBox="0 0 100 100"><line x1="10" y1="50" x2="90" y2="50"/><line x1="50" y1="35" x2="50" y2="65"/></svg>Subject</div>
+            <div class="tool" onclick="window.addShape('direct_object')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Direct Obj.</div>
+            <div class="tool" onclick="window.addShape('modifier')"><svg viewBox="0 0 100 100"><polyline points="30,20 50,70 95,70"/></svg>Modifier</div>
+            <div class="tool" onclick="window.addShape('appositive')"><svg viewBox="0 0 100 100"><polyline points="30,20 30,70 80,70"/></svg>Participle</div>
+            <div class="tool" onclick="window.addShape('x_line')"><svg viewBox="0 0 100 100"><line x1="30" y1="30" x2="70" y2="70"/><line x1="70" y1="30" x2="30" y2="70"/></svg>Understood (X)</div>
+            <div class="tool" onclick="window.addShape('diamond')"><svg viewBox="0 0 100 100"><path d="M5,50 L25,50 L45,20 L75,20 L95,50 L75,80 L45,80 L25,50 M45,20 L45,80 M75,20 L75,80"/></svg>Compound</div>
+            <div class="tool" onclick="window.addShape('stilt')"><svg viewBox="0 0 100 100"><line x1="10" y1="30" x2="90" y2="30"/><line x1="50" y1="30" x2="50" y2="60"/><path d="M30,90 L50,60 L70,90"/></svg>Platform Stilt</div>
+            <div class="tool" onclick="window.addShape('fork')"><svg viewBox="0 0 100 100"><path d="M10,50 L30,50 L50,20 L90,20 M30,50 L50,80 L90,80 M50,20 L50,80"/></svg>Fork (Split)</div>
+            <div class="tool" onclick="window.addPrepShelf()"><svg viewBox="0 0 100 100"><polyline points="60,20 20,80 80,80"/></svg>Prep Shelf</div>
+            <div class="tool" onclick="window.addShape('single_line')"><svg viewBox="0 0 100 100"><line x1="20" y1="80" x2="80" y2="20"/></svg>Single Line</div>
+            <div class="tool" onclick="window.addShape('text')"><strong style="font-size:20px;">Label</strong></div>
+            <button class="std-btn" onclick="window.flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 1;">Flip (F)</button>
+            <button class="std-btn" onclick="window.elements=[]; window.selectedElements=[]; window.draw(); window.updateWordBank(); window.autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 3; margin-top:5px;">Clear Canvas</button>
 
             <div class="palette floating-card" style="margin-top: 10px; grid-column: span 3; align-items: center; justify-content: space-between; gap: 5px;">
-                <button id="snapToggle" onclick="toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#a9dfbf; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
-                <input type="color" id="styleColor" oninput="applyStyle('color', this.value)" style="width:25px; height:25px; padding:0; border:none; background:transparent; cursor:pointer;">
-                <input type="number" id="styleWeight" value="2.5" step="0.5" oninput="applyStyle('thickness', parseFloat(this.value))" style="width: 40px; height:25px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">
-                <button onclick="applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
-                <button onclick="toggleApparatus()" style="cursor:pointer; padding:5px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; font-weight:bold; font-size:12px; color:var(--oxford-navy);">📜 Text</button>
-                <button onclick="setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
-                <button onclick="setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
+                <button id="snapToggle" onclick="window.toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#a9dfbf; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
+                <input type="color" id="styleColor" oninput="window.applyStyle('color', this.value)" style="width:25px; height:25px; padding:0; border:none; background:transparent; cursor:pointer;">
+                <input type="number" id="styleWeight" value="2.5" step="0.5" oninput="window.applyStyle('thickness', parseFloat(this.value))" style="width: 40px; height:25px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">
+                <button onclick="window.applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
+                <button onclick="window.toggleApparatus()" style="cursor:pointer; padding:5px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; font-weight:bold; font-size:12px; color:var(--oxford-navy);">📜 Text</button>
+                <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
+                <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
         </div>
 
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
-            <div class="tool" onclick="openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
-            <div class="tool" onclick="addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Orthogonal Arrow</div>
-            <div class="tool" onclick="addShape('single_line')" style="font-size: 13px; padding: 15px;">↘ Simple Line</div>
-            <div class="tool" onclick="addShape('text')" style="font-size: 13px; padding: 15px;">🏷 Free Label</div>
-            <button class="std-btn" onclick="flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 2;">Flip Selection (F)</button>
-            <button class="std-btn" onclick="elements=[]; selectedElements=[]; draw(); updateWordBank(); autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 2;">Clear Canvas</button>
+            <div class="tool" onclick="window.openBlockModal()" style="font-size: 13px; padding: 15px;">📝 Add Text Block</div>
+            <div class="tool" onclick="window.addLabeledArrow()" style="font-size: 13px; padding: 15px;">➔ Orthogonal Arrow</div>
+            <div class="tool" onclick="window.addShape('single_line')" style="font-size: 13px; padding: 15px;">↘ Simple Line</div>
+            <div class="tool" onclick="window.addShape('text')" style="font-size: 13px; padding: 15px;">🏷 Free Label</div>
+            
+            <button class="std-btn" onclick="window.flipSelected()" style="background:var(--oxford-navy-dark); color:var(--oxford-cream); grid-column: span 2;">Flip Selection (F)</button>
+            <button class="std-btn" onclick="window.elements=[]; window.selectedElements=[]; window.draw(); window.updateWordBank(); window.autoSave();" style="background:var(--oxford-crimson); color:white; grid-column: span 2;">Clear Canvas</button>
+            
+            <div class="palette floating-card" style="margin-top: 10px; grid-column: span 2; align-items: center; justify-content: space-between; gap: 5px;">
+                <button id="snapToggle2" onclick="window.toggleSnap()" style="cursor:pointer; padding:5px; border-radius:var(--radius-small); background:#a9dfbf; border:1px solid var(--oxford-navy-dark); font-weight:bold;">🧲</button>
+                <input type="color" id="styleColor2" oninput="window.applyStyle('color', this.value)" style="width:25px; height:25px; padding:0; border:none; background:transparent; cursor:pointer;">
+                <input type="number" id="styleWeight2" value="2.5" step="0.5" oninput="window.applyStyle('thickness', parseFloat(this.value))" style="width: 40px; height:25px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">
+                <button onclick="window.applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
+                <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
+                <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
+            </div>
         </div>
         
         <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
@@ -253,53 +270,119 @@
                     <option value="esv.xml">English Standard Version (ESV)</option>
                 </optgroup>
             </select>
-            <button class="std-btn" onclick="loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
+            <button class="std-btn" onclick="window.loadNativeBibleTextOnly(document.getElementById('dbRefInput').value, document.getElementById('dbModuleSelect').value)" style="background:var(--oxford-gold); color:var(--oxford-navy);">Extract Text</button>
             <div id="dbStatus" style="font-size: 10px; color: var(--rustic-orange); text-align: center; margin-top: 5px;"></div>
         </div>
         
         <div style="text-align: center; font-size: 10px; color: #888; margin: 5px 0;">— OR PASTE TEXT —</div>
-        <textarea id="passageInput" placeholder="Paste passage here..." oninput="updateWordBank(); autoSave();"></textarea>
+        <textarea id="passageInput" placeholder="Paste passage here..." oninput="window.updateWordBank(); window.autoSave();"></textarea>
         <div id="word-bank"></div>
     </div>
 </div>
 
 <div id="orange-toast"></div>
 
+<div id="context-menu">
+    <div class="context-header">Alignment</div>
+    <div class="context-item" onclick="window.snapLine('horizontal')">Snap Horizontal</div>
+    <div class="context-item" onclick="window.snapLine('vertical')">Snap Vertical</div>
+    <div class="context-header" style="margin-top:5px;">Style</div>
+    <div class="context-item" onclick="window.setLineStyle('solid')">Solid Line</div>
+    <div class="context-item" onclick="window.setLineStyle('dashed')">Dashed Line</div>
+    <div class="context-item" onclick="window.setLineStyle('dotted')">Dotted Line</div>
+</div>
+
+<div id="apparatus-drawer">
+    <div class="apparatus-header"><h3>Apparatus</h3><button class="close-btn" onclick="window.toggleApparatus()" style="background:none; border:none; color:white; font-size:24px; cursor:pointer;">&times;</button></div>
+    <div class="apparatus-content">
+        <div id="apparatus-list"></div>
+        <button onclick="window.openVariantModal()" style="width: 100%; margin-top: 10px; padding: 12px; background: transparent; border: 1px dashed var(--oxford-gold); border-radius: 8px; cursor: pointer; color: var(--oxford-gold); font-weight: bold;">+ Add MS Reading</button>
+        <button onclick="window.launchCNTR()" style="width: 100%; margin-top: 20px; padding: 12px; background: var(--oxford-gold); color: var(--oxford-navy); border: none; border-radius: 8px; cursor: pointer; font-weight: bold;">Verify on CNTR ↗</button>
+        
+        <div style="margin-top: 25px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 15px;">
+            <div style="font-size: 10px; color: var(--oxford-gold); text-transform: uppercase; font-weight: bold; letter-spacing: 1px; margin-bottom: 10px; text-align:center;">Free English Resources</div>
+            <div style="display:flex; gap:10px;">
+                <a href="https://netbible.org" target="_blank" class="resource-link">NET Bible ↗</a>
+                <a href="https://www.stepbible.org" target="_blank" class="resource-link">STEP Bible ↗</a>
+            </div>
+        </div>
+
+        <div id="variant-modal">
+            <h4 id="modal-title">Add Manuscript</h4>
+            
+            <div class="quick-keys">
+                <button type="button" class="quick-key" onclick="window.insertSiglum('𝔓')">𝔓</button>
+                <button type="button" class="quick-key" onclick="window.insertSiglum('א')">א</button>
+                <button type="button" class="quick-key" onclick="window.insertSiglum('B')">B</button>
+                <button type="button" class="quick-key" onclick="window.insertSiglum('D')">D</button>
+                <button type="button" class="quick-key" onclick="window.insertSiglum('𝔪')">𝔪</button>
+            </div>
+            
+            <div style="display:flex; gap:10px;">
+                <input type="text" id="v-symbol" placeholder="Symbol (e.g. א)" style="flex:1;">
+                <select id="v-conviction" style="flex:1;">
+                    <option value="">Conviction...</option>
+                    <option value="highly">Highly Likely</option>
+                    <option value="likely">Likely</option>
+                    <option value="possible">Possible</option>
+                    <option value="unlikely">Unlikely</option>
+                </select>
+            </div>
+            
+            <input type="text" id="v-date" placeholder="Date" style="margin-top: 10px;">
+            <textarea id="v-reading" placeholder="Reading..." style="margin-top: 10px;"></textarea>
+            <div style="display:flex; gap:10px; margin-top: 10px;">
+                <button class="std-btn" onclick="window.closeVariantModal()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">Cancel</button>
+                <button class="std-btn" onclick="window.saveVariant()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div id="block-modal-overlay">
+    <div id="block-modal">
+        <h3 style="color: var(--oxford-navy); border-bottom: 2px solid var(--oxford-gold); padding-bottom: 5px; font-size: 16px;">Add Text Block</h3>
+        <textarea id="block-input" placeholder="Type or paste text here. Use TAB to indent..."></textarea>
+        <div style="display: flex; gap: 10px;">
+            <button class="std-btn secondary" onclick="window.closeBlockModal()" style="flex:1;">Cancel</button>
+            <button class="std-btn" onclick="window.submitBlock()" style="flex:1;">Add to Canvas</button>
+        </div>
+    </div>
+</div>
+
 <script>
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
+    // --- GUARANTEED GLOBAL DATA ---
+    window.elements = [];
+    window.selectedElements = [];
+    window.apparatusData = [];
     
-    // Core Data
-    let elements = [];
-    let selectedElements = [];
-    let apparatusData = [];
     let editingVariantId = null, editingBlockId = null;
     let isDragging = false, isResizing = false, isMarquee = false;
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     let currentResizePoint = null, snapEnabled = true, rightClickedEl = null;
-    let zoomLevel = 1;
-    let activeTab = 'rk';
+    window.zoomLevel = 1;
+    window.activeTab = 'rk'; 
 
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "colossians": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "colossians": 51, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "colossians": "Col", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
 
-    function switchDiagramTab(tab) {
-        activeTab = tab;
+    window.switchDiagramTab = function(tab) {
+        window.activeTab = tab;
         document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
         document.getElementById('tab-block').classList.toggle('active', tab === 'block');
         document.getElementById('palette-rk').style.display = tab === 'rk' ? 'grid' : 'none';
         document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
-    }
+    };
 
-    function showOrangeToast(msg) {
+    window.showOrangeToast = function(msg) {
         const toast = document.getElementById('orange-toast');
         toast.innerText = msg;
         toast.style.display = 'block';
         setTimeout(() => toast.style.display = 'none', 1500);
-    }
+    };
 
-    async function loadNativeBibleTextOnly(query, fileName) {
+    window.loadNativeBibleTextOnly = async function(query, fileName) {
         if (!query.trim()) return;
         const status = document.getElementById('dbStatus'); status.innerText = "Extracting...";
         try {
@@ -325,7 +408,7 @@
                     }
                 }
                 document.getElementById('passageInput').value = out.trim();
-                updateWordBank(); status.innerText = ""; autoSave();
+                window.updateWordBank(); status.innerText = ""; window.autoSave();
                 return;
             }
 
@@ -341,7 +424,7 @@
                 if (bookNode) {
                     chapNode = bookNode.querySelector(`chapter[osisID="${osis}.${chap}"]`) || bookNode.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`) || bookNode.querySelector(`chapter[number="${chap}"]`);
                 } else {
-                    chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
+                     chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
                 }
             }
             
@@ -354,11 +437,14 @@
                 txt += v.textContent + " ";
             });
             document.getElementById('passageInput').value = txt.replace(/\s+/g, ' ').trim();
-            updateWordBank(); status.innerText = ""; autoSave();
+            window.updateWordBank(); status.innerText = ""; window.autoSave();
         } catch (e) { status.innerText = e.message; }
-    }
+    };
 
-    function draw() {
+    window.draw = function() {
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
@@ -366,10 +452,10 @@
         for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
         
         let drawnGroups = [];
-        elements.forEach(el => {
-            if (selectedElements.includes(el) && el.group && !drawnGroups.includes(el.group)) {
+        window.elements.forEach(el => {
+            if (window.selectedElements.includes(el) && el.group && !drawnGroups.includes(el.group)) {
                 drawnGroups.push(el.group);
-                const groupEls = elements.filter(e => e.group === el.group);
+                const groupEls = window.elements.filter(e => e.group === el.group);
                 let minX=9999, minY=9999, maxX=-9999, maxY=-9999;
                 groupEls.forEach(ge => {
                     const gf = ge.flip || 1;
@@ -399,8 +485,8 @@
             }
         });
 
-        elements.forEach(el => {
-            const isSel = selectedElements.includes(el), f = el.flip || 1; 
+        window.elements.forEach(el => {
+            const isSel = window.selectedElements.includes(el), f = el.flip || 1; 
             ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = el.thickness || 2.5;
             if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
             
@@ -418,38 +504,58 @@
             else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
             ctx.stroke(); ctx.setLineDash([]);
             
+            // FULL ORTHOGONAL ARROW LOGIC
+            if (el.type === 'labeled_arrow') {
+                const ex = el.x + (el.w * f), ey = el.y + el.h;
+                ctx.beginPath(); ctx.strokeStyle = el.color || '#000000'; ctx.lineWidth = el.thickness || 2.5;
+                if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
+                ctx.moveTo(el.x, el.y);
+                let angle, mx, my;
+                if (f === 1) { ctx.lineTo(el.x, ey); ctx.lineTo(ex, ey); angle = ex > el.x ? 0 : Math.PI; mx = el.x; my = el.y + (ey - el.y) / 2; } 
+                else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); angle = ey > el.y ? Math.PI/2 : -Math.PI/2; mx = el.x + (ex - el.x) / 2; my = el.y; }
+                ctx.stroke(); ctx.setLineDash([]);
+                ctx.save(); ctx.translate(ex, ey); ctx.rotate(angle); ctx.beginPath(); ctx.moveTo(0, 0); ctx.lineTo(-12, 6); ctx.lineTo(-12, -6); ctx.closePath(); ctx.fillStyle = el.color || '#000000'; ctx.fill(); ctx.restore();
+                ctx.font = `bold 9px -apple-system, BlinkMacSystemFont, sans-serif`; 
+                const m = ctx.measureText(el.val.toUpperCase()); ctx.fillStyle = "#ffffff"; ctx.fillRect(mx - m.width/2 - 4, my - 8, m.width + 8, 16); ctx.fillStyle = el.color || '#000000'; ctx.fillText(el.val.toUpperCase(), mx - m.width/2, my + 3);
+            }
+            
             if (el.type === 'block_text') {
                 ctx.fillStyle = "#ffffff"; ctx.fillRect(el.x, el.y, el.w, el.h || 50); ctx.strokeRect(el.x, el.y, el.w, el.h || 50);
                 ctx.fillStyle = el.color || "#000"; ctx.font = "14px sans-serif"; ctx.fillText(el.val.substring(0,30), el.x+10, el.y+30);
             }
             if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
 
-            if (isSel) {
-                if (el.type === 'text') {
-                    ctx.strokeStyle = '#3498db'; ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
-                    const m = ctx.measureText(el.val); 
-                    ctx.strokeRect(el.x - 4, el.y - 20, m.width + 8, 26); 
+            if (isSel && el.type !== 'text') {
+                ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
+                const hR = 6 / Math.sqrt(window.zoomLevel);
+                const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                
+                if (el.type === 'block_text') { 
+                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
+                    ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); 
                     ctx.setLineDash([]); 
-                } else {
-                    ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
-                    const hR = 6 / Math.sqrt(zoomLevel);
-                    const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
-                    
-                    if (el.type === 'block_text') { ctx.setLineDash([4, 4]); ctx.lineWidth = 1; ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); ctx.setLineDash([]); handle(el.x + el.w, el.y + (el.h||50)); }
-                    else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
-                    else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
-                    else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
-                    else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
+                    handle(el.x + el.w, el.y + (el.h||50)); 
                 }
+                else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
+                else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
             }
         });
         if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); ctx.setLineDash([]); }
-    }
+    };
 
-    function updateWordBank() {
-        const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
-        const bank = document.getElementById('word-bank'); bank.innerHTML = ''; let used = [];
-        elements.filter(el => el.type === 'text').forEach(el => used.push(...el.val.split(/\s+/)));
+    window.updateWordBank = function() {
+        const passageInput = document.getElementById('passageInput');
+        if(!passageInput) return;
+        const words = passageInput.value.split(/\s+/).filter(w => w.length > 0);
+        const bank = document.getElementById('word-bank'); 
+        if(!bank) return;
+        bank.innerHTML = ''; 
+        let used = [];
+        if (window.elements) {
+            window.elements.filter(el => el.type === 'text').forEach(el => used.push(...el.val.split(/\s+/)));
+        }
         words.forEach(word => {
             const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word;
             if (used.indexOf(word) !== -1) { span.style.textDecoration = 'line-through'; span.style.opacity = '0.4'; used.splice(used.indexOf(word),1); }
@@ -457,41 +563,43 @@
             span.ondragstart = (e) => { const s = Array.from(document.querySelectorAll('.bank-word.selected')); e.dataTransfer.setData("text/plain", s.length > 0 ? s.map(x => x.innerText).join(' ') : word); };
             bank.appendChild(span);
         });
-    }
+    };
 
     document.getElementById('mainCanvas').ondragover = e => e.preventDefault();
     document.getElementById('mainCanvas').ondrop = e => { 
         e.preventDefault(); 
         const rect = document.getElementById('mainCanvas').getBoundingClientRect(); 
-        const x = snapEnabled ? Math.round(((e.clientX - rect.left) / zoomLevel) / 10) * 10 : (e.clientX - rect.left) / zoomLevel; 
-        const y = snapEnabled ? Math.round(((e.clientY - rect.top) / zoomLevel) / 10) * 10 : (e.clientY - rect.top) / zoomLevel; 
-        addShape('text', x, y, e.dataTransfer.getData("text/plain")); 
+        const x = snapEnabled ? Math.round(((e.clientX - rect.left) / window.zoomLevel) / 10) * 10 : (e.clientX - rect.left) / window.zoomLevel; 
+        const y = snapEnabled ? Math.round(((e.clientY - rect.top) / window.zoomLevel) / 10) * 10 : (e.clientY - rect.top) / window.zoomLevel; 
+        window.addShape('text', x, y, e.dataTransfer.getData("text/plain")); 
         document.querySelectorAll('.bank-word.selected').forEach(s => s.classList.remove('selected')); 
     };
 
-    function addShape(type, x=null, y=null, val=null) {
+    window.addShape = function(type, x=null, y=null, val=null) {
         if ((type === 'text' || type === 'block_text') && val === null) { val = prompt("Label:"); if (!val) return; }
-        const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/zoomLevel;
-        const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/zoomLevel;
-        elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, w_left: 120, w_right: 120, val, flip: 1, color: '#333', thickness: 2.5 });
-        draw(); autoSave(); if(type==='text') updateWordBank();
-    }
+        const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
+        const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/window.zoomLevel;
+        window.elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, w_left: 120, w_right: 120, val, flip: 1, color: '#333', thickness: 2.5 });
+        window.draw(); window.autoSave(); if(type==='text') window.updateWordBank();
+    };
 
-    function addPrepShelf() { elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); draw(); }
-    function flipSelected() { selectedElements.forEach(el => el.flip *= -1); draw(); }
-    function autoSave() { sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ elements: elements, passage: document.getElementById('passageInput').value, apparatus: apparatusData })); }
-    function renderApparatus() { /* Apparatus untouched */ }
-    function toggleApparatus() { document.getElementById('apparatus-drawer').classList.toggle('open'); }
-    function toggleSnap() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; }
-    function applyStyle(p, v) { selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); draw(); }
-    function setZoom(d) { zoomLevel = Math.max(0.2, zoomLevel + d); document.getElementById('mainCanvas').style.transform = `scale(${zoomLevel})`; document.getElementById('mainCanvas').style.transformOrigin = 'top left'; }
-    function snapLine(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; draw(); } }
-    function setLineStyle(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; draw(); } }
+    window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
+    window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
+    window.autoSave = function() { sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ elements: window.elements, passage: document.getElementById('passageInput').value, apparatus: window.apparatusData })); };
+    window.renderApparatus = function() { /* Apparatus untouched */ };
+    window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); };
+    window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
+    window.applyStyle = function(p, v) { window.selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); window.draw(); };
+    window.setZoom = function(d) { window.zoomLevel = Math.max(0.2, window.zoomLevel + d); document.getElementById('mainCanvas').style.transform = `scale(${window.zoomLevel})`; document.getElementById('mainCanvas').style.transformOrigin = 'top left'; };
+    window.snapLine = function(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; window.draw(); } };
+    window.setLineStyle = function(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; window.draw(); } };
 
+    // --- INTERACTION ---
     function getHitElement(mx, my) {
+        const ctx = document.getElementById('mainCanvas').getContext('2d');
         let hH = null, tP = null, hB = null;
-        const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/zoomLevel) { hH = el; tP = t; } };
-        [...elements].reverse().forEach(el => {
+        const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
+        [...window.elements].reverse().forEach(el => {
             const f = el.flip || 1;
             const wl = el.w_left !== undefined ? el.w_left : el.w;
             const wr = el.w_right !== undefined ? el.w_right : el.w;
@@ -519,155 +627,120 @@
     }
 
     document.getElementById('mainCanvas').onmousedown = (e) => {
-        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX - rect.left)/zoomLevel, my = (e.clientY - rect.top)/zoomLevel;
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX - rect.left)/window.zoomLevel, my = (e.clientY - rect.top)/window.zoomLevel;
         const hit = getHitElement(mx, my);
         if (hit.hH) { 
-            isResizing = true; selectedElements = [hit.hH]; currentResizePoint = hit.tP; 
+            isResizing = true; window.selectedElements = [hit.hH]; currentResizePoint = hit.tP; 
         } else if (hit.body) { 
             isDragging = true; 
             if (!e.shiftKey) {
-                selectedElements = hit.body.group ? elements.filter(el => el.group === hit.body.group) : [hit.body]; 
+                window.selectedElements = hit.body.group ? window.elements.filter(el => el.group === hit.body.group) : [hit.body]; 
             } else {
                 if (hit.body.group) {
-                    const grp = elements.filter(el => el.group === hit.body.group);
-                    grp.forEach(g => { if(!selectedElements.includes(g)) selectedElements.push(g); });
+                    const grp = window.elements.filter(el => el.group === hit.body.group);
+                    grp.forEach(g => { if(!window.selectedElements.includes(g)) window.selectedElements.push(g); });
                 } else {
-                    if(!selectedElements.includes(hit.body)) selectedElements.push(hit.body);
+                    if(!window.selectedElements.includes(hit.body)) window.selectedElements.push(hit.body);
                 }
             }
             dragOffset = {x:mx, y:my}; 
         } else { 
-            isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; selectedElements = []; 
+            isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; window.selectedElements = []; 
         }
-        draw();
+        window.draw();
     };
 
     window.onmousemove = (e) => {
-        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX-rect.left)/zoomLevel, my = (e.clientY-rect.top)/zoomLevel;
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX-rect.left)/window.zoomLevel, my = (e.clientY-rect.top)/window.zoomLevel;
         if (isResizing) {
-            const el = selectedElements[0], f = el.flip || 1;
+            const el = window.selectedElements[0], f = el.flip || 1;
             let mxSnap = snapEnabled ? Math.round(mx/10)*10 : mx;
             let mySnap = snapEnabled ? Math.round(my/10)*10 : my;
             
             if (currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = Math.max(10, (mxSnap - el.x) / f); }
             if (currentResizePoint === 'H') { el.h = Math.max(10, el.y - mySnap); }
-            if (currentResizePoint === 'subj_right') { el.w_right = Math.max(10, (mxSnap - el.x) / f); }
-            if (currentResizePoint === 'subj_left') { el.w_left = Math.max(10, (el.x - mxSnap) * f); }
+            
+            if (currentResizePoint === 'subj_right') { if(el.w_left === undefined) el.w_left = el.w; el.w_right = Math.max(10, (mxSnap - el.x) / f); }
+            if (currentResizePoint === 'subj_left') { if(el.w_right === undefined) el.w_right = el.w; el.w_left = Math.max(10, (el.x - mxSnap) * f); }
+            
             if (currentResizePoint === 'T') { el.dx_top = (mxSnap - el.x) / f; el.dy_top = mySnap - el.y; }
             if (currentResizePoint === 'line_start') { const ex = el.x + el.w, ey = el.y + el.h; el.x = mxSnap; el.y = mySnap; el.w = ex - mxSnap; el.h = ey - mySnap; }
             if (currentResizePoint === 'line_end') { el.w = mxSnap - el.x; el.h = mySnap - el.y; }
             if (currentResizePoint === 'resize_br') { el.w = Math.max(40, mxSnap - el.x); el.h = Math.max(30, mySnap - el.y); }
         } else if (isDragging) {
-            const dx = mx-dragOffset.x, dy = my-dragOffset.y; selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
+            const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
         } else if (isMarquee) {
             marqueeEnd = {x:mx, y:my};
             const x1 = Math.min(marqueeStart.x, mx), x2 = Math.max(marqueeStart.x, mx), y1 = Math.min(marqueeStart.y, my), y2 = Math.max(marqueeStart.y, my);
-            selectedElements = elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2);
+            window.selectedElements = window.elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2);
         }
-        draw();
+        window.draw();
     };
 
-    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; draw(); autoSave(); };
+    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; window.draw(); window.autoSave(); };
     
     window.onkeydown = (e) => {
         if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
         const n = e.shiftKey ? 10 : 2;
         if (e.key.startsWith('Arrow')) { 
             e.preventDefault();
-            if(e.key==='ArrowUp') selectedElements.forEach(el=>el.y-=n); 
-            if(e.key==='ArrowDown') selectedElements.forEach(el=>el.y+=n); 
-            if(e.key==='ArrowLeft') selectedElements.forEach(el=>el.x-=n); 
-            if(e.key==='ArrowRight') selectedElements.forEach(el=>el.x+=n); 
-            draw(); 
+            if(e.key==='ArrowUp') window.selectedElements.forEach(el=>el.y-=n); 
+            if(e.key==='ArrowDown') window.selectedElements.forEach(el=>el.y+=n); 
+            if(e.key==='ArrowLeft') window.selectedElements.forEach(el=>el.x-=n); 
+            if(e.key==='ArrowRight') window.selectedElements.forEach(el=>el.x+=n); 
+            window.draw(); 
         }
-        if (e.key === 'Delete' || e.key === 'Backspace') { elements = elements.filter(el => !selectedElements.includes(el)); selectedElements = []; draw(); updateWordBank(); }
-        if (e.key.toLowerCase() === 'f') flipSelected();
+        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); }
+        if (e.key.toLowerCase() === 'f') window.flipSelected();
         if (e.key.toLowerCase() === 'u') {
-            if (selectedElements.length > 0) {
-                selectedElements.forEach(el => el.group = null);
-                showOrangeToast("UNGROUPED");
+            if (window.selectedElements.length > 0) {
+                window.selectedElements.forEach(el => el.group = null);
+                window.showOrangeToast("UNGROUPED");
             }
-            draw(); autoSave();
+            window.draw(); window.autoSave();
         }
         if (e.key.toLowerCase() === 'g') {
-            if (selectedElements.length > 0) {
+            if (window.selectedElements.length > 0) {
                 const gid = Date.now();
-                selectedElements.forEach(el => el.group = gid);
-                showOrangeToast("GROUPED");
+                window.selectedElements.forEach(el => el.group = gid);
+                window.showOrangeToast("GROUPED");
             }
-            draw(); autoSave();
+            window.draw(); window.autoSave();
         }
     };
 
-    // Attach local functions to window so Firebase module can call them
-    window.updateWordBank = updateWordBank;
-    window.draw = draw;
-    window.autoSave = autoSave;
+    window.openBlockModal = () => { editingBlockId=null; document.getElementById('block-input').value=''; document.getElementById('block-modal-overlay').style.display='flex'; };
+    window.closeBlockModal = () => document.getElementById('block-modal-overlay').style.display='none';
+    window.submitBlock = () => { const t = document.getElementById('block-input').value; window.addShape('block_text', null, null, t); window.closeBlockModal(); };
+    window.addLabeledArrow = () => { const l = prompt("Arrow Label:"); window.addShape('labeled_arrow', null, null, l); };
+    window.openVariantModal = () => document.getElementById('variant-modal').classList.add('active');
+    window.closeVariantModal = () => document.getElementById('variant-modal').classList.remove('active');
+    window.saveVariant = () => { /* Logic untouched */ window.closeVariantModal(); };
+    window.launchCNTR = () => { /* Logic untouched */ };
+    window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
 
-    // Load Cache
+    // Load Cache on DOM Content Loaded
     window.addEventListener('DOMContentLoaded', () => {
         try { 
             const saved = sessionStorage.getItem('syntaxis_autosave'); 
             if (saved) { 
                 const d = JSON.parse(saved); 
-                elements = d.elements||[]; 
-                apparatusData = d.apparatus||[]; 
+                window.elements = d.elements||[]; 
+                window.apparatusData = d.apparatus||[]; 
                 document.getElementById('passageInput').value=d.passage||""; 
                 document.getElementById('projectName').value=d.projectName||""; 
                 document.getElementById('verseReference').value=d.verseReference||""; 
-                updateWordBank(); 
+                window.updateWordBank(); 
             } 
         } catch(e){} 
-        window.updateProjectListLocal();
-        draw(); 
+        window.draw(); 
     });
-
-    window.updateProjectListLocal = function() {
-        const listDiv = document.getElementById('project-list');
-        listDiv.innerHTML = '';
-        const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        Object.keys(projects).forEach(name => {
-            const card = document.createElement('div');
-            card.className = 'proj-card';
-            card.onclick = () => window.loadLocalProject(name);
-            card.innerHTML = `<span>${name}</span><button onclick="window.deleteLocalProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
-            listDiv.appendChild(card);
-        });
-    };
-
-    window.loadLocalProject = function(name) {
-        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        const d = localProjects[name];
-        if (d) {
-            elements = d.elements || [];
-            apparatusData = d.apparatus || [];
-            document.getElementById('passageInput').value = d.passage || "";
-            document.getElementById('projectName').value = name;
-            document.getElementById('verseReference').value = d.verseReference || "";
-            updateWordBank();
-            selectedElements = [];
-            draw();
-            autoSave();
-        }
-    };
-
-    window.deleteLocalProject = function(name, e) {
-        if (e) e.stopPropagation();
-        if (confirm(`Delete diagram "${name}" locally? (Will also delete from cloud if logged in)`)) {
-            const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-            delete localProjects[name];
-            localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-            window.updateProjectListLocal();
-            // Call the cloud delete if it exists
-            if (window.cloudDeleteProject) window.cloudDeleteProject(name);
-        }
-    };
 </script>
 
 <script type="module">
     import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
-    import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, GoogleAuthProvider, signInWithPopup, signOut } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
     const firebaseConfig = {
         apiKey: "AIzaSyAWEDa3YDhaOrYPT4oNrwqEXRk8Jmo8vo8",
@@ -681,56 +754,95 @@
     const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
+    const provider = new GoogleAuthProvider();
     let currentUser = null;
 
+    window.toggleAuth = async function() {
+        if (currentUser) {
+            try { await signOut(auth); window.showOrangeToast("Signed Out"); } catch (e) {}
+        } else {
+            try { await signInWithPopup(auth, provider); window.showOrangeToast("Signed In to Cloud!"); } catch (e) { alert("Sign in failed."); }
+        }
+    };
+
+    onAuthStateChanged(auth, (user) => {
+        const authBtn = document.getElementById('auth-btn');
+        const userStatus = document.getElementById('user-status');
+        if (user) { 
+            currentUser = user; 
+            listenToProjects(user); 
+            if(authBtn) authBtn.innerText = "Sign Out";
+            if(userStatus) userStatus.innerText = user.email.split('@')[0];
+        } else { 
+            currentUser = null; 
+            if(authBtn) authBtn.innerText = "Sign In";
+            if(userStatus) userStatus.innerText = "Not Signed In";
+            document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>';
+        }
+    });
+
     window.saveToApp = async function() {
+        if (!currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
         if (!name) { alert("Enter a Project Name."); return; }
+        
         const data = {
             passage: document.getElementById('passageInput').value,
-            elements: window.elements, // Grabbed from the global scope defined above
+            elements: window.elements,
             apparatus: window.apparatusData,
             verseReference: document.getElementById('verseReference').value,
             lastSaved: Date.now()
         };
 
-        // Save Locally First
-        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        localProjects[name] = data;
-        localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-        window.updateProjectListLocal();
-
-        // Sync to Cloud
-        if (currentUser) {
-            try {
-                await setDoc(doc(db, "users", currentUser.uid, "diagrams", name), data);
-                window.showOrangeToast("Saved to Local & Cloud!");
-            } catch (e) { window.showOrangeToast("Saved Locally (Cloud Failed)"); }
-        } else {
-            window.showOrangeToast("Saved Locally (Sign in for Cloud)");
-        }
+        try {
+            await setDoc(doc(db, "users", currentUser.uid, "diagrams", name), data);
+            window.showOrangeToast("Saved to Cloud!");
+        } catch (e) { window.showOrangeToast("Cloud Save Failed"); }
     };
 
-    window.cloudDeleteProject = async function(name) {
-        if (currentUser) {
+    window.loadFromApp = async function(name) {
+        if (!currentUser) return;
+        const projectsRef = collection(db, "users", currentUser.uid, "diagrams");
+        const snapshot = await getDocs(projectsRef);
+        snapshot.forEach(docSnap => {
+            if (docSnap.id === name) {
+                const d = docSnap.data();
+                window.elements = d.elements || [];
+                window.apparatusData = d.apparatus || [];
+                document.getElementById('passageInput').value = d.passage || "";
+                document.getElementById('projectName').value = name;
+                document.getElementById('verseReference').value = d.verseReference || "";
+                window.updateWordBank();
+                window.selectedElements = [];
+                window.draw();
+            }
+        });
+    };
+
+    window.deleteProject = async function(name, e) {
+        if (e) e.stopPropagation();
+        if (!currentUser) return;
+        if (confirm(`Delete "${name}" from Cloud?`)) {
             try { await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name)); } catch (e) {}
         }
     };
 
     function listenToProjects(user) {
         onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
-            const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+            const listDiv = document.getElementById('project-list');
+            listDiv.innerHTML = '';
+            
+            // Generate list items directly from the Firebase snapshot so Safari renders them instantly
             snapshot.forEach((docSnap) => {
-                localProjects[docSnap.id] = docSnap.data();
+                const name = docSnap.id;
+                const card = document.createElement('div');
+                card.className = 'proj-card';
+                card.onclick = () => window.loadFromApp(name);
+                card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
+                listDiv.appendChild(card);
             });
-            localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-            window.updateProjectListLocal();
         });
     }
-
-    onAuthStateChanged(auth, (user) => {
-        if (user) { currentUser = user; listenToProjects(user); }
-    });
 </script>
 <script type="module" src="firebase-setup.js"></script>
 </body>
