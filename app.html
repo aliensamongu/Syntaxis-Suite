@@ -214,13 +214,6 @@
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
-
-            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 3;">
-                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
-                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
-                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
-                <input type="file" id="fileInput" style="display:none;" onchange="window.fallbackLoad(event)">
-            </div>
         </div>
 
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -240,12 +233,6 @@
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
-            
-            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 2;">
-                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
-                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
-                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
-            </div>
         </div>
         
         <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
@@ -263,7 +250,7 @@
     <div class="right-inner">
         <h3>Text Source</h3>
         <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-            <input type="text" id="dbRefInput" placeholder="Matt 1:1-5">
+            <input type="text" id="dbRefInput" placeholder="Col 1:1-8">
             <select id="dbModuleSelect">
                 <optgroup label="Original Languages">
                     <option value="tischendorf.xml">Tischendorf Greek NT</option>
@@ -357,7 +344,7 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -370,30 +357,34 @@
         appId: "1:348178982976:web:2b27ba62e26a4655add7a5"
     };
 
-    const app = initializeApp(firebaseConfig);
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     let currentUser = null;
 
-    const canvas = document.getElementById('mainCanvas');
-    const ctx = canvas.getContext('2d');
+    // --- DOM CONTENT LOADED CACHE RENDERING ---
+    window.addEventListener('DOMContentLoaded', () => { 
+        try { 
+            const saved = sessionStorage.getItem('syntaxis_autosave'); 
+            if (saved) { 
+                const d = JSON.parse(saved); 
+                window.elements = d.elements||[]; 
+                window.apparatusData = d.apparatus||[]; 
+                document.getElementById('passageInput').value=d.passage||""; 
+                document.getElementById('projectName').value=d.projectName||""; 
+                document.getElementById('verseReference').value=d.verseReference||""; 
+                window.updateWordBank(); 
+            } 
+        } catch(e){} 
+        window.updateProjectListLocal();
+        window.draw(); 
+        window.renderApparatus(); 
+    });
 
-    // --- SHARED DATA ---
-    window.elements = [];
-    window.selectedElements = [];
-    window.apparatusData = [];
-    let editingVariantId = null, editingBlockId = null;
-    let isDragging = false, isResizing = false, isMarquee = false;
-    let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
-    let currentResizePoint = null, snapEnabled = true, rightClickedEl = null;
-    window.zoomLevel = 1;
-    window.activeTab = 'rk'; 
-
-    // --- CLOUD LOGIC ---
     window.saveToApp = async function() {
-        if (!currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
         if (!name) { alert("Enter a Project Name."); return; }
+        
         const data = {
             passage: document.getElementById('passageInput').value,
             elements: window.elements,
@@ -401,58 +392,88 @@
             verseReference: document.getElementById('verseReference').value,
             lastSaved: Date.now()
         };
-        try {
-            await setDoc(doc(db, "users", currentUser.uid, "diagrams", name), data);
-            window.showOrangeToast("Saved to Cloud!");
-        } catch (e) { alert("Error saving to cloud."); }
+
+        // 1. Save locally instantly
+        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+        localProjects[name] = data;
+        localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
+        window.updateProjectListLocal(); 
+
+        // 2. Sync to cloud
+        if (currentUser) {
+            try {
+                await setDoc(doc(db, "users", currentUser.uid, "diagrams", name), data);
+                window.showOrangeToast("Saved to Local & Cloud!");
+            } catch (e) {
+                console.error(e);
+                window.showOrangeToast("Saved Locally (Cloud Sync Failed)");
+            }
+        } else {
+            window.showOrangeToast("Saved Locally (Sign in for Cloud)");
+        }
     };
 
-    window.loadFromApp = async function(name) {
-        if (!currentUser) return;
-        const projectsRef = collection(db, "users", currentUser.uid, "diagrams");
-        const snapshot = await getDocs(projectsRef);
-        snapshot.forEach(docSnap => {
-            if (docSnap.id === name) {
-                const d = docSnap.data();
-                window.elements = d.elements || [];
-                window.apparatusData = d.apparatus || [];
-                document.getElementById('passageInput').value = d.passage || "";
-                document.getElementById('projectName').value = name;
-                document.getElementById('verseReference').value = d.verseReference || "";
-                window.updateWordBank();
-                window.selectedElements = [];
-                window.draw();
-                window.renderApparatus();
-            }
-        });
+    window.loadFromApp = function(name) {
+        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+        const d = localProjects[name];
+        if (d) {
+            window.elements = d.elements || [];
+            window.apparatusData = d.apparatus || [];
+            document.getElementById('passageInput').value = d.passage || "";
+            document.getElementById('projectName').value = name;
+            document.getElementById('verseReference').value = d.verseReference || "";
+            window.updateWordBank();
+            window.selectedElements = [];
+            window.draw();
+            window.renderApparatus();
+            window.autoSave();
+        }
     };
 
     window.deleteProject = async function(name, e) {
         if (e) e.stopPropagation();
-        if (!currentUser) return;
-        if (confirm(`Delete "${name}"?`)) {
-            await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name));
+        if (confirm(`Delete diagram "${name}"?`)) {
+            // Delete local
+            const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+            delete localProjects[name];
+            localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
+            window.updateProjectListLocal();
+
+            // Delete cloud
+            if (currentUser) {
+                try { await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name)); } 
+                catch (e) { console.error(e); }
+            }
         }
+    };
+
+    window.updateProjectListLocal = function() {
+        const listDiv = document.getElementById('project-list');
+        listDiv.innerHTML = '';
+        const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+        Object.keys(projects).forEach(name => {
+            const card = document.createElement('div');
+            card.className = 'proj-card';
+            card.onclick = () => window.loadFromApp(name);
+            card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
+            listDiv.appendChild(card);
+        });
     };
 
     function listenToProjects(user) {
         onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
-            const listDiv = document.getElementById('project-list');
-            listDiv.innerHTML = '';
+            const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
             snapshot.forEach((docSnap) => {
-                const name = docSnap.id;
-                const card = document.createElement('div');
-                card.className = 'proj-card';
-                card.onclick = () => window.loadFromApp(name);
-                card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
-                listDiv.appendChild(card);
+                localProjects[docSnap.id] = docSnap.data();
             });
+            localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
+            window.updateProjectListLocal();
         });
     }
 
     onAuthStateChanged(auth, (user) => {
         if (user) { currentUser = user; listenToProjects(user); }
-        else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>'; }
+        else { currentUser = null; }
     });
 
     // --- MASTER ENGINE FUNCTIONS (ATTACHED TO WINDOW) ---
@@ -536,6 +557,9 @@
     };
 
     window.draw = function() {
+        const canvas = document.getElementById('mainCanvas');
+        const ctx = canvas.getContext('2d');
+        
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
         ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
@@ -686,6 +710,7 @@
             }
             if (!hB) {
                 if (el.type === 'text') {
+                    const ctx = document.getElementById('mainCanvas').getContext('2d');
                     ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
                     const tw = ctx.measureText(el.val).width;
                     if (mx >= el.x && mx <= el.x + tw && my >= el.y - 20 && my <= el.y + 5) hB = el;
@@ -792,8 +817,6 @@
     window.saveVariant = () => { /* Logic untouched */ window.closeVariantModal(); };
     window.launchCNTR = () => { /* Logic untouched */ };
     window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
-
-    // We do NOT call window.draw() here initially because we need DOMContentLoaded to fire first to pull from Cache.
 </script>
 </body>
 </html>
