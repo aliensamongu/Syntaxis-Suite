@@ -380,6 +380,16 @@
         setTimeout(() => toast.style.display = 'none', 1500);
     };
 
+    window.autoSave = function() {
+        localStorage.setItem('syntaxis_autosave', JSON.stringify({
+            elements: window.elements,
+            passage: document.getElementById('passageInput').value,
+            apparatus: window.apparatusData,
+            projectName: document.getElementById('projectName').value,
+            verseReference: document.getElementById('verseReference').value
+        }));
+    };
+
     window.loadNativeBibleTextOnly = async function(query, fileName) {
         if (!query.trim()) return;
         const status = document.getElementById('dbStatus'); status.innerText = "Extracting...";
@@ -593,7 +603,7 @@
     };
 
     window.addShape = function(type, x=null, y=null, val=null) {
-        if ((type === 'text' || type === 'block_text') && val === null) { val = prompt("Label:"); if (!val) return; }
+        if ((type === 'text' || type === 'block_text' || type === 'labeled_arrow') && val === null) { val = prompt("Label:"); if (!val) return; }
         const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
         const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/window.zoomLevel;
         window.elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, w_left: 120, w_right: 120, val, flip: 1, color: '#333', thickness: 2.5 });
@@ -601,25 +611,14 @@
     };
 
     window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
-    window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
+    window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); window.autoSave(); };
     
-    // EXPLICITLY SAVING THE PROJECT NAME AND REFERENCE IN AUTOSAVE
-    window.autoSave = function() { 
-        sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ 
-            elements: window.elements, 
-            passage: document.getElementById('passageInput').value, 
-            apparatus: window.apparatusData,
-            projectName: document.getElementById('projectName').value,
-            verseReference: document.getElementById('verseReference').value
-        })); 
-    };
-    
-    window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); };
+    window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); window.renderApparatus(); };
     window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
-    window.applyStyle = function(p, v) { window.selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); window.draw(); };
+    window.applyStyle = function(p, v) { window.selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); window.draw(); window.autoSave(); };
     window.setZoom = function(d) { window.zoomLevel = Math.max(0.2, window.zoomLevel + d); document.getElementById('mainCanvas').style.transform = `scale(${window.zoomLevel})`; document.getElementById('mainCanvas').style.transformOrigin = 'top left'; };
-    window.snapLine = function(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; window.draw(); } };
-    window.setLineStyle = function(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; window.draw(); } };
+    window.snapLine = function(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; window.draw(); window.autoSave(); } };
+    window.setLineStyle = function(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; window.draw(); window.autoSave(); } };
 
     // --- INTERACTION ---
     function getHitElement(mx, my) {
@@ -715,9 +714,9 @@
             if(e.key==='ArrowDown') window.selectedElements.forEach(el=>el.y+=n); 
             if(e.key==='ArrowLeft') window.selectedElements.forEach(el=>el.x-=n); 
             if(e.key==='ArrowRight') window.selectedElements.forEach(el=>el.x+=n); 
-            window.draw(); 
+            window.draw(); window.autoSave();
         }
-        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); }
+        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); window.autoSave(); }
         if (e.key.toLowerCase() === 'f') window.flipSelected();
         if (e.key.toLowerCase() === 'u') {
             if (window.selectedElements.length > 0) {
@@ -853,7 +852,7 @@
     // Load Local Cache on DOM Content Loaded
     window.addEventListener('DOMContentLoaded', () => {
         try { 
-            const saved = sessionStorage.getItem('syntaxis_autosave'); 
+            const saved = localStorage.getItem('syntaxis_autosave'); 
             if (saved) { 
                 const d = JSON.parse(saved); 
                 window.elements = d.elements||[]; 
@@ -947,16 +946,12 @@
             
             // DIRECT CLOUD RENDERING
             onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
-                const listDiv = document.getElementById('project-list');
-                listDiv.innerHTML = '';
+                const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
                 snapshot.forEach((docSnap) => {
-                    const name = docSnap.id;
-                    const card = document.createElement('div');
-                    card.className = 'proj-card';
-                    card.onclick = () => window.loadFromApp(name);
-                    card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
-                    listDiv.appendChild(card);
+                    localProjects[docSnap.id] = docSnap.data();
                 });
+                localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
+                window.updateProjectListLocal();
             });
         } else { 
             if(authBtn) authBtn.innerText = "Sign In";
@@ -966,11 +961,10 @@
     });
 
     window.saveToApp = async function() {
-        if (!auth.currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
         if (!name) { alert("Enter a Project Name."); return; }
         
-        // FULL DATA OBJECT (Ensuring projectName is explicitly grabbed)
+        // FULL DATA OBJECT
         const data = {
             passage: document.getElementById('passageInput').value,
             elements: window.elements,
@@ -980,36 +974,24 @@
             lastSaved: Date.now()
         };
 
-        try {
-            await setDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name), data);
-            window.showOrangeToast("Saved to Cloud!");
-        } catch (e) { window.showOrangeToast("Cloud Save Failed"); }
+        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+        localProjects[name] = data;
+        localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
+        window.updateProjectListLocal();
+        window.autoSave();
+
+        if (auth.currentUser) {
+            try {
+                await setDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name), data);
+                window.showOrangeToast("Saved to Local & Cloud!");
+            } catch (e) { window.showOrangeToast("Saved Locally (Cloud Failed)"); }
+        } else {
+            window.showOrangeToast("Saved Locally (Sign in for Cloud)");
+        }
     };
 
-    window.loadFromApp = async function(name) {
-        if (!auth.currentUser) return;
-        const projectsRef = collection(db, "users", auth.currentUser.uid, "diagrams");
-        const snapshot = await getDocs(projectsRef);
-        snapshot.forEach(docSnap => {
-            if (docSnap.id === name) {
-                const d = docSnap.data();
-                window.elements = d.elements || [];
-                window.apparatusData = d.apparatus || [];
-                document.getElementById('passageInput').value = d.passage || "";
-                document.getElementById('projectName').value = name;
-                document.getElementById('verseReference').value = d.verseReference || "";
-                window.updateWordBank();
-                window.selectedElements = [];
-                window.draw();
-                window.renderApparatus();
-            }
-        });
-    };
-
-    window.deleteProject = async function(name, e) {
-        if (e) e.stopPropagation();
-        if (!auth.currentUser) return;
-        if (confirm(`Delete "${name}" from Cloud?`)) {
+    window.cloudDeleteProject = async function(name) {
+        if (auth.currentUser) {
             try { await deleteDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name)); } catch (e) {}
         }
     };
