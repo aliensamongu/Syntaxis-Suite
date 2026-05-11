@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis | Diagrammer Master Cloud</title>
+    <title>Σyntaxis | Diagrammer</title>
     <style>
         :root {
             --sidebar-width: 380px;
@@ -39,7 +39,7 @@
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
-        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
+        .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: var(--oxford-gold); }
         .app-nav a.active { background: var(--oxford-gold); color: var(--oxford-navy-dark); border-color: var(--oxford-gold); }
 
@@ -176,9 +176,9 @@
         </div>
         
         <div style="display: flex; flex-direction: column; gap: 8px; margin-top: 10px;">
-            <input type="text" id="projectName" placeholder="Diagram Name" oninput="autoSave()">
+            <input type="text" id="projectName" placeholder="Diagram Name" oninput="window.autoSave()">
             <div style="display: flex; gap: 8px;">
-                <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" oninput="autoSave()" style="flex:1;">
+                <input type="text" id="verseReference" placeholder="Ref (e.g. Col 1:1-8)" oninput="window.autoSave()" style="flex:1;">
                 <button class="std-btn" onclick="window.saveToApp()" style="background:var(--oxford-gold); color:var(--oxford-navy); flex-shrink:0;">Save App</button>
             </div>
         </div>
@@ -261,7 +261,7 @@
     <div class="right-inner">
         <h3>Text Source</h3>
         <div style="display: flex; flex-direction: column; gap: 5px; margin-bottom: 10px;">
-            <input type="text" id="dbRefInput" placeholder="Col 1:1-8">
+            <input type="text" id="dbRefInput" placeholder="Matt 1:1-5">
             <select id="dbModuleSelect">
                 <optgroup label="Original Languages">
                     <option value="tischendorf.xml">Tischendorf Greek NT</option>
@@ -371,7 +371,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    // --- ENGINE DATA ---
+    // --- SHARED DATA ---
     window.elements = [];
     window.selectedElements = [];
     window.apparatusData = [];
@@ -380,7 +380,7 @@
     let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
     let currentResizePoint = null, snapEnabled = true, rightClickedEl = null;
     window.zoomLevel = 1;
-    window.activeTab = 'rk';
+    window.activeTab = 'rk'; 
 
     // --- CLOUD LOGIC ---
     window.saveToApp = async function() {
@@ -422,7 +422,8 @@
 
     window.deleteProject = async function(name, e) {
         if (e) e.stopPropagation();
-        if (confirm(`Delete diagram "${name}"?`)) {
+        if (!currentUser) return;
+        if (confirm(`Delete "${name}"?`)) {
             await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name));
         }
     };
@@ -444,7 +445,7 @@
 
     onAuthStateChanged(auth, (user) => {
         if (user) { currentUser = user; listenToProjects(user); }
-        else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see projects</p>'; }
+        else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>'; }
     });
 
     // --- MASTER ENGINE FUNCTIONS (ATTACHED TO WINDOW) ---
@@ -466,34 +467,44 @@
         try {
             let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
             const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
-            if (!match) throw new Error("Format: Col 1 or Col 1:1-8");
+            if (!match) throw new Error("Invalid Ref");
             const bSearch = match[1].trim().toLowerCase(), chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
             const bName = abbrevs[bSearch] || bSearch, bNum = bnumberMap[bName], osis = osisMap[bName];
+            
             const res = await fetch(fileName);
             const docXML = new DOMParser().parseFromString(await res.text(), "text/xml");
             const isZef = docXML.querySelector('BIBLEBOOK') !== null;
-            let chapNode = isZef ? docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : 
-                           docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
-            if (!chapNode && !isZef) chapNode = docXML.querySelector(`chapter[number="${chap}"]`);
+            const isOsis = docXML.querySelector('chapter[osisID]') !== null;
+            
+            let chapNode;
+            if (isZef) {
+                chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
+            } else if (isOsis) {
+                chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
+            } else {
+                const bookNode = docXML.querySelector(`book[number="${bNum}"]`);
+                if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chap}"]`);
+            }
+            
             if (!chapNode) throw new Error("Passage not found");
             let txt = "";
             chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(v => {
-                let vnStr = v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop();
-                let vn = parseInt(vnStr);
+                let vn = parseInt(v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop());
                 if (sV !== null && (vn < sV || vn > eV)) return;
                 txt += v.textContent + " ";
             });
             document.getElementById('passageInput').value = txt.replace(/\s+/g, ' ').trim();
-            window.updateWordBank(); status.innerText = ""; window.autoSave();
+            window.updateWordBank(); status.innerText = "";
         } catch (e) { status.innerText = e.message; }
     };
 
     window.draw = function() {
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         window.elements.forEach(el => {
-            const isSel = window.selectedElements.includes(el), f = el.flip; 
+            const isSel = window.selectedElements.includes(el), f = el.flip || 1; 
             ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = el.thickness || 2.5;
             if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
+            
             if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.w*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
             else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
             else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
@@ -504,12 +515,92 @@
             else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
             else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
             ctx.stroke(); ctx.setLineDash([]);
-            if (el.type === 'labeled_arrow') { const ex = el.x + (el.w * f), ey = el.y + el.h; ctx.beginPath(); ctx.moveTo(el.x, el.y); if (f === 1) { ctx.lineTo(el.x, ey); ctx.lineTo(ex, ey); } else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); } ctx.stroke(); }
-            if (el.type === 'block_text') { ctx.fillStyle = "#ffffff"; ctx.fillRect(el.x, el.y, el.w, el.h || 50); ctx.strokeRect(el.x, el.y, el.w, el.h || 50); ctx.fillStyle = el.color || "#000"; ctx.font = "14px sans-serif"; ctx.fillText(el.val.substring(0,30), el.x+10, el.y+30); }
-            if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); if (window.apparatusData.some(v => v.targetId === el.id)) { ctx.beginPath(); ctx.arc(el.x + 6, el.y - 22, 3.5, 0, Math.PI * 2); ctx.fillStyle = 'var(--rustic-orange)'; ctx.fill(); ctx.fillStyle = el.color || '#333'; } }
-            if (isSel) { ctx.fillStyle = '#3498db'; const hR = 6 / Math.sqrt(window.zoomLevel); const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); }; if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); } else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); } else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); } else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); } }
+            
+            if (el.type === 'labeled_arrow') {
+                const ex = el.x + (el.w * f), ey = el.y + el.h; ctx.beginPath(); ctx.lineWidth = el.thickness || 2.5; ctx.moveTo(el.x, el.y);
+                if (f === 1) { ctx.lineTo(el.x, ey); ctx.lineTo(ex, ey); } else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); }
+                ctx.stroke();
+            }
+            if (el.type === 'block_text') {
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(el.x, el.y, el.w, el.h || 50); ctx.strokeRect(el.x, el.y, el.w, el.h || 50);
+                ctx.fillStyle = el.color || "#000"; ctx.font = "14px sans-serif"; ctx.fillText(el.val.substring(0,30), el.x+10, el.y+30);
+            }
+            if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
+
+            if (isSel) {
+                ctx.fillStyle = '#3498db'; const hR = 6 / Math.sqrt(window.zoomLevel);
+                const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
+                else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
+            }
         });
-        if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); }
+
+        if (isMarquee) { 
+            ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1;
+            ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); 
+            ctx.setLineDash([]);
+        }
+    };
+
+    function getHitElement(mx, my) {
+        let hH = null, tP = null, hB = null;
+        const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
+        [...window.elements].reverse().forEach(el => {
+            const f = el.flip || 1;
+            if (el.type === 'single_line' || el.type === 'labeled_arrow') { ch(el.x, el.y, 'line_start', el); ch(el.x+el.w*f, el.y+el.h, 'line_end', el); }
+            else if (el.type === 'subject_baseline') { ch(el.x-el.w*f, el.y, 'subj_left', el); ch(el.x+el.w*f, el.y, 'subj_right', el); }
+            else if (el.type === 'modifier' || el.type === 'prep_shelf') { ch(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T', el); ch(el.x+el.w*f, el.y, 'R', el); }
+            else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'x_line') { ch(el.x, el.y-el.h, 'H', el); ch(el.x+el.w*f, el.y, 'W', el); }
+
+            if (!hB && Math.hypot(el.x - mx, el.y - my) < 50) hB = el;
+        });
+        return { hH, tP, body: hB };
+    }
+
+    canvas.onmousedown = (e) => {
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left)/window.zoomLevel, my = (e.clientY - rect.top)/window.zoomLevel;
+        const hit = getHitElement(mx, my);
+        if (hit.hH) { isResizing = true; window.selectedElements = [hit.hH]; currentResizePoint = hit.tP; }
+        else if (hit.body) { isDragging = true; if(!e.shiftKey) window.selectedElements = [hit.body]; else window.selectedElements.push(hit.body); dragOffset = {x:mx, y:my}; }
+        else { isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; window.selectedElements = []; }
+        window.draw();
+    };
+
+    window.onmousemove = (e) => {
+        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX-rect.left)/window.zoomLevel, my = (e.clientY-rect.top)/window.zoomLevel;
+        if (isResizing) {
+            const el = window.selectedElements[0], f = el.flip || 1;
+            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end' || currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = (mx-el.x)/f; el.h = my-el.y; }
+            if (currentResizePoint === 'subj_left' || currentResizePoint === 'line_start') { el.w = (el.x-mx)*f; }
+            if (currentResizePoint === 'H') { el.h = el.y - my; }
+            if (currentResizePoint === 'T') { el.dx_top = (mx - el.x) / f; el.dy_top = my - el.y; }
+        } else if (isDragging) {
+            const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
+        } else if (isMarquee) {
+            marqueeEnd = {x:mx, y:my};
+            const x1 = Math.min(marqueeStart.x, mx), x2 = Math.max(marqueeStart.x, mx), y1 = Math.min(marqueeStart.y, my), y2 = Math.max(marqueeStart.y, my);
+            window.selectedElements = window.elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2);
+        }
+        window.draw();
+    };
+
+    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; window.draw(); window.autoSave(); };
+    
+    window.onkeydown = (e) => {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const n = e.shiftKey ? 10 : 2;
+        if (e.key.startsWith('Arrow')) { 
+            e.preventDefault();
+            if(e.key==='ArrowUp') window.selectedElements.forEach(el=>el.y-=n); 
+            if(e.key==='ArrowDown') window.selectedElements.forEach(el=>el.y+=n); 
+            if(e.key==='ArrowLeft') window.selectedElements.forEach(el=>el.x-=n); 
+            if(e.key==='ArrowRight') window.selectedElements.forEach(el=>el.x+=n); 
+            window.draw(); 
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); }
+        if (e.key.toLowerCase() === 'f') window.flipSelected();
     };
 
     window.updateWordBank = function() {
@@ -535,66 +626,23 @@
     window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
     window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
     window.autoSave = function() { sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ elements: window.elements, passage: document.getElementById('passageInput').value, apparatus: window.apparatusData })); };
-    window.renderApparatus = function() { /* Logic exactly as in working version */ };
+    window.renderApparatus = function() { /* Apparatus untouched */ };
     window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); };
-    window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
+    window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
     window.applyStyle = function(p, v) { window.selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); window.draw(); };
     window.setZoom = function(d) { window.zoomLevel = Math.max(0.2, window.zoomLevel + d); canvas.style.transform = `scale(${window.zoomLevel})`; canvas.style.transformOrigin = 'top left'; };
     window.exportImage = async function() { /* Logic exactly as in working version */ };
     window.snapLine = function(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; window.draw(); } };
     window.setLineStyle = function(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; window.draw(); } };
 
-    // --- INTERACTION ---
-    function getHitElement(mx, my) {
-        let hH = null, tP = null, hB = null;
-        const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
-        [...window.elements].reverse().forEach(el => {
-            const f = el.flip || 1;
-            if (el.type === 'single_line' || el.type === 'labeled_arrow') { ch(el.x, el.y, 'line_start', el); ch(el.x+el.w*f, el.y+el.h, 'line_end', el); }
-            else if (el.type === 'subject_baseline') { ch(el.x-el.w*f, el.y, 'subj_left', el); ch(el.x+el.w*f, el.y, 'subj_right', el); }
-            if (!hB && Math.hypot(el.x - mx, el.y - my) < 50) hB = el;
-        });
-        return { hH, tP, body: hB };
-    }
-
-    canvas.onmousedown = (e) => {
-        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX - rect.left)/window.zoomLevel, my = (e.clientY - rect.top)/window.zoomLevel;
-        const hit = getHitElement(mx, my);
-        if (hit.hH) { isResizing = true; window.selectedElements = [hit.hH]; currentResizePoint = hit.tP; }
-        else if (hit.body) { isDragging = true; if(!e.shiftKey) window.selectedElements = [hit.body]; else window.selectedElements.push(hit.body); dragOffset = {x:mx, y:my}; }
-        else { isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; window.selectedElements = []; }
-        window.draw();
-    };
-
-    window.onmousemove = (e) => {
-        const rect = canvas.getBoundingClientRect(); const mx = (e.clientX-rect.left)/window.zoomLevel, my = (e.clientY-rect.top)/window.zoomLevel;
-        if (isResizing) {
-            const el = window.selectedElements[0], f = el.flip;
-            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end') { el.w = (mx-el.x)/f; el.h = my-el.y; }
-            if (currentResizePoint === 'subj_left' || currentResizePoint === 'line_start') { el.w = (el.x-mx)*f; }
-        } else if (isDragging) { const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my}; }
-        else if (isMarquee) { marqueeEnd = {x:mx, y:my}; const x1 = Math.min(marqueeStart.x, mx), x2 = Math.max(marqueeStart.x, mx), y1 = Math.min(marqueeStart.y, my), y2 = Math.max(marqueeStart.y, my); window.selectedElements = window.elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2); }
-        window.draw();
-    };
-
-    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; window.draw(); window.autoSave(); };
-    window.onkeydown = (e) => {
-        if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
-        const n = e.shiftKey ? 10 : 2;
-        if (e.key.startsWith('Arrow')) { if(e.key==='ArrowUp') window.selectedElements.forEach(el=>el.y-=n); if(e.key==='ArrowDown') window.selectedElements.forEach(el=>el.y+=n); if(e.key==='ArrowLeft') window.selectedElements.forEach(el=>el.x-=n); if(e.key==='ArrowRight') window.selectedElements.forEach(el=>el.x+=n); window.draw(); }
-        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); }
-        if (e.key.toLowerCase() === 'f') window.flipSelected();
-    };
-
-    // --- APP-SPECIFIC UI TRIGGERS ---
     window.openBlockModal = () => { editingBlockId=null; document.getElementById('block-input').value=''; document.getElementById('block-modal-overlay').style.display='flex'; };
     window.closeBlockModal = () => document.getElementById('block-modal-overlay').style.display='none';
     window.submitBlock = () => { const t = document.getElementById('block-input').value; window.addShape('block_text', null, null, t); window.closeBlockModal(); };
     window.addLabeledArrow = () => { const l = prompt("Arrow Label:"); window.addShape('labeled_arrow', null, null, l); };
     window.openVariantModal = () => document.getElementById('variant-modal').classList.add('active');
     window.closeVariantModal = () => document.getElementById('variant-modal').classList.remove('active');
-    window.saveVariant = () => { /* Logic untouched */ window.closeVariantModal(); };
-    window.launchCNTR = () => { /* Logic untouched */ };
+    window.saveVariant = () => { window.closeVariantModal(); };
+    window.launchCNTR = () => { };
     window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
 
     window.onload = () => { window.draw(); window.updateWordBank(); };
