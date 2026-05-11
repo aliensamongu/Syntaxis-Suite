@@ -344,7 +344,7 @@
 </div>
 
 <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -357,7 +357,8 @@
         appId: "1:348178982976:web:2b27ba62e26a4655add7a5"
     };
 
-    const app = initializeApp(firebaseConfig);
+    // THIS PREVENTS THE CRASH WHEN RELOADING
+    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
     const db = getFirestore(app);
     const auth = getAuth(app);
     let currentUser = null;
@@ -658,7 +659,6 @@
 
     // --- INTERACTION ---
     function getHitElement(mx, my) {
-        const ctx = document.getElementById('mainCanvas').getContext('2d');
         let hH = null, tP = null, hB = null;
         const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
         [...window.elements].reverse().forEach(el => {
@@ -675,6 +675,7 @@
             }
             if (!hB) {
                 if (el.type === 'text') {
+                    const ctx = document.getElementById('mainCanvas').getContext('2d');
                     ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
                     const tw = ctx.measureText(el.val).width;
                     if (mx >= el.x && mx <= el.x + tw && my >= el.y - 20 && my <= el.y + 5) hB = el;
