@@ -214,13 +214,6 @@
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
-
-            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 3;">
-                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
-                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
-                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
-                <input type="file" id="fileInput" style="display:none;" onchange="window.fallbackLoad(event)">
-            </div>
         </div>
 
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -239,12 +232,6 @@
                 <button onclick="window.applyStyle('bold', true)" style="cursor:pointer; font-weight:bold; font-family:serif; font-style:italic; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy);">B</button>
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
-            </div>
-            
-            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 2;">
-                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
-                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
-                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
             </div>
         </div>
         
@@ -510,7 +497,6 @@
             if (isZef) {
                 chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
             } else {
-                // Ensure we only look for the OSIS ID within the correct book, or find the book first.
                 const bookNode = docXML.querySelector(`book[number="${bNum}"]`) || docXML.querySelector(`div[osisID="${osis}"]`) || docXML.querySelector(`div[type="book"]`);
                 
                 if (bookNode) {
@@ -608,18 +594,12 @@
             }
             if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
 
-            if (isSel) {
+            if (isSel && el.type !== 'text') {
                 ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
                 const hR = 6 / Math.sqrt(window.zoomLevel);
                 const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
                 
-                if (el.type === 'text') { 
-                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
-                    const m = ctx.measureText(el.val); 
-                    ctx.strokeRect(el.x - 4, el.y - 20, m.width + 8, 26); 
-                    ctx.setLineDash([]); 
-                }
-                else if (el.type === 'block_text') { 
+                if (el.type === 'block_text') { 
                     ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
                     ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); 
                     ctx.setLineDash([]); 
@@ -678,6 +658,7 @@
 
     // --- INTERACTION ---
     function getHitElement(mx, my) {
+        const ctx = document.getElementById('mainCanvas').getContext('2d');
         let hH = null, tP = null, hB = null;
         const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
         [...window.elements].reverse().forEach(el => {
