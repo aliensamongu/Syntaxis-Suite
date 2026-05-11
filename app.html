@@ -2,18 +2,21 @@
 <html lang="en">
 <head>
     <meta charset="UTF-8">
-    <title>Σyntaxis | Diagrammer Master Cloud</title>
+    <title>Σyntaxis Pro | Master Editor</title>
     <style>
         :root {
             --sidebar-width: 380px;
             --right-sidebar-width: 320px;
             --bg-main: #e4e7ea;
+            
+            /* Oxford Scholar Palette */
             --oxford-navy: #1B263B;
             --oxford-navy-dark: #121A2A;
             --oxford-cream: #F8F5EE;
             --oxford-gold: #C5A059;
             --oxford-crimson: #8C1C13;
             --rustic-orange: #C86428;
+            
             --radius-small: 8px;
             --radius-medium: 12px;
         }
@@ -24,6 +27,7 @@
             overflow: hidden; background: var(--bg-main);
         }
         
+        /* Left Sidebar (Tools) */
         #sidebar {
             width: var(--sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-right: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
@@ -31,6 +35,7 @@
         }
         .sidebar-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: auto; }
         
+        /* Right Sidebar (Word Bank) */
         #right-sidebar {
             width: var(--right-sidebar-width); background: var(--oxford-navy); flex-shrink: 0;
             border-left: 1px solid var(--oxford-navy-dark); display: flex; flex-direction: column;
@@ -38,6 +43,7 @@
         }
         .right-inner { padding: 25px; display: flex; flex-direction: column; flex-grow: 1; overflow-y: hidden; }
 
+        /* UNIVERSAL APP NAV Styling */
         .app-nav { display: flex; gap: 5px; margin-bottom: 20px; margin-top: 10px; }
         .app-nav a { flex: 1; text-align: center; padding: 8px 4px; font-size: 9px; color: var(--oxford-cream); text-decoration: none; text-transform: uppercase; font-weight: bold; letter-spacing: 1px; background: var(--oxford-navy-dark); border: 1px solid rgba(255,255,255,0.05); border-radius: 4px; transition: 0.2s; }
         .app-nav a:hover { border-color: var(--oxford-gold); }
@@ -121,12 +127,14 @@
         }
         .edit-btn:hover { color: var(--oxford-gold); background: rgba(255,255,255,0.05); }
 
+        /* Conviction Badge CSS */
         .ms-badge { display: inline-block; padding: 3px 8px; border-radius: 4px; font-size: 10px; font-weight: bold; color: var(--oxford-cream); margin-right: 8px; text-transform: uppercase; letter-spacing: 0.5px; }
         .badge-highly { background: #3A4A63; } 
         .badge-likely { background: var(--oxford-gold); color: var(--oxford-navy); }
         .badge-possible { background: var(--rustic-orange); }
         .badge-unlikely { background: var(--oxford-crimson); }
 
+        /* Quick-Key CSS */
         .quick-keys { display: flex; gap: 5px; margin-bottom: 10px; }
         .quick-key { flex: 1; background: var(--oxford-navy-dark); border: 1px solid var(--oxford-navy-dark); border-radius: 4px; cursor: pointer; padding: 6px 0; font-family: Georgia, serif; font-size: 16px; color: var(--oxford-cream); transition: 0.1s; text-align: center; }
         .quick-key:hover { background: var(--oxford-gold); color: var(--oxford-navy); border-color: var(--oxford-gold); }
@@ -154,6 +162,7 @@
         .resource-link { flex:1; padding: 10px; background: rgba(255,255,255,0.03); color: var(--oxford-cream); text-decoration: none; border-radius: var(--radius-small); font-size: 11px; text-align: center; border: 1px solid rgba(255,255,255,0.1); transition: 0.2s; font-weight: bold; }
         .resource-link:hover { border-color: var(--oxford-gold); color: var(--oxford-gold); }
 
+        /* Block Modal CSS */
         #block-modal-overlay { display: none; position: fixed; top: 0; left: 0; right: 0; bottom: 0; background: rgba(0,0,0,0.5); z-index: 4000; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
         #block-modal { background: var(--oxford-cream); padding: 25px; border-radius: var(--radius-medium); width: 80%; max-width: 700px; box-shadow: 0 10px 30px rgba(0,0,0,0.3); border: 1px solid var(--oxford-gold); display: flex; flex-direction: column; gap: 15px; }
         #block-input { min-height: 200px; font-family: monospace; white-space: pre-wrap; font-size: 16px; resize: vertical; overflow-y: auto; padding: 15px;}
@@ -371,7 +380,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
-    // --- ENGINE DATA ---
+    // --- SHARED DATA ---
     window.elements = [];
     window.selectedElements = [];
     window.apparatusData = [];
@@ -471,31 +480,39 @@
             const bSearch = match[1].trim().toLowerCase(), chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
             const bName = abbrevs[bSearch] || bSearch, bNum = bnumberMap[bName], osis = osisMap[bName];
             
+            if (fileName === 'srgnt.tsv') {
+                const res = await fetch('srgnt.tsv');
+                if (!res.ok) throw new Error("File not found.");
+                const text = await res.text();
+                const targetPrefix = bNum.toString().padStart(2, '0') + chap.toString().padStart(3, '0');
+                const lines = text.split('\n');
+                let out = "";
+                for (let line of lines) {
+                    const cols = line.split('\t');
+                    if (cols[0] && cols[0].startsWith(targetPrefix)) {
+                        const vInt = parseInt(cols[0].substring(5, 8));
+                        if (sV !== null && (vInt < sV || vInt > eV)) continue;
+                        out += cols[1] + " ";
+                    }
+                }
+                document.getElementById('passageInput').value = out.trim();
+                window.updateWordBank(); status.innerText = "";
+                return;
+            }
+
             const res = await fetch(fileName);
             const docXML = new DOMParser().parseFromString(await res.text(), "text/xml");
             const isZef = docXML.querySelector('BIBLEBOOK') !== null;
-            
-            let chapNode;
-            if (isZef) {
-                chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
-            } else {
-                chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
-                if (!chapNode) {
-                    const bookNode = docXML.querySelector(`book[number="${bNum}"]`);
-                    if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chap}"]`);
-                }
-            }
-            
+            let chapNode = isZef ? docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`) : docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[number="${chap}"]`);
             if (!chapNode) throw new Error("Passage not found");
             let txt = "";
             chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(v => {
-                let vnStr = v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop();
-                let vn = parseInt(vnStr);
+                let vn = parseInt(v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop());
                 if (sV !== null && (vn < sV || vn > eV)) return;
                 txt += v.textContent + " ";
             });
             document.getElementById('passageInput').value = txt.replace(/\s+/g, ' ').trim();
-            window.updateWordBank(); status.innerText = ""; window.autoSave();
+            window.updateWordBank(); status.innerText = "";
         } catch (e) { status.innerText = e.message; }
     };
 
@@ -557,6 +574,16 @@
         });
     };
 
+    document.getElementById('mainCanvas').ondragover = e => e.preventDefault();
+    document.getElementById('mainCanvas').ondrop = e => { 
+        e.preventDefault(); 
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); 
+        const x = snapEnabled ? Math.round(((e.clientX - rect.left) / window.zoomLevel) / 10) * 10 : (e.clientX - rect.left) / window.zoomLevel; 
+        const y = snapEnabled ? Math.round(((e.clientY - rect.top) / window.zoomLevel) / 10) * 10 : (e.clientY - rect.top) / window.zoomLevel; 
+        window.addShape('text', x, y, e.dataTransfer.getData("text/plain")); 
+        document.querySelectorAll('.bank-word.selected').forEach(s => s.classList.remove('selected')); 
+    };
+
     window.addShape = function(type, x=null, y=null, val=null) {
         if (type === 'text' && val === null) { val = prompt("Label:"); if (!val) return; }
         const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
@@ -584,9 +611,6 @@
             const f = el.flip || 1;
             if (el.type === 'single_line' || el.type === 'labeled_arrow') { ch(el.x, el.y, 'line_start', el); ch(el.x+el.w*f, el.y+el.h, 'line_end', el); }
             else if (el.type === 'subject_baseline') { ch(el.x-el.w*f, el.y, 'subj_left', el); ch(el.x+el.w*f, el.y, 'subj_right', el); }
-            else if (el.type === 'modifier' || el.type === 'prep_shelf') { ch(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T', el); ch(el.x+el.w*f, el.y, 'R', el); }
-            else if (el.type === 'direct_object' || el.type === 'appositive' || el.type === 'x_line') { ch(el.x, el.y-el.h, 'H', el); ch(el.x+el.w*f, el.y, 'W', el); }
-
             if (!hB && Math.hypot(el.x - mx, el.y - my) < 50) hB = el;
         });
         return { hH, tP, body: hB };
@@ -605,10 +629,8 @@
         const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX-rect.left)/window.zoomLevel, my = (e.clientY-rect.top)/window.zoomLevel;
         if (isResizing) {
             const el = window.selectedElements[0], f = el.flip || 1;
-            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end' || currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = (mx-el.x)/f; el.h = my-el.y; }
+            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end') { el.w = (mx-el.x)/f; el.h = my-el.y; }
             if (currentResizePoint === 'subj_left' || currentResizePoint === 'line_start') { el.w = (el.x-mx)*f; }
-            if (currentResizePoint === 'H') { el.h = el.y - my; }
-            if (currentResizePoint === 'T') { el.dx_top = (mx - el.x) / f; el.dy_top = my - el.y; }
         } else if (isDragging) {
             const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
         } else if (isMarquee) {
