@@ -380,16 +380,6 @@
         setTimeout(() => toast.style.display = 'none', 1500);
     };
 
-    window.autoSave = function() {
-        localStorage.setItem('syntaxis_autosave', JSON.stringify({
-            elements: window.elements,
-            passage: document.getElementById('passageInput').value,
-            apparatus: window.apparatusData,
-            projectName: document.getElementById('projectName').value,
-            verseReference: document.getElementById('verseReference').value
-        }));
-    };
-
     window.loadNativeBibleTextOnly = async function(query, fileName) {
         if (!query.trim()) return;
         const status = document.getElementById('dbStatus'); status.innerText = "Extracting...";
@@ -603,7 +593,7 @@
     };
 
     window.addShape = function(type, x=null, y=null, val=null) {
-        if ((type === 'text' || type === 'block_text' || type === 'labeled_arrow') && val === null) { val = prompt("Label:"); if (!val) return; }
+        if ((type === 'text' || type === 'block_text') && val === null) { val = prompt("Label:"); if (!val) return; }
         const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
         const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/window.zoomLevel;
         window.elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, w_left: 120, w_right: 120, val, flip: 1, color: '#333', thickness: 2.5 });
@@ -612,6 +602,16 @@
 
     window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
     window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); window.autoSave(); };
+    
+    window.autoSave = function() { 
+        localStorage.setItem('syntaxis_autosave', JSON.stringify({ 
+            elements: window.elements, 
+            passage: document.getElementById('passageInput').value, 
+            apparatus: window.apparatusData,
+            projectName: document.getElementById('projectName').value,
+            verseReference: document.getElementById('verseReference').value
+        })); 
+    };
     
     window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); window.renderApparatus(); };
     window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
@@ -740,7 +740,6 @@
     window.submitBlock = () => { const t = document.getElementById('block-input').value; window.addShape('block_text', null, null, t); window.closeBlockModal(); };
     window.addLabeledArrow = () => { const l = prompt("Arrow Label:"); window.addShape('labeled_arrow', null, null, l); };
     
-    // --- FULL ORIGINAL APPARATUS LOGIC RESTORED ---
     window.openVariantModal = function() { 
         document.getElementById('modal-title').innerText = editingVariantId ? "Edit Manuscript" : "Add Manuscript";
         document.getElementById('variant-modal').classList.add('active'); 
@@ -849,7 +848,6 @@
     
     window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
 
-    // Load Local Cache on DOM Content Loaded
     window.addEventListener('DOMContentLoaded', () => {
         try { 
             const saved = localStorage.getItem('syntaxis_autosave'); 
@@ -863,51 +861,9 @@
                 window.updateWordBank(); 
             } 
         } catch(e){} 
-        window.updateProjectListLocal();
         window.draw(); 
         window.renderApparatus();
     });
-
-    window.updateProjectListLocal = function() {
-        const listDiv = document.getElementById('project-list');
-        listDiv.innerHTML = '';
-        const projects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        Object.keys(projects).forEach(name => {
-            const card = document.createElement('div');
-            card.className = 'proj-card';
-            card.onclick = () => window.loadLocalProject(name);
-            card.innerHTML = `<span>${name}</span><button onclick="window.deleteLocalProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
-            listDiv.appendChild(card);
-        });
-    };
-
-    window.loadLocalProject = function(name) {
-        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        const d = localProjects[name];
-        if (d) {
-            window.elements = d.elements || [];
-            window.apparatusData = d.apparatus || [];
-            document.getElementById('passageInput').value = d.passage || "";
-            document.getElementById('projectName').value = d.projectName || name;
-            document.getElementById('verseReference').value = d.verseReference || "";
-            window.updateWordBank();
-            window.selectedElements = [];
-            window.draw();
-            window.renderApparatus();
-            window.autoSave();
-        }
-    };
-
-    window.deleteLocalProject = function(name, e) {
-        if (e) e.stopPropagation();
-        if (confirm(`Delete diagram "${name}" locally? (Will also delete from cloud if logged in)`)) {
-            const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-            delete localProjects[name];
-            localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-            window.updateProjectListLocal();
-            if (window.cloudDeleteProject) window.cloudDeleteProject(name);
-        }
-    };
 </script>
 
 <script type="module">
@@ -944,14 +900,17 @@
             if(authBtn) authBtn.innerText = "Sign Out";
             if(userStatus) userStatus.innerText = user.email.split('@')[0];
             
-            // DIRECT CLOUD RENDERING
             onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
-                const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
+                const listDiv = document.getElementById('project-list');
+                listDiv.innerHTML = '';
                 snapshot.forEach((docSnap) => {
-                    localProjects[docSnap.id] = docSnap.data();
+                    const name = docSnap.id;
+                    const card = document.createElement('div');
+                    card.className = 'proj-card';
+                    card.onclick = () => window.loadFromApp(name);
+                    card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
+                    listDiv.appendChild(card);
                 });
-                localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-                window.updateProjectListLocal();
             });
         } else { 
             if(authBtn) authBtn.innerText = "Sign In";
@@ -961,10 +920,10 @@
     });
 
     window.saveToApp = async function() {
+        if (!auth.currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
         if (!name) { alert("Enter a Project Name."); return; }
         
-        // FULL DATA OBJECT
         const data = {
             passage: document.getElementById('passageInput').value,
             elements: window.elements,
@@ -974,24 +933,36 @@
             lastSaved: Date.now()
         };
 
-        const localProjects = JSON.parse(localStorage.getItem('syntaxis_projects') || '{}');
-        localProjects[name] = data;
-        localStorage.setItem('syntaxis_projects', JSON.stringify(localProjects));
-        window.updateProjectListLocal();
-        window.autoSave();
-
-        if (auth.currentUser) {
-            try {
-                await setDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name), data);
-                window.showOrangeToast("Saved to Local & Cloud!");
-            } catch (e) { window.showOrangeToast("Saved Locally (Cloud Failed)"); }
-        } else {
-            window.showOrangeToast("Saved Locally (Sign in for Cloud)");
-        }
+        try {
+            await setDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name), data);
+            window.showOrangeToast("Saved to Cloud!");
+        } catch (e) { window.showOrangeToast("Cloud Save Failed"); }
     };
 
-    window.cloudDeleteProject = async function(name) {
-        if (auth.currentUser) {
+    window.loadFromApp = async function(name) {
+        if (!auth.currentUser) return;
+        const projectsRef = collection(db, "users", auth.currentUser.uid, "diagrams");
+        const snapshot = await getDocs(projectsRef);
+        snapshot.forEach(docSnap => {
+            if (docSnap.id === name) {
+                const d = docSnap.data();
+                window.elements = d.elements || [];
+                window.apparatusData = d.apparatus || [];
+                document.getElementById('passageInput').value = d.passage || "";
+                document.getElementById('projectName').value = name;
+                document.getElementById('verseReference').value = d.verseReference || "";
+                window.updateWordBank();
+                window.selectedElements = [];
+                window.draw();
+                window.renderApparatus();
+            }
+        });
+    };
+
+    window.deleteProject = async function(name, e) {
+        if (e) e.stopPropagation();
+        if (!auth.currentUser) return;
+        if (confirm(`Delete "${name}" from Cloud?`)) {
             try { await deleteDoc(doc(db, "users", auth.currentUser.uid, "diagrams", name)); } catch (e) {}
         }
     };
