@@ -218,6 +218,8 @@
             <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 3;">
                 <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
                 <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
+                <input type="file" id="fileInput" style="display:none;" onchange="window.fallbackLoad(event)">
             </div>
         </div>
 
@@ -242,6 +244,7 @@
             <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 2;">
                 <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
                 <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
             </div>
         </div>
         
@@ -372,6 +375,7 @@
     const auth = getAuth(app);
     let currentUser = null;
 
+    // --- SHARED DATA ---
     window.elements = [];
     window.selectedElements = [];
     window.apparatusData = [];
@@ -382,6 +386,7 @@
     window.zoomLevel = 1;
     window.activeTab = 'rk'; 
 
+    // --- CLOUD LOGIC ---
     window.saveToApp = async function() {
         if (!currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
@@ -447,6 +452,7 @@
         else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>'; }
     });
 
+    // --- MASTER ENGINE FUNCTIONS (ATTACHED TO WINDOW) ---
     const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "colossians": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
     const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "colossians": 51, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
     const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "colossians": "Col", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
@@ -504,11 +510,13 @@
             if (isZef) {
                 chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
             } else {
-                chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
-                if (!chapNode) {
-                    // LOCKING THE FALLBACK TO THE SPECIFIC BOOK
-                    const bookNode = docXML.querySelector(`book[number="${bNum}"]`);
-                    if (bookNode) chapNode = bookNode.querySelector(`chapter[number="${chap}"]`);
+                // Ensure we only look for the OSIS ID within the correct book, or find the book first.
+                const bookNode = docXML.querySelector(`book[number="${bNum}"]`) || docXML.querySelector(`div[osisID="${osis}"]`) || docXML.querySelector(`div[type="book"]`);
+                
+                if (bookNode) {
+                    chapNode = bookNode.querySelector(`chapter[osisID="${osis}.${chap}"]`) || bookNode.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`) || bookNode.querySelector(`chapter[number="${chap}"]`);
+                } else {
+                     chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
                 }
             }
             
@@ -532,12 +540,10 @@
         
         ctx.clearRect(0, 0, canvas.width, canvas.height);
         
-        // Draw Grid
         ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
         for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
         for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
         
-        // Group Background Highlight
         let drawnGroups = [];
         window.elements.forEach(el => {
             if (window.selectedElements.includes(el) && el.group && !drawnGroups.includes(el.group)) {
@@ -546,9 +552,20 @@
                 let minX=9999, minY=9999, maxX=-9999, maxY=-9999;
                 groupEls.forEach(ge => {
                     const gf = ge.flip || 1;
-                    const gw = ge.w || 50, gh = ge.h || 50;
-                    const bx1 = ge.x - gw, bx2 = ge.x + gw;
-                    const by1 = ge.y - gh, by2 = ge.y + gh;
+                    let gw, gh, bx1, bx2, by1, by2;
+
+                    if (ge.type === 'text') {
+                        ctx.font = `${ge.bold ? "bold" : "normal"} italic 20px Georgia`;
+                        gw = ctx.measureText(ge.val).width;
+                        gh = 25;
+                        bx1 = ge.x; bx2 = ge.x + gw;
+                        by1 = ge.y - 20; by2 = ge.y + 5;
+                    } else {
+                        gw = ge.w || 50; gh = ge.h || 50;
+                        bx1 = Math.min(ge.x, ge.x + (gw*gf)); bx2 = Math.max(ge.x, ge.x + (gw*gf));
+                        by1 = ge.y - gh; by2 = ge.y + gh;
+                    }
+                    
                     if (bx1 < minX) minX = bx1; if (bx2 > maxX) maxX = bx2;
                     if (by1 < minY) minY = by1; if (by2 > maxY) maxY = by2;
                 });
@@ -566,7 +583,10 @@
             ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = el.thickness || 2.5;
             if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
             
-            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (el.w*f), el.y); ctx.lineTo(el.x + (el.w*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
+            const wl = el.w_left !== undefined ? el.w_left : el.w;
+            const wr = el.w_right !== undefined ? el.w_right : el.w;
+
+            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (wl*f), el.y); ctx.lineTo(el.x + (wr*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
             else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
             else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
             else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dx_top * f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
@@ -605,7 +625,7 @@
                     ctx.setLineDash([]); 
                     handle(el.x + el.w, el.y + (el.h||50)); 
                 }
-                else if (el.type === 'subject_baseline') { handle(el.x-el.w*f, el.y); handle(el.x+el.w*f, el.y); }
+                else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
                 else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
                 else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
                 else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
@@ -662,17 +682,21 @@
         const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
         [...window.elements].reverse().forEach(el => {
             const f = el.flip || 1;
+            const wl = el.w_left !== undefined ? el.w_left : el.w;
+            const wr = el.w_right !== undefined ? el.w_right : el.w;
+
             if (el.type !== 'text') {
                 if (el.type === 'single_line' || el.type === 'labeled_arrow') { ch(el.x, el.y, 'line_start', el); ch(el.x+el.w*f, el.y+el.h, 'line_end', el); }
-                else if (el.type === 'subject_baseline') { ch(el.x-el.w*f, el.y, 'subj_left', el); ch(el.x+el.w*f, el.y, 'subj_right', el); }
+                else if (el.type === 'subject_baseline') { ch(el.x-wl*f, el.y, 'subj_left', el); ch(el.x+wr*f, el.y, 'subj_right', el); }
                 else if (el.type === 'modifier' || el.type === 'prep_shelf') { ch(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T', el); ch(el.x+el.w*f, el.y, 'R', el); }
                 else if (el.type === 'block_text') { ch(el.x+el.w, el.y+(el.h||50), 'resize_br', el); }
                 else { ch(el.x, el.y-el.h, 'H', el); ch(el.x+el.w*f, el.y, 'W', el); }
             }
             if (!hB) {
                 if (el.type === 'text') {
-                    const tw = el.val.length * 10;
-                    if (mx >= el.x - 5 && mx <= el.x + tw && my >= el.y - 25 && my <= el.y + 10) hB = el;
+                    ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
+                    const tw = ctx.measureText(el.val).width;
+                    if (mx >= el.x && mx <= el.x + tw && my >= el.y - 20 && my <= el.y + 5) hB = el;
                 } else if (el.type === 'block_text') {
                     if (mx >= el.x && mx <= el.x + el.w && my >= el.y && my <= el.y + (el.h||50)) hB = el;
                 } else {
@@ -714,10 +738,15 @@
             let mxSnap = snapEnabled ? Math.round(mx/10)*10 : mx;
             let mySnap = snapEnabled ? Math.round(my/10)*10 : my;
             
-            if (currentResizePoint === 'subj_right' || currentResizePoint === 'line_end' || currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = (mxSnap-el.x)/f; el.h = mySnap-el.y; }
-            if (currentResizePoint === 'subj_left' || currentResizePoint === 'line_start') { el.w = (el.x-mxSnap)*f; }
-            if (currentResizePoint === 'H') { el.h = el.y - mySnap; }
+            if (currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = Math.max(10, (mxSnap - el.x) / f); }
+            if (currentResizePoint === 'H') { el.h = Math.max(10, el.y - mySnap); }
+            
+            if (currentResizePoint === 'subj_right') { if(el.w_left === undefined) el.w_left = el.w; el.w_right = Math.max(10, (mxSnap - el.x) / f); }
+            if (currentResizePoint === 'subj_left') { if(el.w_right === undefined) el.w_right = el.w; el.w_left = Math.max(10, (el.x - mxSnap) * f); }
+            
             if (currentResizePoint === 'T') { el.dx_top = (mxSnap - el.x) / f; el.dy_top = mySnap - el.y; }
+            if (currentResizePoint === 'line_start') { const ex = el.x + el.w, ey = el.y + el.h; el.x = mxSnap; el.y = mySnap; el.w = ex - mxSnap; el.h = ey - mySnap; }
+            if (currentResizePoint === 'line_end') { el.w = mxSnap - el.x; el.h = mySnap - el.y; }
             if (currentResizePoint === 'resize_br') { el.w = Math.max(40, mxSnap - el.x); el.h = Math.max(30, mySnap - el.y); }
         } else if (isDragging) {
             const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
