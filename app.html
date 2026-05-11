@@ -214,6 +214,13 @@
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
+
+            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 3;">
+                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
+                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
+                <input type="file" id="fileInput" style="display:none;" onchange="window.fallbackLoad(event)">
+            </div>
         </div>
 
         <div id="palette-block" class="palette" style="display:none; grid-template-columns: 1fr 1fr; gap: 8px;">
@@ -233,6 +240,12 @@
                 <button onclick="window.setZoom(-0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">-</button>
                 <button onclick="window.setZoom(0.1)" style="cursor:pointer; padding:4px 8px; border:1px solid var(--oxford-navy-dark); border-radius:var(--radius-small); background:#fff; color:var(--oxford-navy); font-weight:bold;">+</button>
             </div>
+            
+            <div class="floating-card" style="display: flex; gap: 5px; margin-top: 5px; grid-column: span 2;">
+                <button class="std-btn" onclick="window.exportImage()" style="flex:1; background:var(--oxford-navy-dark); color:var(--oxford-cream);">PNG</button>
+                <button class="std-btn" onclick="window.saveToApp()" style="flex:1; background:var(--oxford-gold); color:var(--oxford-navy);">Save</button>
+                <button class="std-btn" onclick="window.triggerLoad()" style="flex:1; background:var(--oxford-crimson); color:white;">Load</button>
+            </div>
         </div>
         
         <div style="margin-top: 20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top: 20px;">
@@ -243,7 +256,7 @@
 </div>
 
 <div id="canvas-viewport">
-    <canvas id="mainCanvas"></canvas>
+    <canvas id="mainCanvas" width="4000" height="4000"></canvas>
 </div>
 
 <div id="right-sidebar">
@@ -344,7 +357,7 @@
 </div>
 
 <script type="module">
-    import { initializeApp, getApps, getApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-app.js";
     import { getFirestore, doc, setDoc, getDocs, collection, deleteDoc, onSnapshot } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-firestore.js";
     import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.1/firebase-auth.js";
 
@@ -357,37 +370,26 @@
         appId: "1:348178982976:web:2b27ba62e26a4655add7a5"
     };
 
-    const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApp();
+    const app = initializeApp(firebaseConfig);
     const db = getFirestore(app);
     const auth = getAuth(app);
     let currentUser = null;
 
-    // --- DOM CONTENT LOADED CACHE RENDERING ---
-    window.addEventListener('DOMContentLoaded', () => { 
-        try { 
-            const saved = sessionStorage.getItem('syntaxis_autosave'); 
-            if (saved) { 
-                const d = JSON.parse(saved); 
-                window.elements = d.elements||[]; 
-                window.apparatusData = d.apparatus||[]; 
-                document.getElementById('passageInput').value=d.passage||""; 
-                document.getElementById('projectName').value=d.projectName||""; 
-                document.getElementById('verseReference').value=d.verseReference||""; 
-                window.updateWordBank(); 
-            } 
-        } catch(e){} 
-        
-        // Cache render immediately so list doesn't vanish while waiting for Firebase
-        const cached = JSON.parse(localStorage.getItem('syntaxis_cloud_cache') || '[]');
-        if (cached.length > 0) {
-            const listDiv = document.getElementById('project-list');
-            listDiv.innerHTML = cached.map(name => `<div class="proj-card" onclick="window.loadFromApp('${name}')"><span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button></div>`).join('');
-        }
-        
-        window.draw(); 
-        window.renderApparatus(); 
-    });
+    const canvas = document.getElementById('mainCanvas');
+    const ctx = canvas.getContext('2d');
 
+    // --- SHARED DATA ---
+    window.elements = [];
+    window.selectedElements = [];
+    window.apparatusData = [];
+    let editingVariantId = null, editingBlockId = null;
+    let isDragging = false, isResizing = false, isMarquee = false;
+    let marqueeStart = {x:0, y:0}, marqueeEnd = {x:0, y:0}, dragOffset = {x:0, y:0};
+    let currentResizePoint = null, snapEnabled = true, rightClickedEl = null;
+    window.zoomLevel = 1;
+    window.activeTab = 'rk'; 
+
+    // --- CLOUD LOGIC ---
     window.saveToApp = async function() {
         if (!currentUser) { alert("Please Sign In to save to cloud."); return; }
         const name = document.getElementById('projectName').value.trim();
@@ -428,7 +430,7 @@
     window.deleteProject = async function(name, e) {
         if (e) e.stopPropagation();
         if (!currentUser) return;
-        if (confirm(`Delete "${name}" from Cloud?`)) {
+        if (confirm(`Delete "${name}"?`)) {
             await deleteDoc(doc(db, "users", currentUser.uid, "diagrams", name));
         }
     };
@@ -437,17 +439,14 @@
         onSnapshot(collection(db, "users", user.uid, "diagrams"), (snapshot) => {
             const listDiv = document.getElementById('project-list');
             listDiv.innerHTML = '';
-            const cache = [];
             snapshot.forEach((docSnap) => {
                 const name = docSnap.id;
-                cache.push(name);
                 const card = document.createElement('div');
                 card.className = 'proj-card';
                 card.onclick = () => window.loadFromApp(name);
                 card.innerHTML = `<span>${name}</span><button onclick="window.deleteProject('${name}', event)" style="background:transparent; border:none; color:var(--oxford-crimson); cursor:pointer; font-size:16px; font-weight:bold;">&times;</button>`;
                 listDiv.appendChild(card);
             });
-            localStorage.setItem('syntaxis_cloud_cache', JSON.stringify(cache));
         });
     }
 
@@ -455,9 +454,346 @@
         if (user) { currentUser = user; listenToProjects(user); }
         else { currentUser = null; document.getElementById('project-list').innerHTML = '<p style="color:#aaa; font-size:11px;">Sign in to see cloud saves</p>'; }
     });
+
+    // --- MASTER ENGINE FUNCTIONS (ATTACHED TO WINDOW) ---
+    const abbrevs = { "gen": "genesis", "exo": "exodus", "lev": "leviticus", "num": "numbers", "deu": "deuteronomy", "jos": "joshua", "jud": "judges", "rut": "ruth", "1 sa": "1 samuel", "2 sa": "2 samuel", "1 ki": "1 kings", "2 ki": "2 kings", "1 ch": "1 chronicles", "2 ch": "2 chronicles", "ezr": "ezra", "neh": "nehemiah", "est": "esther", "job": "job", "psa": "psalms", "pro": "proverbs", "ecc": "ecclesiastes", "sng": "song of solomon", "isa": "isaiah", "jer": "jeremiah", "lam": "lamentations", "eze": "ezekiel", "dan": "daniel", "hos": "hosea", "joe": "joel", "amo": "amos", "oba": "obadiah", "jon": "jonah", "mic": "micah", "nah": "nahum", "hab": "habakkuk", "zep": "zephaniah", "hag": "haggai", "zec": "zechariah", "mal": "malachi", "mat": "matthew", "mrk": "mark", "mk": "mark", "luk": "luke", "lk": "luke", "jhn": "john", "jn": "john", "act": "acts", "rom": "romans", "col": "colossians", "colossians": "colossians", "1 cor": "1 corinthians", "2 cor": "2 corinthians", "gal": "galatians", "eph": "ephesians", "php": "philippians", "1 th": "1 thessalonians", "2 th": "2 thessalonians", "1 ti": "1 timothy", "2 ti": "2 timothy", "tit": "titus", "phm": "philemon", "heb": "hebrews", "jas": "james", "1 pe": "1 peter", "2 pe": "2 peter", "1 jn": "1 john", "2 jn": "2 john", "3 jn": "3 john", "jude": "jude", "rev": "revelation" };
+    const bnumberMap = { "genesis": 1, "exodus": 2, "leviticus": 3, "numbers": 4, "deuteronomy": 5, "joshua": 6, "judges": 7, "ruth": 8, "1 samuel": 9, "2 samuel": 10, "1 kings": 11, "2 kings": 12, "1 chronicles": 13, "2 chronicles": 14, "ezra": 15, "nehemiah": 16, "esther": 17, "job": 18, "psalms": 19, "proverbs": 20, "ecclesiastes": 21, "song of solomon": 22, "isaiah": 23, "jeremiah": 24, "lamentations": 25, "ezekiel": 26, "daniel": 27, "hosea": 28, "joel": 29, "amos": 30, "obadiah": 31, "jonah": 32, "micah": 33, "nahum": 34, "habakkuk": 35, "zephaniah": 36, "haggai": 37, "zechariah": 38, "malachi": 39, "matthew": 40, "mark": 41, "luke": 42, "john": 43, "acts": 44, "romans": 45, "colossians": 51, "1 corinthians": 46, "2 corinthians": 47, "galatians": 48, "ephesians": 49, "philippians": 50, "1 thessalonians": 52, "2 thessalonians": 53, "1 timothy": 54, "2 timothy": 55, "titus": 56, "philemon": 57, "hebrews": 58, "james": 59, "1 peter": 60, "2 peter": 61, "1 john": 62, "2 john": 63, "3 john": 64, "jude": 65, "revelation": 66 };
+    const osisMap = { "genesis": "Gen", "exodus": "Exod", "leviticus": "Lev", "numbers": "Num", "deuteronomy": "Deut", "joshua": "Josh", "judges": "Judg", "ruth": "Ruth", "1 samuel": "1Sam", "2 samuel": "2Sam", "1 kings": "1Kgs", "2 kings": "2Kgs", "1 chronicles": "1Chr", "2 chronicles": "2Chr", "ezra": "Ezra", "nehemiah": "Neh", "esther": "Esth", "job": "Job", "psalms": "Ps", "proverbs": "Prov", "ecclesiastes": "Eccl", "song of solomon": "Song", "isaiah": "Isa", "jeremiah": "Jer", "lamentations": "Lam", "ezekiel": "Ezek", "daniel": "Dan", "hosea": "Hos", "joel": "Joel", "amos": "Amos", "obadiah": "Obad", "jonah": "Jonah", "micah": "Mic", "nahum": "Nah", "habakkuk": "Hab", "zephaniah": "Zeph", "haggai": "Hag", "zechariah": "Zech", "malachi": "Mal", "matthew": "Matt", "mark": "Mark", "luke": "Luke", "john": "John", "acts": "Acts", "romans": "Rom", "colossians": "Col", "1 corinthians": "1Cor", "2 corinthians": "2Cor", "galatians": "Gal", "ephesians": "Eph", "philippians": "Phil", "1 thessalonians": "1Thess", "2 thessalonians": "2Thess", "1 timothy": "1Tim", "2 timothy": "2Tim", "titus": "Titus", "philemon": "Phlm", "hebrews": "Heb", "james": "Jas", "1 peter": "1Pet", "2 peter": "2Pet", "1 john": "1John", "2 john": "2John", "3 john": "3John", "jude": "Jude", "revelation": "Rev" };
+
+    window.switchDiagramTab = function(tab) {
+        window.activeTab = tab;
+        document.getElementById('tab-rk').classList.toggle('active', tab === 'rk');
+        document.getElementById('tab-block').classList.toggle('active', tab === 'block');
+        document.getElementById('palette-rk').style.display = tab === 'rk' ? 'grid' : 'none';
+        document.getElementById('palette-block').style.display = tab === 'block' ? 'grid' : 'none';
+    };
+
+    window.showOrangeToast = function(msg) {
+        const toast = document.getElementById('orange-toast');
+        toast.innerText = msg;
+        toast.style.display = 'block';
+        setTimeout(() => toast.style.display = 'none', 1500);
+    };
+
+    window.loadNativeBibleTextOnly = async function(query, fileName) {
+        if (!query.trim()) return;
+        const status = document.getElementById('dbStatus'); status.innerText = "Extracting...";
+        try {
+            let fQ = query.replace(/^(\d)\s*([a-zA-Z]+)/, "$1 $2");
+            const match = fQ.match(/^([\d\s]*[a-zA-Z\s]+?)\s+(\d+)(?:\s*:\s*(\d+)(?:\s*-\s*(\d+))?)?\s*$/);
+            if (!match) throw new Error("Invalid Ref");
+            const bSearch = match[1].trim().toLowerCase(), chap = match[2], sV = match[3] ? parseInt(match[3]) : null, eV = match[4] ? parseInt(match[4]) : sV;
+            const bName = abbrevs[bSearch] || bSearch, bNum = bnumberMap[bName], osis = osisMap[bName];
+            
+            if (fileName === 'srgnt.tsv') {
+                const res = await fetch('srgnt.tsv');
+                if (!res.ok) throw new Error("File not found.");
+                const text = await res.text();
+                const targetPrefix = bNum.toString().padStart(2, '0') + chap.toString().padStart(3, '0');
+                const lines = text.split('\n');
+                let out = "";
+                for (let line of lines) {
+                    const cols = line.split('\t');
+                    if (cols[0] && cols[0].startsWith(targetPrefix)) {
+                        const vInt = parseInt(cols[0].substring(5, 8));
+                        if (sV !== null && (vInt < sV || vInt > eV)) continue;
+                        out += cols[1] + " ";
+                    }
+                }
+                document.getElementById('passageInput').value = out.trim();
+                window.updateWordBank(); status.innerText = ""; window.autoSave();
+                return;
+            }
+
+            const res = await fetch(fileName);
+            const docXML = new DOMParser().parseFromString(await res.text(), "text/xml");
+            const isZef = docXML.querySelector('BIBLEBOOK') !== null;
+            
+            let chapNode;
+            if (isZef) {
+                chapNode = docXML.querySelector(`BIBLEBOOK[bnumber="${bNum}"] CHAPTER[cnumber="${chap}"]`);
+            } else {
+                const bookNode = docXML.querySelector(`book[number="${bNum}"]`) || docXML.querySelector(`div[osisID="${osis}"]`) || docXML.querySelector(`div[type="book"]`);
+                
+                if (bookNode) {
+                    chapNode = bookNode.querySelector(`chapter[osisID="${osis}.${chap}"]`) || bookNode.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`) || bookNode.querySelector(`chapter[number="${chap}"]`);
+                } else {
+                     chapNode = docXML.querySelector(`chapter[osisID="${osis}.${chap}"]`) || docXML.querySelector(`chapter[osisID="${osis}.${chap.padStart(3,'0')}"]`);
+                }
+            }
+            
+            if (!chapNode) throw new Error("Passage not found");
+            let txt = "";
+            chapNode.querySelectorAll(isZef ? 'VERS' : 'verse').forEach(v => {
+                let vnStr = v.getAttribute('vnumber') || v.getAttribute('number') || v.getAttribute('osisID')?.split('.').pop();
+                let vn = parseInt(vnStr);
+                if (sV !== null && (vn < sV || vn > eV)) return;
+                txt += v.textContent + " ";
+            });
+            document.getElementById('passageInput').value = txt.replace(/\s+/g, ' ').trim();
+            window.updateWordBank(); status.innerText = ""; window.autoSave();
+        } catch (e) { status.innerText = e.message; }
+    };
+
+    window.draw = function() {
+        ctx.clearRect(0, 0, canvas.width, canvas.height);
+        
+        ctx.strokeStyle = '#f5f5f5'; ctx.lineWidth = 1;
+        for(let i=0; i<canvas.width; i+=40) { ctx.beginPath(); ctx.moveTo(i,0); ctx.lineTo(i,canvas.height); ctx.stroke(); }
+        for(let j=0; j<canvas.height; j+=40) { ctx.beginPath(); ctx.moveTo(0,j); ctx.lineTo(canvas.width,j); ctx.stroke(); }
+        
+        let drawnGroups = [];
+        window.elements.forEach(el => {
+            if (window.selectedElements.includes(el) && el.group && !drawnGroups.includes(el.group)) {
+                drawnGroups.push(el.group);
+                const groupEls = window.elements.filter(e => e.group === el.group);
+                let minX=9999, minY=9999, maxX=-9999, maxY=-9999;
+                groupEls.forEach(ge => {
+                    const gf = ge.flip || 1;
+                    let gw, gh, bx1, bx2, by1, by2;
+
+                    if (ge.type === 'text') {
+                        ctx.font = `${ge.bold ? "bold" : "normal"} italic 20px Georgia`;
+                        gw = ctx.measureText(ge.val).width;
+                        gh = 25;
+                        bx1 = ge.x; bx2 = ge.x + gw;
+                        by1 = ge.y - 20; by2 = ge.y + 5;
+                    } else {
+                        gw = ge.w || 50; gh = ge.h || 50;
+                        bx1 = Math.min(ge.x, ge.x + (gw*gf)); bx2 = Math.max(ge.x, ge.x + (gw*gf));
+                        by1 = ge.y - gh; by2 = ge.y + gh;
+                    }
+                    
+                    if (bx1 < minX) minX = bx1; if (bx2 > maxX) maxX = bx2;
+                    if (by1 < minY) minY = by1; if (by2 > maxY) maxY = by2;
+                });
+                ctx.save();
+                ctx.strokeStyle = '#e67e22'; ctx.setLineDash([8, 4]); ctx.lineWidth = 2;
+                ctx.strokeRect(minX - 10, minY - 10, maxX - minX + 20, maxY - minY + 20);
+                ctx.fillStyle = '#e67e22'; ctx.font = 'bold 10px sans-serif';
+                ctx.fillText('GROUPED', minX - 10, minY - 15);
+                ctx.restore();
+            }
+        });
+
+        window.elements.forEach(el => {
+            const isSel = window.selectedElements.includes(el), f = el.flip || 1; 
+            ctx.beginPath(); ctx.strokeStyle = el.color || '#333'; ctx.fillStyle = el.color || '#333'; ctx.lineWidth = el.thickness || 2.5;
+            if (el.lineStyle === 'dashed') ctx.setLineDash([10, 10]); else if (el.lineStyle === 'dotted') ctx.setLineDash([2, 6]); else ctx.setLineDash([]);
+            
+            const wl = el.w_left !== undefined ? el.w_left : el.w;
+            const wr = el.w_right !== undefined ? el.w_right : el.w;
+
+            if (el.type === 'subject_baseline') { ctx.moveTo(el.x - (wl*f), el.y); ctx.lineTo(el.x + (wr*f), el.y); ctx.moveTo(el.x, el.y - 30); ctx.lineTo(el.x, el.y + 30); }
+            else if (el.type === 'direct_object' || el.type === 'appositive') { ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'modifier') { ctx.moveTo(el.x + (el.dx_top ? el.dx_top*f : -(el.w*f*0.3)), el.y + (el.dy_top ? el.dy_top : -el.h)); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f), el.y); }
+            else if (el.type === 'prep_shelf') { ctx.moveTo(el.x + (el.dx_top * f), el.y + el.dy_top); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y); }
+            else if (el.type === 'stilt') { ctx.moveTo(el.x - (el.w*f), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y - el.h); ctx.lineTo(el.x, el.y); ctx.moveTo(el.x - (20*f), el.y + 25); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (20*f), el.y + 25); }
+            else if (el.type === 'fork') { ctx.moveTo(el.x - (30*f), el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f), el.y - el.h); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*f), el.y + el.h); ctx.moveTo(el.x + (el.w*f*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*f*0.3), el.y + el.h); }
+            else if (el.type === 'diamond') { ctx.moveTo(el.x - 30, el.y); ctx.lineTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); ctx.lineTo(el.x + el.w, el.y); ctx.moveTo(el.x + (el.w*0.3), el.y - el.h); ctx.lineTo(el.x + (el.w*0.3), el.y + el.h); ctx.moveTo(el.x + (el.w*0.7), el.y - el.h); ctx.lineTo(el.x + (el.w*0.7), el.y + el.h); }
+            else if (el.type === 'x_line') { ctx.moveTo(el.x - 30, el.y - 30); ctx.lineTo(el.x + 30, el.y + 30); ctx.moveTo(el.x + 30, el.y - 30); ctx.lineTo(el.x - 30, el.y + 30); }
+            else if (el.type === 'single_line') { ctx.moveTo(el.x, el.y); ctx.lineTo(el.x + (el.w * f), el.y + el.h); }
+            ctx.stroke(); ctx.setLineDash([]);
+            
+            if (el.type === 'labeled_arrow') {
+                const ex = el.x + (el.w * f), ey = el.y + el.h; ctx.beginPath(); ctx.lineWidth = el.thickness || 2.5; ctx.moveTo(el.x, el.y);
+                if (f === 1) { ctx.lineTo(el.x, ey); ctx.lineTo(ex, ey); } else { ctx.lineTo(ex, el.y); ctx.lineTo(ex, ey); }
+                ctx.stroke();
+            }
+            if (el.type === 'block_text') {
+                ctx.fillStyle = "#ffffff"; ctx.fillRect(el.x, el.y, el.w, el.h || 50); ctx.strokeRect(el.x, el.y, el.w, el.h || 50);
+                ctx.fillStyle = el.color || "#000"; ctx.font = "14px sans-serif"; ctx.fillText(el.val.substring(0,30), el.x+10, el.y+30);
+            }
+            if (el.type === 'text') { ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`; ctx.fillText(el.val, el.x, el.y); }
+
+            if (isSel && el.type !== 'text') {
+                ctx.fillStyle = '#3498db'; ctx.strokeStyle = '#3498db';
+                const hR = 6 / Math.sqrt(window.zoomLevel);
+                const handle = (hx, hy) => { ctx.beginPath(); ctx.arc(hx, hy, hR, 0, Math.PI*2); ctx.fill(); };
+                
+                if (el.type === 'block_text') { 
+                    ctx.setLineDash([4, 4]); ctx.lineWidth = 1; 
+                    ctx.strokeRect(el.x - 4, el.y - 4, el.w + 8, (el.h||50) + 8); 
+                    ctx.setLineDash([]); 
+                    handle(el.x + el.w, el.y + (el.h||50)); 
+                }
+                else if (el.type === 'subject_baseline') { handle(el.x-wl*f, el.y); handle(el.x+wr*f, el.y); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { handle(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40)); handle(el.x+el.w*f, el.y); }
+                else if (el.type.includes('line') || el.type === 'labeled_arrow') { handle(el.x, el.y); handle(el.x+el.w*f, el.y+el.h); }
+                else { handle(el.x, el.y-el.h); handle(el.x+el.w*f, el.y); }
+            }
+        });
+        if (isMarquee) { ctx.setLineDash([5, 5]); ctx.strokeStyle = '#3498db'; ctx.lineWidth = 1; ctx.strokeRect(marqueeStart.x, marqueeStart.y, marqueeEnd.x - marqueeStart.x, marqueeEnd.y - marqueeStart.y); ctx.setLineDash([]); }
+    };
+
+    window.updateWordBank = function() {
+        const words = document.getElementById('passageInput').value.split(/\s+/).filter(w => w.length > 0);
+        const bank = document.getElementById('word-bank'); bank.innerHTML = ''; let used = [];
+        window.elements.filter(el => el.type === 'text').forEach(el => used.push(...el.val.split(/\s+/)));
+        words.forEach(word => {
+            const span = document.createElement('span'); span.className = 'bank-word'; span.innerText = word;
+            if (used.indexOf(word) !== -1) { span.style.textDecoration = 'line-through'; span.style.opacity = '0.4'; used.splice(used.indexOf(word),1); }
+            span.draggable = true; span.onclick = () => span.classList.toggle('selected');
+            span.ondragstart = (e) => { const s = Array.from(document.querySelectorAll('.bank-word.selected')); e.dataTransfer.setData("text/plain", s.length > 0 ? s.map(x => x.innerText).join(' ') : word); };
+            bank.appendChild(span);
+        });
+    };
+
+    document.getElementById('mainCanvas').ondragover = e => e.preventDefault();
+    document.getElementById('mainCanvas').ondrop = e => { 
+        e.preventDefault(); 
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); 
+        const x = snapEnabled ? Math.round(((e.clientX - rect.left) / window.zoomLevel) / 10) * 10 : (e.clientX - rect.left) / window.zoomLevel; 
+        const y = snapEnabled ? Math.round(((e.clientY - rect.top) / window.zoomLevel) / 10) * 10 : (e.clientY - rect.top) / window.zoomLevel; 
+        window.addShape('text', x, y, e.dataTransfer.getData("text/plain")); 
+        document.querySelectorAll('.bank-word.selected').forEach(s => s.classList.remove('selected')); 
+    };
+
+    window.addShape = function(type, x=null, y=null, val=null) {
+        if ((type === 'text' || type === 'block_text') && val === null) { val = prompt("Label:"); if (!val) return; }
+        const vp = document.getElementById('canvas-viewport'); const dX = x !== null ? x : (vp.scrollLeft + vp.clientWidth/2)/window.zoomLevel;
+        const dY = y !== null ? y : (vp.scrollTop + vp.clientHeight/2)/window.zoomLevel;
+        window.elements.push({ id: Date.now()+Math.random(), type, x: dX, y: dY, w: 120, h: 40, val, flip: 1, color: '#333', thickness: 2.5 });
+        window.draw(); window.autoSave(); if(type==='text') window.updateWordBank();
+    };
+
+    window.addPrepShelf = function() { window.elements.push({ id: Date.now(), type: 'prep_shelf', x: 500, y: 500, w: 120, h: 40, dx_top: 50, dy_top: -40, flip: 1, color:'#333' }); window.draw(); };
+    window.flipSelected = function() { window.selectedElements.forEach(el => el.flip *= -1); window.draw(); };
+    window.autoSave = function() { sessionStorage.setItem('syntaxis_autosave', JSON.stringify({ elements: window.elements, passage: document.getElementById('passageInput').value, apparatus: window.apparatusData })); };
+    window.renderApparatus = function() { /* Apparatus untouched */ };
+    window.toggleApparatus = function() { document.getElementById('apparatus-drawer').classList.toggle('open'); };
+    window.toggleSnap = function() { snapEnabled = !snapEnabled; document.getElementById('snapToggle').style.background = snapEnabled ? '#a9dfbf' : '#fff'; document.getElementById('snapToggle2').style.background = snapEnabled ? '#a9dfbf' : '#fff'; };
+    window.applyStyle = function(p, v) { window.selectedElements.forEach(el => { if(p==='bold') el.bold=!el.bold; else el[p]=v; }); window.draw(); };
+    window.setZoom = function(d) { window.zoomLevel = Math.max(0.2, window.zoomLevel + d); document.getElementById('mainCanvas').style.transform = `scale(${window.zoomLevel})`; document.getElementById('mainCanvas').style.transformOrigin = 'top left'; };
+    window.snapLine = function(dir) { if (rightClickedEl) { if (dir === 'horizontal') rightClickedEl.h = 0; else rightClickedEl.w = 0; window.draw(); } };
+    window.setLineStyle = function(s) { if (rightClickedEl) { rightClickedEl.lineStyle = s; window.draw(); } };
+
+    // --- INTERACTION ---
+    function getHitElement(mx, my) {
+        let hH = null, tP = null, hB = null;
+        const ch = (hx, hy, t, el) => { if (!hH && Math.hypot(hx - mx, hy - my) < 20/window.zoomLevel) { hH = el; tP = t; } };
+        [...window.elements].reverse().forEach(el => {
+            const f = el.flip || 1;
+            const wl = el.w_left !== undefined ? el.w_left : el.w;
+            const wr = el.w_right !== undefined ? el.w_right : el.w;
+
+            if (el.type !== 'text') {
+                if (el.type === 'single_line' || el.type === 'labeled_arrow') { ch(el.x, el.y, 'line_start', el); ch(el.x+el.w*f, el.y+el.h, 'line_end', el); }
+                else if (el.type === 'subject_baseline') { ch(el.x-wl*f, el.y, 'subj_left', el); ch(el.x+wr*f, el.y, 'subj_right', el); }
+                else if (el.type === 'modifier' || el.type === 'prep_shelf') { ch(el.x+(el.dx_top||-20)*f, el.y+(el.dy_top||-40), 'T', el); ch(el.x+el.w*f, el.y, 'R', el); }
+                else if (el.type === 'block_text') { ch(el.x+el.w, el.y+(el.h||50), 'resize_br', el); }
+                else { ch(el.x, el.y-el.h, 'H', el); ch(el.x+el.w*f, el.y, 'W', el); }
+            }
+            if (!hB) {
+                if (el.type === 'text') {
+                    ctx.font = `${el.bold ? "bold" : "normal"} italic 20px Georgia`;
+                    const tw = ctx.measureText(el.val).width;
+                    if (mx >= el.x && mx <= el.x + tw && my >= el.y - 20 && my <= el.y + 5) hB = el;
+                } else if (el.type === 'block_text') {
+                    if (mx >= el.x && mx <= el.x + el.w && my >= el.y && my <= el.y + (el.h||50)) hB = el;
+                } else {
+                    if (Math.hypot(el.x - mx, el.y - my) < 40) hB = el;
+                }
+            }
+        });
+        return { hH, tP, body: hB };
+    }
+
+    document.getElementById('mainCanvas').onmousedown = (e) => {
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX - rect.left)/window.zoomLevel, my = (e.clientY - rect.top)/window.zoomLevel;
+        const hit = getHitElement(mx, my);
+        if (hit.hH) { 
+            isResizing = true; window.selectedElements = [hit.hH]; currentResizePoint = hit.tP; 
+        } else if (hit.body) { 
+            isDragging = true; 
+            if (!e.shiftKey) {
+                window.selectedElements = hit.body.group ? window.elements.filter(el => el.group === hit.body.group) : [hit.body]; 
+            } else {
+                if (hit.body.group) {
+                    const grp = window.elements.filter(el => el.group === hit.body.group);
+                    grp.forEach(g => { if(!window.selectedElements.includes(g)) window.selectedElements.push(g); });
+                } else {
+                    if(!window.selectedElements.includes(hit.body)) window.selectedElements.push(hit.body);
+                }
+            }
+            dragOffset = {x:mx, y:my}; 
+        } else { 
+            isMarquee = true; marqueeStart = {x:mx, y:my}; marqueeEnd = {x:mx, y:my}; window.selectedElements = []; 
+        }
+        window.draw();
+    };
+
+    window.onmousemove = (e) => {
+        const rect = document.getElementById('mainCanvas').getBoundingClientRect(); const mx = (e.clientX-rect.left)/window.zoomLevel, my = (e.clientY-rect.top)/window.zoomLevel;
+        if (isResizing) {
+            const el = window.selectedElements[0], f = el.flip || 1;
+            let mxSnap = snapEnabled ? Math.round(mx/10)*10 : mx;
+            let mySnap = snapEnabled ? Math.round(my/10)*10 : my;
+            
+            if (currentResizePoint === 'W' || currentResizePoint === 'R') { el.w = Math.max(10, (mxSnap - el.x) / f); }
+            if (currentResizePoint === 'H') { el.h = Math.max(10, el.y - mySnap); }
+            
+            if (currentResizePoint === 'subj_right') { if(el.w_left === undefined) el.w_left = el.w; el.w_right = Math.max(10, (mxSnap - el.x) / f); }
+            if (currentResizePoint === 'subj_left') { if(el.w_right === undefined) el.w_right = el.w; el.w_left = Math.max(10, (el.x - mxSnap) * f); }
+            
+            if (currentResizePoint === 'T') { el.dx_top = (mxSnap - el.x) / f; el.dy_top = mySnap - el.y; }
+            if (currentResizePoint === 'line_start') { const ex = el.x + el.w, ey = el.y + el.h; el.x = mxSnap; el.y = mySnap; el.w = ex - mxSnap; el.h = ey - mySnap; }
+            if (currentResizePoint === 'line_end') { el.w = mxSnap - el.x; el.h = mySnap - el.y; }
+            if (currentResizePoint === 'resize_br') { el.w = Math.max(40, mxSnap - el.x); el.h = Math.max(30, mySnap - el.y); }
+        } else if (isDragging) {
+            const dx = mx-dragOffset.x, dy = my-dragOffset.y; window.selectedElements.forEach(el => { el.x += dx; el.y += dy; }); dragOffset = {x:mx, y:my};
+        } else if (isMarquee) {
+            marqueeEnd = {x:mx, y:my};
+            const x1 = Math.min(marqueeStart.x, mx), x2 = Math.max(marqueeStart.x, mx), y1 = Math.min(marqueeStart.y, my), y2 = Math.max(marqueeStart.y, my);
+            window.selectedElements = window.elements.filter(el => el.x > x1 && el.x < x2 && el.y > y1 && el.y < y2);
+        }
+        window.draw();
+    };
+
+    window.onmouseup = () => { isDragging = isResizing = isMarquee = false; window.draw(); window.autoSave(); };
+    
+    window.onkeydown = (e) => {
+        if(e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') return;
+        const n = e.shiftKey ? 10 : 2;
+        if (e.key.startsWith('Arrow')) { 
+            e.preventDefault();
+            if(e.key==='ArrowUp') window.selectedElements.forEach(el=>el.y-=n); 
+            if(e.key==='ArrowDown') window.selectedElements.forEach(el=>el.y+=n); 
+            if(e.key==='ArrowLeft') window.selectedElements.forEach(el=>el.x-=n); 
+            if(e.key==='ArrowRight') window.selectedElements.forEach(el=>el.x+=n); 
+            window.draw(); 
+        }
+        if (e.key === 'Delete' || e.key === 'Backspace') { window.elements = window.elements.filter(el => !window.selectedElements.includes(el)); window.selectedElements = []; window.draw(); window.updateWordBank(); }
+        if (e.key.toLowerCase() === 'f') window.flipSelected();
+        if (e.key.toLowerCase() === 'u') {
+            if (window.selectedElements.length > 0) {
+                window.selectedElements.forEach(el => el.group = null);
+                window.showOrangeToast("UNGROUPED");
+            }
+            window.draw(); window.autoSave();
+        }
+        if (e.key.toLowerCase() === 'g') {
+            if (window.selectedElements.length > 0) {
+                const gid = Date.now();
+                window.selectedElements.forEach(el => el.group = gid);
+                window.showOrangeToast("GROUPED");
+            }
+            window.draw(); window.autoSave();
+        }
+    };
+
+    // --- APP-SPECIFIC UI TRIGGERS ---
+    window.openBlockModal = () => { editingBlockId=null; document.getElementById('block-input').value=''; document.getElementById('block-modal-overlay').style.display='flex'; };
+    window.closeBlockModal = () => document.getElementById('block-modal-overlay').style.display='none';
+    window.submitBlock = () => { const t = document.getElementById('block-input').value; window.addShape('block_text', null, null, t); window.closeBlockModal(); };
+    window.addLabeledArrow = () => { const l = prompt("Arrow Label:"); window.addShape('labeled_arrow', null, null, l); };
+    window.openVariantModal = () => document.getElementById('variant-modal').classList.add('active');
+    window.closeVariantModal = () => document.getElementById('variant-modal').classList.remove('active');
+    window.saveVariant = () => { /* Logic untouched */ window.closeVariantModal(); };
+    window.launchCNTR = () => { /* Logic untouched */ };
+    window.insertSiglum = (c) => document.getElementById('v-symbol').value += c;
+
+    // We do NOT call window.draw() here initially because we need DOMContentLoaded to fire first to pull from Cache.
 </script>
-
-<script type="module" src="firebase-setup.js"></script>
-
 </body>
 </html>
